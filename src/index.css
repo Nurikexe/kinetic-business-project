@@ -1,0 +1,66 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+@theme {
+  --color-bg-900: #060709;
+  --color-bg-800: #0b0c10;
+  --color-bg-700: #111318;
+  --color-bg-600: #181a21;
+  --color-bg-500: #1f2129;
+  --color-bg-400: #282a34;
+
+  --color-mint: #00ffaa;
+  --color-mint-dim: rgba(0, 255, 170, 0.07);
+  --color-mint-glow: rgba(0, 255, 170, 0.22);
+
+  --color-cyan: #00ccff;
+  --color-cyan-dim: rgba(0, 204, 255, 0.07);
+  --color-cyan-glow: rgba(0, 204, 255, 0.22);
+
+  --color-red: #ff3b5c;
+  --color-amber: #ffb020;
+  --color-violet: #a064ff;
+
+  --color-text-primary: #ededf0;
+  --color-text-secondary: #9898a6;
+  --color-text-muted: #55566a;
+
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-body: 'Manrope', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+* { -webkit-tap-highlight-color: transparent; }
+
+body {
+  background: var(--color-bg-900);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  min-height: 100dvh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-bg-400); border-radius: 4px; }
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; }
+
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* Subtle grain overlay */
+.grain::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+}
