@@ -229,7 +229,7 @@ function RunTypeCard({ rt, i = 0, attributes = {}, listeners = {}, isOverlay = f
 }
 
 // ── Sortable week row ─────────────────────────────────────────
-function SortableWeekRow({ week, idx, isCur, isPast, wDone, editingIdx, onSelect, onEdit, editRow, dayKeys }) {
+function SortableWeekRow({ week, idx, isCur, isPast, wDone, editingIdx, onSelect, onEdit, onDelete, canDelete, editRow, dayKeys }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: String(idx) });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 };
 
@@ -274,14 +274,23 @@ function SortableWeekRow({ week, idx, isCur, isPast, wDone, editingIdx, onSelect
       )}
 
       <td className="pl-1 pr-0 py-2.5 bg-transparent">
-        <button
-          onClick={() => onEdit(editingIdx === idx ? null : idx)}
-          className={`w-6 h-6 rounded-lg flex items-center justify-center transition-colors ${
-            editingIdx === idx ? 'text-cyan bg-cyan/10' : 'text-text-muted/40 hover:text-text-muted'
-          }`}
-        >
-          {editingIdx === idx ? <X size={11} /> : <Pencil size={11} />}
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => onEdit(editingIdx === idx ? null : idx)}
+            className={`w-6 h-6 rounded-lg flex items-center justify-center transition-colors ${
+              editingIdx === idx ? 'text-cyan bg-cyan/10' : 'text-text-muted/40 hover:text-text-muted'
+            }`}
+          >
+            {editingIdx === idx ? <X size={11} /> : <Pencil size={11} />}
+          </button>
+          <button
+            onClick={() => onDelete(idx)}
+            disabled={!canDelete}
+            className="w-6 h-6 rounded-lg flex items-center justify-center text-text-muted/35 hover:text-red disabled:opacity-20 disabled:hover:text-text-muted/35 transition-colors"
+          >
+            <Trash2 size={11} />
+          </button>
+        </div>
       </td>
     </motion.tr>
   );
@@ -598,6 +607,26 @@ export default function RunningPage() {
       run_week:      newIdx === currentWeek ? oldIdx : oldIdx === currentWeek ? newIdx : currentWeek,
       run_completed: newCompleted,
     });
+  };
+
+  const handleDeleteWeek = (weekIdx) => {
+    if (runWeeks.length <= 1) return;
+    const nextWeeks = runWeeks
+      .filter((_, idx) => idx !== weekIdx)
+      .map((week, idx) => ({ ...week, week: idx + 1 }));
+
+    const nextCompleted = {};
+    nextWeeks.forEach((_, idx) => {
+      const sourceIdx = idx < weekIdx ? idx : idx + 1;
+      nextCompleted[idx] = runCompleted[sourceIdx] ?? getWeekCompletion(sourceIdx);
+    });
+
+    updateConfig({
+      run_weeks: nextWeeks,
+      run_week: Math.max(0, Math.min(currentWeek > weekIdx ? currentWeek - 1 : currentWeek, nextWeeks.length - 1)),
+      run_completed: nextCompleted,
+    });
+    setEditingRowIdx(null);
   };
 
   // DnD — run types list
@@ -1127,6 +1156,8 @@ export default function RunningPage() {
                         editingIdx={editingRowIdx}
                         onSelect={(idx) => updateConfig({ run_week: idx })}
                         onEdit={setEditingRowIdx}
+                        onDelete={handleDeleteWeek}
+                        canDelete={runWeeks.length > 1}
                         editRow={editRow}
                         dayKeys={dayKeys}
                       />

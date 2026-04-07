@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, PencilLine, Sparkles, Wand2 } from 'lucide-react';
+import { ArrowLeft, Dumbbell, Flame, Footprints, PencilLine, Sparkles, Timer, Wand2 } from 'lucide-react';
 import { ONBOARDING_QUESTIONS, ONBOARDING_START_OPTIONS } from '../data/onboarding';
 
 const SPRING = { type: 'spring', stiffness: 320, damping: 28, mass: 0.85 };
@@ -13,28 +13,72 @@ const ICONS = {
 
 const START_VISUALS = {
   favorite: {
-    image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1200&q=80',
     accent: 'from-mint/35 via-mint/10 to-transparent',
     badge: 'Default split + default runs',
+    icon: Dumbbell,
+    tone: 'mint',
   },
   generate: {
-    image: 'https://images.unsplash.com/photo-1549060279-7e168fcee0c2?auto=format&fit=crop&w=1200&q=80',
     accent: 'from-cyan/35 via-cyan/10 to-transparent',
     badge: '4 quick questions',
+    icon: Flame,
+    tone: 'cyan',
   },
   manual: {
-    image: 'https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?auto=format&fit=crop&w=1200&q=80',
     accent: 'from-white/14 via-white/5 to-transparent',
     badge: 'Start simple and edit later',
+    icon: Footprints,
+    tone: 'neutral',
   },
 };
 
 const QUESTION_VISUALS = [
-  'https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=1200&q=80',
-  'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=1200&q=80',
-  'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=1200&q=80',
-  'https://images.unsplash.com/photo-1517963879433-6ad2b056d712?auto=format&fit=crop&w=1200&q=80',
+  { icon: Dumbbell, tone: 'mint', label: 'Strength setup' },
+  { icon: Footprints, tone: 'cyan', label: 'Training rhythm' },
+  { icon: Flame, tone: 'mint', label: 'Experience level' },
+  { icon: Timer, tone: 'cyan', label: 'Session flow' },
 ];
+
+function FitnessVisual({ icon: Icon, tone = 'mint', label, compact = false }) {
+  const toneClasses = tone === 'cyan'
+    ? {
+        halo: 'bg-[radial-gradient(circle_at_20%_20%,rgba(214,238,99,0.34),transparent_36%)]',
+        orb: 'from-cyan via-mint to-cyan/40',
+        chip: 'bg-cyan/[0.16] text-cyan',
+        plate: 'from-cyan/[0.2] to-transparent',
+      }
+    : tone === 'neutral'
+    ? {
+        halo: 'bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.12),transparent_36%)]',
+        orb: 'from-white/70 via-white/30 to-transparent',
+        chip: 'bg-white/[0.08] text-text-secondary',
+        plate: 'from-white/[0.12] to-transparent',
+      }
+    : {
+        halo: 'bg-[radial-gradient(circle_at_20%_20%,rgba(113,215,201,0.34),transparent_36%)]',
+        orb: 'from-mint via-cyan to-mint/40',
+        chip: 'bg-mint/[0.16] text-mint',
+        plate: 'from-mint/[0.22] to-transparent',
+      };
+
+  return (
+    <div className={`relative overflow-hidden ${compact ? 'h-full min-h-[170px]' : 'h-full min-h-[220px] md:min-h-[560px]'}`}>
+      <div className={`absolute inset-0 ${toneClasses.halo}`} />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,11,13,0.08)_0%,rgba(10,11,13,0.72)_72%,rgba(10,11,13,0.92)_100%)]" />
+      <div className={`absolute right-[-10%] top-[10%] h-[45%] w-[45%] rounded-full bg-gradient-to-br ${toneClasses.orb} blur-2xl opacity-85`} />
+      <div className={`absolute left-[10%] top-[16%] h-[42%] w-[42%] rounded-[32px] bg-gradient-to-br ${toneClasses.plate} border border-white/[0.08] rotate-[-14deg] shadow-[0_24px_60px_rgba(0,0,0,0.24)]`} />
+      <div className="absolute right-[16%] top-[16%] h-16 w-16 rounded-[22px] border border-white/[0.08] bg-bg-700/82 shadow-[0_16px_34px_rgba(0,0,0,0.24)]" />
+      <div className="absolute right-[24%] top-[33%] h-24 w-24 rounded-[30px] border border-white/[0.08] bg-bg-700/88 shadow-[0_18px_40px_rgba(0,0,0,0.28)]" />
+      <div className="absolute left-[18%] top-[28%] flex h-28 w-28 items-center justify-center rounded-[34px] border border-white/[0.08] bg-bg-700/88 shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
+        <div className={`absolute inset-3 rounded-[26px] bg-gradient-to-br ${toneClasses.orb} opacity-20 blur-lg`} />
+        <Icon size={compact ? 34 : 40} className={tone === 'cyan' ? 'text-cyan' : tone === 'neutral' ? 'text-text-secondary' : 'text-mint'} />
+      </div>
+      <div className={`absolute bottom-5 left-5 rounded-full px-3 py-1 text-[11px] font-body font-semibold ${toneClasses.chip}`}>
+        {label}
+      </div>
+    </div>
+  );
+}
 
 export default function OnboardingModal({ displayName, onApply }) {
   const [mode, setMode] = useState(null);
@@ -86,13 +130,7 @@ export default function OnboardingModal({ displayName, onApply }) {
             <div className="grid md:grid-cols-[1.1fr_0.9fr]">
               <div className="relative min-h-[280px] md:min-h-[640px] p-6 md:p-8 overflow-hidden">
                 <div className="absolute inset-0">
-                  <img
-                    src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1400&q=80"
-                    alt=""
-                    className="h-full w-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(10,11,13,0.18)_0%,rgba(10,11,13,0.72)_58%,rgba(10,11,13,0.92)_100%)]" />
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(214,238,99,0.32),transparent_34%)]" />
+                  <FitnessVisual icon={Dumbbell} tone="mint" label="3D fitness starter" />
                 </div>
 
                 <div className="relative z-10 flex h-full flex-col justify-between">
@@ -126,6 +164,7 @@ export default function OnboardingModal({ displayName, onApply }) {
                   {ONBOARDING_START_OPTIONS.map((option, idx) => {
                     const Icon = ICONS[option.id];
                     const visual = START_VISUALS[option.id];
+                    const VisualIcon = visual.icon;
                     return (
                       <motion.button
                         key={option.id}
@@ -160,9 +199,8 @@ export default function OnboardingModal({ displayName, onApply }) {
                           </div>
 
                           <div className="relative overflow-hidden">
-                            <img src={visual.image} alt="" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                             <div className={`absolute inset-0 bg-gradient-to-br ${visual.accent}`} />
-                            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(17,24,28,0.88)_0%,rgba(17,24,28,0.18)_55%,rgba(17,24,28,0.06)_100%)]" />
+                            <FitnessVisual icon={VisualIcon} tone={visual.tone} label={visual.badge} compact />
                           </div>
                         </div>
                       </motion.button>
@@ -189,9 +227,11 @@ export default function OnboardingModal({ displayName, onApply }) {
                   className="grid md:col-span-2 md:grid-cols-[0.92fr_1.08fr]"
                 >
                   <div className="relative min-h-[220px] md:min-h-[560px] overflow-hidden">
-                    <img src={QUESTION_VISUALS[step]} alt="" className="h-full w-full object-cover" />
-                    <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,11,13,0.12)_0%,rgba(10,11,13,0.7)_70%,rgba(10,11,13,0.9)_100%)]" />
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(113,215,201,0.28),transparent_34%)]" />
+                    <FitnessVisual
+                      icon={QUESTION_VISUALS[step].icon}
+                      tone={QUESTION_VISUALS[step].tone}
+                      label={QUESTION_VISUALS[step].label}
+                    />
                     <div className="absolute left-5 right-5 bottom-5 rounded-[26px] border border-white/[0.08] bg-bg-900/38 p-4 backdrop-blur-xl">
                       <p className="font-mono text-[10px] tracking-[0.28em] uppercase text-cyan/75 mb-2">
                         Question {step + 1} of {ONBOARDING_QUESTIONS.length}

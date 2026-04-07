@@ -29,6 +29,7 @@ export function AuthProvider({ children }) {
       options: { data: { display_name: displayName.trim() } },
     });
     if (error) return { error: error.message };
+    sessionStorage.setItem('ha_force_onboarding', '1');
     return { success: true, user: data.user };
   }, []);
 

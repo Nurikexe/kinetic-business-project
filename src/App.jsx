@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dumbbell, Wind, User } from 'lucide-react';
 import GymPage from './pages/GymPage';
@@ -23,11 +23,21 @@ const PAGE_SPRING = { type: 'spring', stiffness: 260, damping: 32, mass: 0.9 };
 function AppContent({ page, setPage, displayName }) {
   const { loaded, hasConfigRow, updateConfig } = useUserConfig();
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
-  const showOnboarding = loaded && !hasConfigRow && !onboardingDismissed;
+  const [forceOnboarding, setForceOnboarding] = useState(() => sessionStorage.getItem('ha_force_onboarding') === '1');
+  const showOnboarding = (forceOnboarding || (loaded && !hasConfigRow)) && !onboardingDismissed;
+
+  useEffect(() => {
+    if (forceOnboarding && hasConfigRow) {
+      sessionStorage.removeItem('ha_force_onboarding');
+      setForceOnboarding(false);
+    }
+  }, [forceOnboarding, hasConfigRow]);
 
   const applyOnboarding = (mode, answers = {}) => {
     const { config } = buildOnboardingConfig(mode, answers);
     updateConfig(config, { immediate: true });
+    sessionStorage.removeItem('ha_force_onboarding');
+    setForceOnboarding(false);
     setOnboardingDismissed(true);
     setPage('gym');
   };
