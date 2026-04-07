@@ -25,10 +25,13 @@ export function UserConfigProvider({ children }) {
   const [loaded, setLoaded]   = useState(false);
   const timerRef              = useRef(null);
   const pendingRef            = useRef(null);
+  const savingRef             = useRef(false);
 
   // Load on auth
   useEffect(() => {
     if (!user) {
+      clearTimeout(timerRef.current);
+      pendingRef.current = null;
       setConfig(DEFAULTS);
       setLoaded(false);
       return;
@@ -50,19 +53,62 @@ export function UserConfigProvider({ children }) {
       });
   }, [user?.id]);
 
+  const flushSave = useCallback(async () => {
+    if (!user || !loaded || !pendingRef.current || savingRef.current) return;
+    savingRef.current = true;
+    const payload = pendingRef.current;
+    pendingRef.current = null;
+
+    const { error } = await supabase.from('user_config').upsert(
+      { ...payload, user_id: user.id, updated_at: new Date().toISOString() },
+      { onConflict: 'user_id' }
+    );
+
+    if (error) {
+      pendingRef.current = payload;
+      console.error('Config save failed:', error.message);
+    }
+
+    savingRef.current = false;
+  }, [user, loaded]);
+
   // Debounced upsert — 800ms after the last change
   const scheduleSave = useCallback((next) => {
-    if (!user || !loaded) return;
+    if (!user) return;
     pendingRef.current = next;
     clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(async () => {
-      const { error } = await supabase.from('user_config').upsert(
-        { ...pendingRef.current, user_id: user.id, updated_at: new Date().toISOString() },
-        { onConflict: 'user_id' }
-      );
-      if (error) console.error('Config save failed:', error.message);
+    if (!loaded) return;
+    timerRef.current = setTimeout(() => {
+      flushSave();
     }, 800);
-  }, [user, loaded]);
+  }, [flushSave, user, loaded]);
+
+  useEffect(() => {
+    if (!loaded || !pendingRef.current) return;
+    scheduleSave(pendingRef.current);
+  }, [loaded, scheduleSave]);
+
+  useEffect(() => {
+    const flushNow = () => {
+      clearTimeout(timerRef.current);
+      flushSave();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') flushNow();
+    };
+
+    window.addEventListener('pagehide', flushNow);
+    window.addEventListener('beforeunload', flushNow);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearTimeout(timerRef.current);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pagehide', flushNow);
+      window.removeEventListener('beforeunload', flushNow);
+    };
+  }, [flushSave]);
 
   const updateConfig = useCallback((updates) => {
     setConfig(prev => {
