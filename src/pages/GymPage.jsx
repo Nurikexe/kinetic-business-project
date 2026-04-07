@@ -30,6 +30,14 @@ function makeBlankDay(idx) {
   };
 }
 
+function syncDaySlots(days) {
+  return days.map((day, idx) => ({
+    ...day,
+    num: `Day ${idx + 1}`,
+    schedule: WEEK_SCHEDULES[idx] || `Day ${idx + 1}`,
+  }));
+}
+
 export default function GymPage() {
   const { user } = useAuth();
   const { config, updateConfig, loaded } = useUserConfig();
@@ -63,7 +71,7 @@ export default function GymPage() {
       const extra = Array.from({ length: c - gymDays.length }, (_, i) => makeBlankDay(gymDays.length + i));
       newDays = [...gymDays, ...extra];
     }
-    updateConfig({ gym_day_count: c, completed: newCompleted, gym_days: newDays });
+    updateConfig({ gym_day_count: c, completed: newCompleted, gym_days: syncDaySlots(newDays) });
   };
 
   const handleReorder = (oldIdx, newIdx) => {
@@ -71,7 +79,7 @@ export default function GymPage() {
     const reorderedCompleted = arrayMove([...effectiveCompleted], oldIdx, newIdx);
     // Replace only the first gymDayCount entries; keep any extra days
     const newDays = [
-      ...reorderedDays,
+      ...syncDaySlots(reorderedDays),
       ...gymDays.slice(gymDayCount),
     ];
     updateConfig({ gym_days: newDays, completed: reorderedCompleted });
