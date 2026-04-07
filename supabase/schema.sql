@@ -11,11 +11,22 @@ CREATE TABLE IF NOT EXISTS user_config (
   gym_day_count  INT      NOT NULL DEFAULT 5,
   completed      JSONB    NOT NULL DEFAULT '[]',
   lifts          JSONB    NOT NULL DEFAULT '[]',
+  gym_goals      JSONB    NOT NULL DEFAULT '[]',
+  gym_rules      JSONB    NOT NULL DEFAULT '[]',
   run_week       INT      NOT NULL DEFAULT 0,
+  run_weeks      JSONB    NOT NULL DEFAULT '[]',
+  run_types      JSONB    NOT NULL DEFAULT '[]',
   run_completed  JSONB    NOT NULL DEFAULT '{}',
   ten_k_time     TEXT     NOT NULL DEFAULT '',
+  ten_k_target   TEXT     NOT NULL DEFAULT '60:00',
   updated_at     TIMESTAMPTZ DEFAULT NOW()
 );
+
+ALTER TABLE user_config ADD COLUMN IF NOT EXISTS gym_goals JSONB NOT NULL DEFAULT '[]';
+ALTER TABLE user_config ADD COLUMN IF NOT EXISTS gym_rules JSONB NOT NULL DEFAULT '[]';
+ALTER TABLE user_config ADD COLUMN IF NOT EXISTS run_weeks JSONB NOT NULL DEFAULT '[]';
+ALTER TABLE user_config ADD COLUMN IF NOT EXISTS run_types JSONB NOT NULL DEFAULT '[]';
+ALTER TABLE user_config ADD COLUMN IF NOT EXISTS ten_k_target TEXT NOT NULL DEFAULT '60:00';
 
 ALTER TABLE user_config ENABLE ROW LEVEL SECURITY;
 

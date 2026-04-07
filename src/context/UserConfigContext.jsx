@@ -19,6 +19,27 @@ const DEFAULTS = {
 
 const UserConfigContext = createContext(null);
 
+const getStorageKey = (userId) => `ha_user_config:${userId}`;
+
+const readLocalConfig = (userId) => {
+  if (!userId || typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(getStorageKey(userId));
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+const writeLocalConfig = (userId, config) => {
+  if (!userId || typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(getStorageKey(userId), JSON.stringify(config));
+  } catch {
+    // Ignore storage write failures and keep in-memory state working.
+  }
+};
+
 export function UserConfigProvider({ children }) {
   const { user } = useAuth();
   const [config, setConfig]   = useState(DEFAULTS);
@@ -37,7 +58,10 @@ export function UserConfigProvider({ children }) {
       return;
     }
 
-    setLoaded(false);
+    const localConfig = readLocalConfig(user.id);
+    setConfig(localConfig ? { ...DEFAULTS, ...localConfig } : DEFAULTS);
+    setLoaded(true);
+
     supabase
       .from('user_config')
       .select('*')
@@ -45,11 +69,12 @@ export function UserConfigProvider({ children }) {
       .maybeSingle()
       .then(({ data, error }) => {
         if (error) console.error('Failed to load config:', error.message);
-        if (data) {
-          // Merge with defaults so new fields always exist
-          setConfig({ ...DEFAULTS, ...data });
+        const latestLocalConfig = readLocalConfig(user.id);
+        if (data || latestLocalConfig) {
+          // Prefer the freshest local copy so recent edits survive even if
+          // Supabase is behind or the schema is missing newer columns.
+          setConfig({ ...DEFAULTS, ...(data ?? {}), ...(latestLocalConfig ?? {}) });
         }
-        setLoaded(true);
       });
   }, [user?.id]);
 
@@ -113,10 +138,11 @@ export function UserConfigProvider({ children }) {
   const updateConfig = useCallback((updates) => {
     setConfig(prev => {
       const next = { ...prev, ...updates };
+      if (user) writeLocalConfig(user.id, next);
       scheduleSave(next);
       return next;
     });
-  }, [scheduleSave]);
+  }, [scheduleSave, user]);
 
   return (
     <UserConfigContext.Provider value={{ config, updateConfig, loaded }}>
