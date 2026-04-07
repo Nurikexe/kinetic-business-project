@@ -506,6 +506,7 @@ export default function RunningPage() {
   const [activeTypeId,     setActiveTypeId]    = useState(null);
   const [activeTypeSurface, setActiveTypeSurface] = useState('list');
   const [runNotesByDay, setRunNotesByDay] = useState({});
+  const [selectedSubmitDayKey, setSelectedSubmitDayKey] = useState(null);
   const [toast, setToast] = useState(null);
 
   const goals = parseGoalTargets(config.ten_k_target, config.ten_k_time ?? '');
@@ -556,6 +557,9 @@ export default function RunningPage() {
   const weekCompletion = getWeekCompletion(currentWeek);
   const doneCnt        = dayKeys.filter(k => weekCompletion[k]).length;
   const totalRuns      = dayKeys.length;
+  const effectiveSubmitDayKey = selectedSubmitDayKey && dayKeys.includes(selectedSubmitDayKey)
+    ? selectedSubmitDayKey
+    : dayKeys[0];
 
   const toggleRun = (dayKey) => {
     const cur = getWeekCompletion(currentWeek);
@@ -673,6 +677,12 @@ export default function RunningPage() {
     ));
     updateConfig({ ten_k_time: nextPace }, { immediate: true });
   };
+
+  const selectedSubmitIndex = Math.max(0, dayKeys.indexOf(effectiveSubmitDayKey));
+  const selectedSubmitRunType = runTypes[selectedSubmitIndex];
+  const selectedSubmitSessionText = weekData[effectiveSubmitDayKey] ?? selectedSubmitRunType?.name ?? '';
+  const selectedSubmitNote = runNotesByDay[effectiveSubmitDayKey] ?? '';
+  const selectedSubmitDone = weekCompletion[effectiveSubmitDayKey] ?? false;
 
   const handleSubmitRun = async (rt, dayKey, sessionText, note = '') => {
     const sessionLabel = sessionText?.trim() || rt.name;
@@ -839,67 +849,78 @@ export default function RunningPage() {
           )}
         </DndContext>
 
-        <div className="mt-4 space-y-3">
-          {runTypes.map((rt, i) => {
-            const dayKey = dayKeys[i];
-            const sessionText = weekData[dayKey] ?? rt.name;
-            const note = runNotesByDay[dayKey] ?? '';
-            const submitted = weekCompletion[dayKey] ?? false;
-
-            return (
-              <div key={`submit-${typeIds[i]}`} className="rounded-2xl border border-white/[0.06] bg-bg-700/60 p-4 backdrop-blur-sm">
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className="min-w-0">
-                    <p className="font-mono text-[10px] tracking-[0.22em] uppercase text-cyan/75 mb-1">
-                      {rt.day}
-                    </p>
-                    <p className="font-display text-[18px] leading-none text-text-primary mb-1">{rt.name}</p>
-                    <p className="text-[12px] text-text-secondary">{sessionText}</p>
-                  </div>
-                  <div className={`rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-[0.18em] ${
-                    submitted ? 'bg-cyan/[0.16] text-cyan' : 'bg-white/[0.05] text-text-muted'
-                  }`}>
-                    {submitted ? 'Submitted' : 'Ready'}
-                  </div>
-                </div>
-
-                <div className="mb-3 rounded-xl border border-white/[0.05] bg-bg-800/72 px-3 py-2.5">
-                  <p className="font-mono text-[9px] tracking-[0.2em] uppercase text-text-muted mb-1">Run session</p>
-                  <p className="text-[13px] font-body text-text-primary">{sessionText}</p>
-                </div>
-
-                <div className="mb-3 rounded-xl border border-white/[0.05] bg-bg-800/72 p-3">
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="font-mono text-[9px] tracking-[0.2em] uppercase text-text-muted">Feedback</span>
-                    <span className="font-mono text-[10px] text-text-muted/60">{note.length}/250</span>
-                  </div>
-                  <textarea
-                    value={note}
-                    onChange={(e) => setRunNotesByDay(prev => ({ ...prev, [dayKey]: e.target.value.slice(0, 250) }))}
-                    placeholder="How did the run feel? Pace, fatigue, pain, or conditions."
-                    maxLength={250}
-                    className="min-h-[82px] w-full resize-none rounded-xl border border-white/[0.07] bg-bg-600 px-3 py-2.5 text-sm text-text-primary outline-none transition-colors placeholder:text-text-muted/40 focus:border-cyan/30"
-                  />
-                </div>
-
-                <motion.button
-                  whileHover={{ scale: submitted ? 1 : 1.01 }}
-                  whileTap={{ scale: submitted ? 1 : 0.98 }}
-                  onClick={() => handleSubmitRun(rt, dayKey, sessionText, note)}
-                  disabled={submitted}
-                  className={`flex w-full items-center justify-center gap-2.5 rounded-xl border py-3 text-sm font-body font-semibold transition-colors ${
-                    submitted
-                      ? 'cursor-default border-cyan/15 bg-cyan/[0.05] text-cyan/50'
-                      : 'border-cyan/25 bg-cyan/[0.09] text-cyan hover:bg-cyan/[0.14]'
-                  }`}
-                >
-                  <Send size={14} />
-                  {submitted ? 'Run Submitted' : 'Submit Run'}
-                </motion.button>
+        {selectedSubmitRunType && (
+          <div className="mt-4 rounded-2xl border border-white/[0.06] bg-bg-700/60 p-4 backdrop-blur-sm">
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-mono text-[10px] tracking-[0.22em] uppercase text-cyan/75 mb-1">
+                  Submit run
+                </p>
+                <p className="font-display text-[18px] leading-none text-text-primary">
+                  One form for all sessions
+                </p>
               </div>
-            );
-          })}
-        </div>
+              <div className={`rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-[0.18em] ${
+                selectedSubmitDone ? 'bg-cyan/[0.16] text-cyan' : 'bg-white/[0.05] text-text-muted'
+              }`}>
+                {selectedSubmitDone ? 'Submitted' : 'Ready'}
+              </div>
+            </div>
+
+            <div className="mb-3 grid gap-3 sm:grid-cols-[190px_1fr]">
+              <div className="rounded-xl border border-white/[0.05] bg-bg-800/72 p-3">
+                <p className="mb-2 font-mono text-[9px] tracking-[0.2em] uppercase text-text-muted">Day</p>
+                <select
+                  value={effectiveSubmitDayKey}
+                  onChange={(e) => setSelectedSubmitDayKey(e.target.value)}
+                  className="w-full rounded-xl border border-white/[0.07] bg-bg-600 px-3 py-2.5 text-sm text-text-primary outline-none transition-colors focus:border-cyan/30"
+                >
+                  {runTypes.map((rt, i) => (
+                    <option key={typeIds[i]} value={dayKeys[i]}>
+                      {rt.day} · {rt.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="rounded-xl border border-white/[0.05] bg-bg-800/72 px-3 py-2.5">
+                <p className="mb-1 font-mono text-[9px] tracking-[0.2em] uppercase text-text-muted">Run session</p>
+                <p className="text-[13px] font-body text-text-primary">
+                  {selectedSubmitSessionText} · {selectedSubmitRunType.name}
+                </p>
+              </div>
+            </div>
+
+            <div className="mb-3 rounded-xl border border-white/[0.05] bg-bg-800/72 p-3">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="font-mono text-[9px] tracking-[0.2em] uppercase text-text-muted">Feedback</span>
+                <span className="font-mono text-[10px] text-text-muted/60">{selectedSubmitNote.length}/250</span>
+              </div>
+              <textarea
+                value={selectedSubmitNote}
+                onChange={(e) => setRunNotesByDay(prev => ({ ...prev, [effectiveSubmitDayKey]: e.target.value.slice(0, 250) }))}
+                placeholder="How did the run feel? Pace, fatigue, pain, or conditions."
+                maxLength={250}
+                className="min-h-[82px] w-full resize-none rounded-xl border border-white/[0.07] bg-bg-600 px-3 py-2.5 text-sm text-text-primary outline-none transition-colors placeholder:text-text-muted/40 focus:border-cyan/30"
+              />
+            </div>
+
+            <motion.button
+              whileHover={{ scale: selectedSubmitDone ? 1 : 1.01 }}
+              whileTap={{ scale: selectedSubmitDone ? 1 : 0.98 }}
+              onClick={() => handleSubmitRun(selectedSubmitRunType, effectiveSubmitDayKey, selectedSubmitSessionText, selectedSubmitNote)}
+              disabled={selectedSubmitDone}
+              className={`flex w-full items-center justify-center gap-2.5 rounded-xl border py-3 text-sm font-body font-semibold transition-colors ${
+                selectedSubmitDone
+                  ? 'cursor-default border-cyan/15 bg-cyan/[0.05] text-cyan/50'
+                  : 'border-cyan/25 bg-cyan/[0.09] text-cyan hover:bg-cyan/[0.14]'
+              }`}
+            >
+              <Send size={14} />
+              {selectedSubmitDone ? 'Run Submitted' : 'Submit Run'}
+            </motion.button>
+          </div>
+        )}
       </Section>
 
       {/* Goal */}
