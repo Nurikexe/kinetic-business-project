@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Dumbbell, Flame, Footprints, PencilLine, Sparkles, Timer, Wand2 } from 'lucide-react';
 import { ONBOARDING_QUESTIONS, ONBOARDING_START_OPTIONS } from '../data/onboarding';
+import heroImage from '../assets/hero.png';
 
 const SPRING = { type: 'spring', stiffness: 320, damping: 28, mass: 0.85 };
 
@@ -39,25 +40,22 @@ const QUESTION_VISUALS = [
   { icon: Timer, tone: 'cyan', label: 'Session flow' },
 ];
 
-function FitnessVisual({ icon: Icon, tone = 'mint', label, compact = false }) {
+function FitnessVisual({ icon: Icon, tone = 'mint', compact = false }) {
   const toneClasses = tone === 'cyan'
     ? {
         halo: 'bg-[radial-gradient(circle_at_20%_20%,rgba(214,238,99,0.34),transparent_36%)]',
         orb: 'from-cyan via-mint to-cyan/40',
-        chip: 'bg-cyan/[0.16] text-cyan',
         plate: 'from-cyan/[0.2] to-transparent',
       }
     : tone === 'neutral'
     ? {
         halo: 'bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.12),transparent_36%)]',
         orb: 'from-white/70 via-white/30 to-transparent',
-        chip: 'bg-white/[0.08] text-text-secondary',
         plate: 'from-white/[0.12] to-transparent',
       }
     : {
         halo: 'bg-[radial-gradient(circle_at_20%_20%,rgba(113,215,201,0.34),transparent_36%)]',
         orb: 'from-mint via-cyan to-mint/40',
-        chip: 'bg-mint/[0.16] text-mint',
         plate: 'from-mint/[0.22] to-transparent',
       };
 
@@ -73,9 +71,28 @@ function FitnessVisual({ icon: Icon, tone = 'mint', label, compact = false }) {
         <div className={`absolute inset-3 rounded-[26px] bg-gradient-to-br ${toneClasses.orb} opacity-20 blur-lg`} />
         <Icon size={compact ? 34 : 40} className={tone === 'cyan' ? 'text-cyan' : tone === 'neutral' ? 'text-text-secondary' : 'text-mint'} />
       </div>
-      <div className={`absolute bottom-5 left-5 rounded-full px-3 py-1 text-[11px] font-body font-semibold ${toneClasses.chip}`}>
-        {label}
-      </div>
+    </div>
+  );
+}
+
+function PhotoVisual({ tone = 'mint', compact = false }) {
+  const glowClass = tone === 'cyan'
+    ? 'from-cyan/28 via-cyan/8 to-transparent'
+    : 'from-mint/28 via-lime/12 to-transparent';
+
+  return (
+    <div className={`relative overflow-hidden ${compact ? 'h-full min-h-[170px]' : 'h-full min-h-[220px] md:min-h-[560px]'}`}>
+      <img
+        src={heroImage}
+        alt="Fitness athlete"
+        className="absolute inset-0 h-full w-full object-cover object-center"
+      />
+      <div className={`absolute inset-0 bg-gradient-to-br ${glowClass}`} />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,10,12,0.06)_0%,rgba(8,10,12,0.34)_38%,rgba(8,10,12,0.78)_100%)]" />
+      <div className="absolute inset-y-0 left-0 w-[56%] bg-[linear-gradient(90deg,rgba(8,10,12,0.82)_0%,rgba(8,10,12,0.52)_60%,rgba(8,10,12,0)_100%)]" />
+      <div className="absolute left-[7%] top-[11%] h-[34%] w-[28%] rounded-[34px] border border-white/[0.08] bg-white/[0.03] backdrop-blur-[2px]" />
+      <div className="absolute right-[10%] top-[16%] h-[20%] w-[22%] rounded-[28px] border border-white/[0.08] bg-bg-900/34 backdrop-blur-md" />
+      <div className="absolute right-[18%] bottom-[14%] h-[18%] w-[16%] rounded-[24px] border border-white/[0.06] bg-bg-900/26 backdrop-blur-md" />
     </div>
   );
 }
@@ -130,7 +147,7 @@ export default function OnboardingModal({ displayName, onApply }) {
             <div className="grid md:grid-cols-[1.1fr_0.9fr]">
               <div className="relative min-h-[280px] md:min-h-[640px] p-6 md:p-8 overflow-hidden">
                 <div className="absolute inset-0">
-                  <FitnessVisual icon={Dumbbell} tone="mint" label="3D fitness starter" />
+                  <PhotoVisual tone="mint" />
                 </div>
 
                 <div className="relative z-10 flex h-full flex-col justify-between">
@@ -200,7 +217,7 @@ export default function OnboardingModal({ displayName, onApply }) {
 
                           <div className="relative overflow-hidden">
                             <div className={`absolute inset-0 bg-gradient-to-br ${visual.accent}`} />
-                            <FitnessVisual icon={VisualIcon} tone={visual.tone} label={visual.badge} compact />
+                            <FitnessVisual icon={VisualIcon} tone={visual.tone} compact />
                           </div>
                         </div>
                       </motion.button>
@@ -227,11 +244,7 @@ export default function OnboardingModal({ displayName, onApply }) {
                   className="grid md:col-span-2 md:grid-cols-[0.92fr_1.08fr]"
                 >
                   <div className="relative min-h-[220px] md:min-h-[560px] overflow-hidden">
-                    <FitnessVisual
-                      icon={QUESTION_VISUALS[step].icon}
-                      tone={QUESTION_VISUALS[step].tone}
-                      label={QUESTION_VISUALS[step].label}
-                    />
+                    <PhotoVisual tone={QUESTION_VISUALS[step].tone} />
                     <div className="absolute left-5 right-5 bottom-5 rounded-[26px] border border-white/[0.08] bg-bg-900/38 p-4 backdrop-blur-xl">
                       <p className="font-mono text-[10px] tracking-[0.28em] uppercase text-cyan/75 mb-2">
                         Question {step + 1} of {ONBOARDING_QUESTIONS.length}
