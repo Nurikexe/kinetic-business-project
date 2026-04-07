@@ -73,7 +73,7 @@ const syncRunTypeDays = (items) => {
   }));
 };
 
-const parseGoalTargets = (value) => {
+const parseGoalTargets = (value, fallbackCurrentPace = '') => {
   const fallback = [{ id: 'goal-1', distance: '10K', pace: '6:00', selected: true }];
   if (!value) return fallback;
 
@@ -86,6 +86,7 @@ const parseGoalTargets = (value) => {
           distance: (goal.distance || '10K').toUpperCase(),
           pace: goal.pace || '6:00',
           selected: Boolean(goal.selected),
+          currentPace: goal.currentPace || '',
         }));
         if (!normalized.some(goal => goal.selected)) normalized[0].selected = true;
         return normalized;
@@ -96,7 +97,13 @@ const parseGoalTargets = (value) => {
   }
 
   const [distance, pace] = value.includes('|') ? value.split('|') : ['10K', value];
-  return [{ id: 'goal-1', distance: (distance || '10K').toUpperCase(), pace: pace || '6:00', selected: true }];
+  return [{
+    id: 'goal-1',
+    distance: (distance || '10K').toUpperCase(),
+    pace: pace || '6:00',
+    selected: true,
+    currentPace: fallbackCurrentPace || '',
+  }];
 };
 
 // ── Sortable run type card ─────────────────────────────────────
@@ -481,7 +488,6 @@ export default function RunningPage() {
   const { config, updateConfig } = useUserConfig();
   const currentWeek  = config.run_week     ?? 0;
   const runCompleted = config.run_completed ?? {};
-  const currentRunPace = config.ten_k_time ?? '';
   const runWeeks     = config.run_weeks    ?? [];
   const runTypes     = (config.run_types   ?? DEFAULT_RUN_TYPES).map(enrichRunType);
 
@@ -495,15 +501,15 @@ export default function RunningPage() {
   const [activeTypeId,     setActiveTypeId]    = useState(null);
   const [activeTypeSurface, setActiveTypeSurface] = useState('list');
 
-  const goals = parseGoalTargets(config.ten_k_target);
+  const goals = parseGoalTargets(config.ten_k_target, config.ten_k_time ?? '');
   const goalsSummary = goals.map(goal => `${goal.distance} @ ${goal.pace}/km`).join(' · ');
   const selectedGoal = goals.find(goal => goal.selected) || goals[0];
+  const currentRunPace = selectedGoal?.currentPace || '';
   const selectGoal = (goalId) => {
     const nextGoals = goals.map(goal => ({ ...goal, selected: goal.id === goalId }));
-    const nextSelected = nextGoals.find(goal => goal.selected);
     updateConfig({
       ten_k_target: JSON.stringify(nextGoals),
-      ten_k_time: nextSelected?.pace || '',
+      ten_k_time: nextGoals.find(goal => goal.selected)?.currentPace || '',
     }, { immediate: true });
   };
   const saveGoals = (nextGoals) => {
@@ -514,6 +520,7 @@ export default function RunningPage() {
         distance: (goal.distance || '10K').toUpperCase(),
         pace: goal.pace || '6:00',
         selected: Boolean(goal.selected),
+        currentPace: goal.currentPace || '',
       }));
 
     if (sanitizedGoals.length > 0 && !sanitizedGoals.some(goal => goal.selected)) {
@@ -810,7 +817,13 @@ export default function RunningPage() {
             </div>
             <div className="flex items-center gap-3 mb-3">
               <input type="text" value={currentRunPace}
-                onChange={e => updateConfig({ ten_k_time: e.target.value }, { immediate: true })}
+                onChange={e => {
+                  const nextValue = e.target.value;
+                  saveGoals(goals.map(goal =>
+                    goal.id === selectedGoal?.id ? { ...goal, currentPace: nextValue } : goal
+                  ));
+                  updateConfig({ ten_k_time: nextValue }, { immediate: true });
+                }}
                 placeholder="5:00"
                 className="w-24 px-3 py-2 bg-bg-600 border border-white/[0.07] rounded-lg text-sm text-center text-text-primary font-mono font-bold outline-none focus:border-cyan/35 transition-colors" />
               <span className="text-xs text-text-muted font-body">min/km</span>
@@ -882,7 +895,7 @@ export default function RunningPage() {
           {editingTarget && (
             <motion.button
               whileTap={{ scale: 0.98 }}
-              onClick={() => saveGoals([...goals, { id: `goal-${Date.now()}`, distance: '5K', pace: '5:00' }])}
+              onClick={() => saveGoals([...goals, { id: `goal-${Date.now()}`, distance: '5K', pace: '5:00', currentPace: '', selected: false }])}
               className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-cyan/20 text-cyan hover:bg-cyan/[0.06] transition-colors text-sm font-body"
             >
               <Plus size={13} /> Add Goal
