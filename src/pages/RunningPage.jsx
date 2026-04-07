@@ -377,8 +377,7 @@ export default function RunningPage() {
   const { config, updateConfig } = useUserConfig();
   const currentWeek  = config.run_week     ?? 0;
   const runCompleted = config.run_completed ?? {};
-  const tenkTime     = config.ten_k_time   ?? '';
-  const tenkTarget   = config.ten_k_target ?? '60:00';
+  const currentRunPace = config.ten_k_time ?? '';
   const runWeeks     = config.run_weeks    ?? [];
   const runTypes     = (config.run_types   ?? DEFAULT_RUN_TYPES).map(enrichRunType);
 
@@ -390,6 +389,20 @@ export default function RunningPage() {
   const [pendingNewTypes,  setPendingNewTypes] = useState(null);
   const [editingTarget,    setEditingTarget]   = useState(false);
   const [activeTypeId,     setActiveTypeId]    = useState(null);
+
+  const parseGoalTarget = (value) => {
+    if (!value) return { distance: '10K', pace: '6:00' };
+    const [distance, pace] = value.includes('|') ? value.split('|') : ['10K', value];
+    return {
+      distance: (distance || '10K').toUpperCase(),
+      pace: pace || '6:00',
+    };
+  };
+
+  const { distance: goalDistance, pace: goalPace } = parseGoalTarget(config.ten_k_target);
+  const saveGoalTarget = (distance, pace) => {
+    updateConfig({ ten_k_target: `${(distance || '10K').toUpperCase()}|${pace || '6:00'}` });
+  };
 
   const weekData = runWeeks[currentWeek] ?? {};
 
@@ -468,9 +481,9 @@ export default function RunningPage() {
     const [m, s] = str.split(':');
     return parseInt(m || 0) + (parseInt(s || 0) / 60);
   };
-  const mins       = parseMins(tenkTime);
-  const targetMins = parseMins(tenkTarget) || 60;
-  const tenkPct    = mins > 0 ? Math.min(100, Math.max(0, ((targetMins + 30 - mins) / 30) * 100)) : 0;
+  const paceMins       = parseMins(currentRunPace);
+  const targetPaceMins = parseMins(goalPace) || 6;
+  const pacePct        = paceMins > 0 ? Math.min(100, Math.max(0, ((targetPaceMins + 2 - paceMins) / 2) * 100)) : 0;
 
   // Save run types → detect new types with new day keys → prompt for weekly plan
   const handleSaveRunTypes = (updated) => {
@@ -530,7 +543,7 @@ export default function RunningPage() {
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
           className="text-[12px] font-body text-text-muted mt-2 tracking-wide font-light"
         >
-          Sub-{tenkTarget} 10km · {Math.round(targetMins / 10 * 60)}s/km Target Pace
+          {goalDistance} Goal · {goalPace}/km Target Pace
         </motion.p>
         <motion.div
           initial={{ scaleX: 0 }} animate={{ scaleX: 1 }}
@@ -632,23 +645,28 @@ export default function RunningPage() {
         </div>
       </Section>
 
-      {/* 10K Goal */}
-      <Section icon={<Target size={15} />} title="10K Goal" accent="cyan">
+      {/* Goal */}
+      <Section icon={<Target size={15} />} title="Goal" accent="cyan">
         <div className="bg-bg-700/60 border border-white/[0.06] rounded-2xl p-4 backdrop-blur-sm">
           <div className="flex items-center justify-between mb-3">
-            <span className="font-display text-sm tracking-[2px] uppercase">Current 10K</span>
+            <span className="font-display text-sm tracking-[2px] uppercase">Current Pace</span>
             {editingTarget ? (
               <div className="flex items-center gap-1">
-                <span className="font-mono text-[11px] text-text-muted">&lt;</span>
                 <input
                   type="text"
-                  value={tenkTarget}
-                  onChange={e => updateConfig({ ten_k_target: e.target.value })}
+                  value={goalDistance}
+                  onChange={e => saveGoalTarget(e.target.value, goalPace)}
+                  className="w-16 bg-transparent border-b border-cyan/50 text-center font-mono text-[11px] text-text-primary outline-none"
+                />
+                <input
+                  type="text"
+                  value={goalPace}
+                  onChange={e => saveGoalTarget(goalDistance, e.target.value)}
                   onBlur={() => setEditingTarget(false)}
-                  autoFocus
+                  autoFocus={!goalDistance}
                   className="w-14 bg-transparent border-b border-cyan/50 text-center font-mono text-[11px] text-text-primary outline-none"
                 />
-                <span className="font-mono text-[11px] text-text-muted">target</span>
+                <span className="font-mono text-[11px] text-text-muted">/km</span>
               </div>
             ) : (
               <motion.button
@@ -656,22 +674,22 @@ export default function RunningPage() {
                 whileHover={{ scale: 1.02 }}
                 className="flex items-center gap-1 font-mono text-[11px] text-text-muted hover:text-cyan transition-colors"
               >
-                &lt; {tenkTarget} target <Pencil size={9} className="opacity-50 ml-0.5" />
+                {goalDistance} · {goalPace}/km <Pencil size={9} className="opacity-50 ml-0.5" />
               </motion.button>
             )}
           </div>
           <div className="flex items-center gap-3 mb-3">
-            <input type="text" value={tenkTime}
+            <input type="text" value={currentRunPace}
               onChange={e => updateConfig({ ten_k_time: e.target.value })}
-              placeholder="65:00"
+              placeholder="5:00"
               className="w-24 px-3 py-2 bg-bg-600 border border-white/[0.07] rounded-lg text-sm text-center text-text-primary font-mono font-bold outline-none focus:border-cyan/35 transition-colors" />
-            <span className="text-xs text-text-muted font-body">min:sec</span>
+            <span className="text-xs text-text-muted font-body">min/km</span>
             <div className="flex-1" />
-            <span className={`font-mono text-xs font-bold ${mins > 0 && mins <= targetMins ? 'text-cyan' : 'text-text-muted'}`}>
-              {mins > 0 ? (mins <= targetMins ? '🎯 Goal reached!' : `−${Math.round(mins - targetMins)}min to go`) : ''}
+            <span className={`font-mono text-xs font-bold ${paceMins > 0 && paceMins <= targetPaceMins ? 'text-cyan' : 'text-text-muted'}`}>
+              {paceMins > 0 ? (paceMins <= targetPaceMins ? 'Goal pace reached!' : `${(paceMins - targetPaceMins).toFixed(2)} min/km to go`) : ''}
             </span>
           </div>
-          <ProgressBar value={tenkPct} max={100} accent="cyan" />
+          <ProgressBar value={pacePct} max={100} accent="cyan" />
         </div>
       </Section>
 

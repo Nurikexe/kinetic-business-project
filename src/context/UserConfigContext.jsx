@@ -18,7 +18,7 @@ const DEFAULTS = {
   run_weeks:     RUN_WEEKS,
   run_types:     DEFAULT_RUN_TYPES,
   ten_k_time:    '',
-  ten_k_target:  '60:00',
+  ten_k_target:  '10K|6:00',
 };
 
 const UserConfigContext = createContext(null);
