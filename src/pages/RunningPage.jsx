@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   CalendarCheck, Target, Zap, Heart, Flame,
@@ -704,12 +705,15 @@ export default function RunningPage() {
               ))}
             </div>
           </SortableContext>
-          <DragOverlay dropAnimation={{
-            duration: 220,
-            easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
-          }}>
-            {activeRunType ? <RunTypeCard rt={activeRunType} isOverlay /> : null}
-          </DragOverlay>
+          {typeof document !== 'undefined' && createPortal(
+            <DragOverlay dropAnimation={{
+              duration: 220,
+              easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+            }}>
+              {activeRunType ? <RunTypeCard rt={activeRunType} isOverlay /> : null}
+            </DragOverlay>,
+            document.body
+          )}
         </DndContext>
       </Section>
 
