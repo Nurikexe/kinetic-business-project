@@ -36,8 +36,8 @@ function AppShell() {
   if (!user) return <LoginPage />;
 
   const accentColor = page === 'running'
-    ? 'rgba(0,204,255,0.04)'
-    : 'rgba(0,255,170,0.04)';
+    ? 'rgba(214,238,99,0.07)'
+    : 'rgba(113,215,201,0.07)';
 
   const TABS = [
     { id: 'gym',     label: 'Gym',        icon: Dumbbell },
@@ -78,21 +78,21 @@ function AppShell() {
 
         {/* ── NAV ── */}
         <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-5 h-14">
-          <div className="absolute inset-0 bg-bg-900/60 backdrop-blur-2xl border-b border-white/[0.05]" />
+          <div className="absolute inset-0 bg-bg-900/62 backdrop-blur-2xl border-b border-white/[0.05]" />
 
-          <div className="relative font-display text-xl tracking-[4px] uppercase">
+          <div className="relative font-display text-[21px] font-semibold tracking-[-0.03em]">
             <span className={`transition-colors duration-500 ${page === 'running' ? 'text-cyan' : 'text-mint'}`}>
               Hybrid
             </span>
-            <span className="text-text-muted"> Athlete</span>
+            <span className="text-text-secondary"> Athlete</span>
           </div>
 
-          <div className="relative flex gap-0.5 bg-bg-700/70 rounded-xl p-1 border border-white/[0.05]">
+          <div className="relative flex gap-0.5 bg-bg-700/78 rounded-2xl p-1 border border-white/[0.06] shadow-[0_12px_32px_rgba(0,0,0,0.22)]">
             {TABS.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setPage(tab.id)}
-                className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-body font-semibold tracking-wide transition-colors duration-200 ${
+                className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[13px] font-body font-semibold tracking-wide transition-colors duration-200 ${
                   page === tab.id ? 'text-text-primary' : 'text-text-muted hover:text-text-secondary'
                 }`}
               >
@@ -100,15 +100,15 @@ function AppShell() {
                   <motion.div
                     layoutId="activeTab"
                     transition={SPRING}
-                    className={`absolute inset-0 rounded-lg border ${
+                    className={`absolute inset-0 rounded-xl border shadow-[0_12px_28px_rgba(0,0,0,0.22)] ${
                       page === 'running'
-                        ? 'bg-cyan/[0.08] border-cyan/20'
-                        : 'bg-mint/[0.08] border-mint/20'
+                        ? 'bg-cyan/[0.12] border-cyan/20'
+                        : 'bg-mint/[0.12] border-mint/18'
                     }`}
                   />
                 )}
                 <tab.icon size={13} className="relative z-10 flex-shrink-0" />
-                <span className="relative z-10 font-display tracking-[1.5px] text-[12px] max-w-[72px] truncate">
+                <span className="relative z-10 font-body tracking-[0.08em] text-[12px] uppercase max-w-[72px] truncate">
                   {tab.label}
                 </span>
               </button>

@@ -9,12 +9,14 @@ export default function Section({ icon, title, subtitle, action, children, accen
       className="mb-7"
     >
       <div className="flex items-center gap-3 mb-3.5">
-        <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${
-          accent === 'mint' ? 'bg-mint/[0.08] text-mint' : 'bg-cyan/[0.08] text-cyan'
+        <div className={`w-9 h-9 rounded-2xl flex items-center justify-center flex-shrink-0 border shadow-[0_10px_30px_rgba(0,0,0,0.18)] ${
+          accent === 'mint'
+            ? 'bg-mint/[0.10] text-mint border-mint/15'
+            : 'bg-cyan/[0.10] text-cyan border-cyan/20'
         }`}>
           {icon}
         </div>
-        <h2 className="font-display text-base tracking-[3px] uppercase text-text-primary">
+        <h2 className="font-display text-[17px] font-semibold tracking-[0.18em] uppercase text-text-primary">
           {title}
         </h2>
         {(subtitle || action) && (
