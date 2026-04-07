@@ -498,6 +498,14 @@ export default function RunningPage() {
   const goals = parseGoalTargets(config.ten_k_target);
   const goalsSummary = goals.map(goal => `${goal.distance} @ ${goal.pace}/km`).join(' · ');
   const selectedGoal = goals.find(goal => goal.selected) || goals[0];
+  const selectGoal = (goalId) => {
+    const nextGoals = goals.map(goal => ({ ...goal, selected: goal.id === goalId }));
+    const nextSelected = nextGoals.find(goal => goal.selected);
+    updateConfig({
+      ten_k_target: JSON.stringify(nextGoals),
+      ten_k_time: nextSelected?.pace || '',
+    });
+  };
   const saveGoals = (nextGoals) => {
     const sanitizedGoals = nextGoals
       .filter(goal => goal.distance.trim() || goal.pace.trim())
@@ -812,7 +820,7 @@ export default function RunningPage() {
             <button
               key={goal.id}
               type="button"
-              onClick={() => !editingTarget && saveGoals(goals.map(item => ({ ...item, selected: item.id === goal.id })))}
+              onClick={() => !editingTarget && selectGoal(goal.id)}
               className={`w-full text-left bg-bg-700/60 border rounded-2xl p-4 backdrop-blur-sm transition-colors ${
                 goal.id === selectedGoal?.id
                   ? 'border-cyan/25 bg-cyan/[0.08]'
