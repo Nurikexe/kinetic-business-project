@@ -7,7 +7,7 @@ import {
   TrendingUp, Timer, Wind, RefreshCw,
 } from 'lucide-react';
 import {
-  DndContext, closestCenter, PointerSensor, useSensor, useSensors,
+  DndContext, DragOverlay, closestCenter, PointerSensor, useSensor, useSensors,
 } from '@dnd-kit/core';
 import {
   SortableContext, useSortable, verticalListSortingStrategy, arrayMove,
@@ -63,20 +63,38 @@ const keyToLabel  = (key) => key.charAt(0).toUpperCase() + key.slice(1); // 'mon
 // ── Sortable run type card ─────────────────────────────────────
 function SortableRunType({ rt, i }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: String(i) });
-  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 };
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition: transition || 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)',
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`origin-center ${isDragging ? 'z-0 scale-[0.985] opacity-30' : 'z-10'}`}
+    >
+      <RunTypeCard rt={rt} i={i} attributes={attributes} listeners={listeners} isOverlay={false} />
+    </div>
+  );
+}
+
+function RunTypeCard({ rt, i = 0, attributes = {}, listeners = {}, isOverlay = false }) {
   const e = enrichRunType(rt);
 
   return (
     <motion.div
-      ref={setNodeRef}
-      style={style}
       initial={{ opacity: 0, x: -12 }}
       animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: i * 0.07, ...SPRING }}
-      className="flex items-center gap-3 bg-bg-700/60 border border-white/[0.06] rounded-2xl p-4 backdrop-blur-sm"
+      transition={isOverlay ? { duration: 0.12 } : { delay: i * 0.07, ...SPRING }}
+      className={`flex items-center gap-3 rounded-2xl p-4 backdrop-blur-sm select-none ${
+        isOverlay
+          ? 'bg-bg-700/95 border border-cyan/25 shadow-[0_26px_70px_rgba(0,0,0,0.45)] ring-1 ring-white/[0.06] scale-[1.02] cursor-grabbing'
+          : 'bg-bg-700/60 border border-white/[0.06]'
+      }`}
     >
       <span {...attributes} {...listeners}
-        className="cursor-grab active:cursor-grabbing text-text-muted/40 hover:text-text-muted/70 touch-none flex-shrink-0">
+        className={`touch-none flex-shrink-0 ${isOverlay ? 'cursor-grabbing text-text-primary/70' : 'cursor-grab active:cursor-grabbing text-text-muted/40 hover:text-text-muted/70'}`}>
         <GripVertical size={14} />
       </span>
       <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -370,6 +388,7 @@ export default function RunningPage() {
   const [editingSessions,  setEditingSessions] = useState(false);
   const [pendingNewTypes,  setPendingNewTypes] = useState(null);
   const [editingTarget,    setEditingTarget]   = useState(false);
+  const [activeTypeId,     setActiveTypeId]    = useState(null);
 
   const weekData = runWeeks[currentWeek] ?? {};
 
@@ -433,11 +452,14 @@ export default function RunningPage() {
   const typeIds     = runTypes.map((_, i) => String(i));
 
   const handleTypeDragEnd = ({ active, over }) => {
+    setActiveTypeId(null);
     if (!over || active.id === over.id) return;
     const oldIdx = parseInt(active.id);
     const newIdx = parseInt(over.id);
     updateConfig({ run_types: arrayMove([...runTypes], oldIdx, newIdx) });
   };
+
+  const activeRunType = activeTypeId == null ? null : runTypes[parseInt(activeTypeId)];
 
   // 10K goal progress
   const parseMins = (str) => {
@@ -668,7 +690,13 @@ export default function RunningPage() {
         <p className="text-[10px] font-mono text-text-muted/50 mb-3 tracking-wider">
           Drag to reorder
         </p>
-        <DndContext sensors={typeSensors} collisionDetection={closestCenter} onDragEnd={handleTypeDragEnd}>
+        <DndContext
+          sensors={typeSensors}
+          collisionDetection={closestCenter}
+          onDragStart={({ active }) => setActiveTypeId(active.id)}
+          onDragCancel={() => setActiveTypeId(null)}
+          onDragEnd={handleTypeDragEnd}
+        >
           <SortableContext items={typeIds} strategy={verticalListSortingStrategy}>
             <div className="space-y-2">
               {runTypes.map((rt, i) => (
@@ -676,6 +704,12 @@ export default function RunningPage() {
               ))}
             </div>
           </SortableContext>
+          <DragOverlay dropAnimation={{
+            duration: 220,
+            easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+          }}>
+            {activeRunType ? <RunTypeCard rt={activeRunType} isOverlay /> : null}
+          </DragOverlay>
         </DndContext>
       </Section>
 
