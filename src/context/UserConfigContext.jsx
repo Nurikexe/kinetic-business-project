@@ -52,6 +52,7 @@ export function UserConfigProvider({ children }) {
   const { user } = useAuth();
   const [config, setConfig]   = useState(DEFAULTS);
   const [loaded, setLoaded]   = useState(false);
+  const [hasConfigRow, setHasConfigRow] = useState(false);
   const timerRef              = useRef(null);
   const pendingRef            = useRef(null);
   const savingRef             = useRef(false);
@@ -63,6 +64,7 @@ export function UserConfigProvider({ children }) {
       pendingRef.current = null;
       setConfig(DEFAULTS);
       setLoaded(false);
+      setHasConfigRow(false);
       return;
     }
 
@@ -74,6 +76,7 @@ export function UserConfigProvider({ children }) {
       .maybeSingle()
       .then(({ data, error }) => {
         if (error) console.error('Failed to load config:', error.message);
+        setHasConfigRow(Boolean(data));
         if (data) setConfig(normalizeConfig(data));
         setLoaded(true);
       });
@@ -173,7 +176,7 @@ export function UserConfigProvider({ children }) {
   }, [resetConfigSlice]);
 
   return (
-    <UserConfigContext.Provider value={{ config, updateConfig, loaded, resetGymConfig, resetRunningConfig }}>
+    <UserConfigContext.Provider value={{ config, updateConfig, loaded, hasConfigRow, resetGymConfig, resetRunningConfig }}>
       {children}
     </UserConfigContext.Provider>
   );

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dumbbell, Wind, User } from 'lucide-react';
 import GymPage from './pages/GymPage';
@@ -5,8 +6,10 @@ import RunningPage from './pages/RunningPage';
 import CabinetPage from './pages/CabinetPage';
 import LoginPage from './pages/LoginPage';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { UserConfigProvider } from './context/UserConfigContext';
+import { UserConfigProvider, useUserConfig } from './context/UserConfigContext';
 import { useLocalStorage } from './hooks/useLocalStorage';
+import OnboardingModal from './components/OnboardingModal';
+import { buildOnboardingConfig } from './data/onboarding';
 
 const BG_IMAGES = {
   gym:     'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1400&q=80',
@@ -17,23 +20,17 @@ const BG_IMAGES = {
 const SPRING      = { type: 'spring', stiffness: 380, damping: 36, mass: 0.8 };
 const PAGE_SPRING = { type: 'spring', stiffness: 260, damping: 32, mass: 0.9 };
 
-function AppShell() {
-  const { user, displayName, loading } = useAuth();
-  const [page, setPage] = useLocalStorage('ha_page', 'gym');
+function AppContent({ page, setPage, displayName }) {
+  const { loaded, hasConfigRow, updateConfig } = useUserConfig();
+  const [onboardingDismissed, setOnboardingDismissed] = useState(false);
+  const showOnboarding = loaded && !hasConfigRow && !onboardingDismissed;
 
-  // Still resolving session from Supabase
-  if (loading) {
-    return (
-      <div className="min-h-dvh grain bg-bg-900 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 rounded-full border-2 border-mint/30 border-t-mint animate-spin" />
-          <p className="font-mono text-[10px] tracking-[3px] text-text-muted uppercase">Loading…</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) return <LoginPage />;
+  const applyOnboarding = (mode, answers = {}) => {
+    const { config } = buildOnboardingConfig(mode, answers);
+    updateConfig(config, { immediate: true });
+    setOnboardingDismissed(true);
+    setPage('gym');
+  };
 
   const accentColor = page === 'running'
     ? 'rgba(214,238,99,0.07)'
@@ -46,10 +43,8 @@ function AppShell() {
   ];
 
   return (
-    <UserConfigProvider>
+    <>
       <div className="min-h-dvh grain relative">
-
-        {/* ── BACKGROUND ── */}
         <div className="fixed inset-0 z-0 overflow-hidden">
           <AnimatePresence mode="sync">
             <motion.div
@@ -76,7 +71,6 @@ function AppShell() {
           <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-bg-900 to-transparent" />
         </div>
 
-        {/* ── NAV ── */}
         <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-5 h-14">
           <div className="absolute inset-0 bg-bg-900/62 backdrop-blur-2xl border-b border-white/[0.05]" />
 
@@ -116,7 +110,6 @@ function AppShell() {
           </div>
         </nav>
 
-        {/* ── CONTENT ── */}
         <main className="relative z-10 pt-14 pb-16 px-4 max-w-xl mx-auto">
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
@@ -133,6 +126,35 @@ function AppShell() {
           </AnimatePresence>
         </main>
       </div>
+
+      {showOnboarding && (
+        <OnboardingModal displayName={displayName} onApply={applyOnboarding} />
+      )}
+    </>
+  );
+}
+
+function AppShell() {
+  const { user, displayName, loading } = useAuth();
+  const [page, setPage] = useLocalStorage('ha_page', 'gym');
+
+  // Still resolving session from Supabase
+  if (loading) {
+    return (
+      <div className="min-h-dvh grain bg-bg-900 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 rounded-full border-2 border-mint/30 border-t-mint animate-spin" />
+          <p className="font-mono text-[10px] tracking-[3px] text-text-muted uppercase">Loading…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) return <LoginPage />;
+
+  return (
+    <UserConfigProvider>
+      <AppContent page={page} setPage={setPage} displayName={displayName} />
     </UserConfigProvider>
   );
 }
