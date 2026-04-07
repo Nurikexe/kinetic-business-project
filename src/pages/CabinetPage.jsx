@@ -12,6 +12,17 @@ import { supabase } from '../lib/supabase';
 
 const SPRING = { type: 'spring', stiffness: 320, damping: 30, mass: 0.8 };
 
+function getWorkoutContent(workout) {
+  if (Array.isArray(workout.exercises)) {
+    return { exercises: workout.exercises, notes: '' };
+  }
+
+  return {
+    exercises: workout.exercises?.items || [],
+    notes: workout.exercises?.notes || '',
+  };
+}
+
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
@@ -30,17 +41,17 @@ function downloadBlob(blob, filename) {
 
 function exportCSV(workouts, displayName) {
   const rows = workouts.flatMap(w =>
-    (w.exercises || []).map(e =>
-      [w.date, w.day_name, w.day_focus ?? '', e.name, e.sets, e.reps, e.weight || ''].join(',')
+    getWorkoutContent(w).exercises.map(e =>
+      [w.date, w.day_name, w.day_focus ?? '', e.name, e.sets, e.reps, e.weight || '', `"${(getWorkoutContent(w).notes || '').replaceAll('"', '""')}"`].join(',')
     )
   );
-  const csv = ['Date,Day,Focus,Exercise,Sets,Reps,Weight (kg)', ...rows].join('\n');
+  const csv = ['Date,Day,Focus,Exercise,Sets,Reps,Weight (kg),Notes', ...rows].join('\n');
   downloadBlob(new Blob([csv], { type: 'text/csv' }), `hybrid-athlete-${displayName}-${today()}.csv`);
 }
 
 function exportJSON(workouts, displayName) {
   const data = workouts.map(w => ({
-    date: w.date, day: w.day_name, focus: w.day_focus ?? '', exercises: w.exercises ?? [],
+    date: w.date, day: w.day_name, focus: w.day_focus ?? '', ...getWorkoutContent(w),
   }));
   downloadBlob(
     new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }),
@@ -56,10 +67,12 @@ function exportTXT(workouts, displayName) {
     '',
   ];
   workouts.forEach(w => {
+    const { exercises, notes } = getWorkoutContent(w);
     lines.push(sep);
     lines.push(`${w.date}  —  ${w.day_name}${w.day_focus ? '  ·  ' + w.day_focus : ''}`);
+    if (notes) lines.push(`Note: ${notes}`);
     lines.push('');
-    (w.exercises || []).forEach((e, i) => {
+    exercises.forEach((e, i) => {
       const weight = e.weight ? `  @  ${e.weight} kg` : '';
       lines.push(`  ${String(i + 1).padStart(2, '0')}.  ${e.name}  —  ${e.sets}×${e.reps}${weight}`);
     });
@@ -75,6 +88,7 @@ function exportPDF(workouts, displayName) {
   const rows = workouts.map(w => `
     <section style="margin-bottom:24px;page-break-inside:avoid">
       <h3 style="margin:0 0 4px;font-size:14px;color:#00ffaa">${w.date} — ${w.day_name}${w.day_focus ? ' · ' + w.day_focus : ''}</h3>
+      ${getWorkoutContent(w).notes ? `<p style="margin:0 0 10px;font-size:12px;color:#888">${getWorkoutContent(w).notes}</p>` : ''}
       <table style="width:100%;border-collapse:collapse;font-size:12px">
         <thead>
           <tr style="background:#1a1a1a;color:#888">
@@ -86,7 +100,7 @@ function exportPDF(workouts, displayName) {
           </tr>
         </thead>
         <tbody>
-          ${(w.exercises || []).map((e, i) => `
+          ${getWorkoutContent(w).exercises.map((e, i) => `
             <tr style="border-bottom:1px solid #222">
               <td style="padding:4px 8px;color:#555">${String(i + 1).padStart(2, '0')}</td>
               <td style="padding:4px 8px">${e.name}</td>
@@ -148,7 +162,7 @@ function groupByWeek(workouts) {
 function WorkoutEntry({ workout, onDelete, selectMode, isSelected, onToggleSelect }) {
   const [open, setOpen]         = useState(false);
   const [confirming, setConfirm] = useState(false);
-  const exercises = workout.exercises || [];
+  const { exercises, notes } = getWorkoutContent(workout);
 
   return (
     <motion.div layout className="bg-bg-700 border border-white/[0.06] rounded-2xl overflow-hidden">
@@ -239,6 +253,12 @@ function WorkoutEntry({ workout, onDelete, selectMode, isSelected, onToggleSelec
             className="overflow-hidden"
           >
             <div className="px-4 pb-4 pt-1 space-y-1.5 border-t border-white/[0.04]">
+              {notes && (
+                <div className="mb-2 rounded-xl bg-bg-800/80 border border-white/[0.04] px-3 py-2.5">
+                  <p className="font-mono text-[9px] tracking-[2px] uppercase text-mint/60 mb-1">Workout Note</p>
+                  <p className="text-[12px] font-body text-text-secondary leading-relaxed">{notes}</p>
+                </div>
+              )}
               {exercises.map((ex, i) => (
                 <div key={i} className="flex items-center gap-3 py-1.5 border-b border-white/[0.03] last:border-0">
                   <span className="font-mono text-[10px] text-text-muted w-4 text-right flex-shrink-0">
@@ -354,10 +374,10 @@ export default function CabinetPage() {
 
   // Stats
   const totalSets = workouts.reduce((s, w) =>
-    s + (w.exercises || []).reduce((ss, e) => ss + (e.sets || 0), 0), 0
+    s + getWorkoutContent(w).exercises.reduce((ss, e) => ss + (e.sets || 0), 0), 0
   );
   const freq = {};
-  workouts.forEach(w => (w.exercises || []).forEach(e => { freq[e.name] = (freq[e.name] || 0) + 1; }));
+  workouts.forEach(w => getWorkoutContent(w).exercises.forEach(e => { freq[e.name] = (freq[e.name] || 0) + 1; }));
   const topExercise = Object.entries(freq).sort((a, b) => b[1] - a[1])[0];
 
   const EXPORT_FORMATS = [

@@ -11,7 +11,7 @@ import {
   DndContext, DragOverlay, closestCenter, PointerSensor, useSensor, useSensors,
 } from '@dnd-kit/core';
 import {
-  SortableContext, useSortable, verticalListSortingStrategy, arrayMove,
+  SortableContext, useSortable, verticalListSortingStrategy, rectSortingStrategy, arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import Section from '../components/Section';
@@ -60,10 +60,33 @@ const enrichRunType = (rt) => {
 
 const dayToKey    = (day) => (day || '').slice(0, 3).toLowerCase(); // 'Monday' → 'mon'
 const keyToLabel  = (key) => key.charAt(0).toUpperCase() + key.slice(1); // 'mon' → 'Mon'
+const getRunTypeId = (rt, i) => String(rt?.id || rt?.key || `${rt?.day || 'day'}-${rt?.name || 'run'}-${i}`);
+const parseGoalTargets = (value) => {
+  const fallback = [{ id: 'goal-1', distance: '10K', pace: '6:00' }];
+  if (!value) return fallback;
+
+  if (value.trim().startsWith('[')) {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.map((goal, i) => ({
+          id: goal.id || `goal-${i + 1}`,
+          distance: (goal.distance || '10K').toUpperCase(),
+          pace: goal.pace || '6:00',
+        }));
+      }
+    } catch {
+      return fallback;
+    }
+  }
+
+  const [distance, pace] = value.includes('|') ? value.split('|') : ['10K', value];
+  return [{ id: 'goal-1', distance: (distance || '10K').toUpperCase(), pace: pace || '6:00' }];
+};
 
 // ── Sortable run type card ─────────────────────────────────────
-function SortableRunType({ rt, i }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: String(i) });
+function SortableRunType({ id, rt, i }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   const style = {
     transform: CSS.Transform.toString(transform),
     transition: transition || 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)',
@@ -76,6 +99,72 @@ function SortableRunType({ rt, i }) {
       className={`origin-center ${isDragging ? 'z-0 scale-[0.985] opacity-30' : 'z-10'}`}
     >
       <RunTypeCard rt={rt} i={i} attributes={attributes} listeners={listeners} isOverlay={false} />
+    </div>
+  );
+}
+
+function ThisWeekCard({ rt, done, content, onToggle, attributes = {}, listeners = {}, isOverlay = false }) {
+  const e = enrichRunType(rt);
+
+  return (
+    <motion.div
+      whileHover={!isOverlay ? { y: -2 } : undefined}
+      whileTap={!isOverlay ? { scale: 0.98 } : undefined}
+      transition={SPRING}
+      onClick={!isOverlay ? onToggle : undefined}
+      className={`relative flex flex-col items-center gap-2 py-4 px-2 rounded-2xl border transition-colors duration-300 select-none ${
+        isOverlay
+          ? 'bg-bg-700/95 border-cyan/25 shadow-[0_26px_70px_rgba(0,0,0,0.45)] ring-1 ring-white/[0.06] cursor-grabbing'
+          : done
+          ? 'bg-cyan/[0.07] border-cyan/20'
+          : 'bg-bg-700 border-white/[0.04] hover:border-white/[0.08] cursor-pointer'
+      }`}
+    >
+      <div
+        {...attributes} {...listeners}
+        className={`absolute top-1.5 right-1.5 touch-none ${isOverlay ? 'cursor-grabbing text-text-primary/60' : 'cursor-grab active:cursor-grabbing text-text-muted/30 hover:text-text-muted/70'}`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <GripVertical size={10} />
+      </div>
+      <span className={`font-mono text-[10px] tracking-widest uppercase ${done ? 'text-cyan' : 'text-text-muted'}`}>
+        {dayToKey(e.day).toUpperCase()}
+      </span>
+      <motion.div animate={done ? { scale: [1, 1.2, 1] } : { scale: 1 }} transition={{ duration: 0.3 }}
+        className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
+          done ? 'bg-cyan' : 'border border-bg-400'
+        }`}>
+        {done && (
+          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 25 }}>
+            <Check size={15} strokeWidth={3} className="text-bg-900" />
+          </motion.div>
+        )}
+      </motion.div>
+      <span className={`font-mono text-[9px] text-center leading-tight tracking-wide px-1 ${done ? 'text-cyan' : 'text-text-muted'}`}>
+        {content ?? ''}
+      </span>
+    </motion.div>
+  );
+}
+
+function SortableThisWeekCard({ id, rt, done, content, onToggle }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition: transition || 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)',
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className={isDragging ? 'scale-[0.985] opacity-30' : ''}>
+      <ThisWeekCard
+        rt={rt}
+        done={done}
+        content={content}
+        onToggle={onToggle}
+        attributes={attributes}
+        listeners={listeners}
+      />
     </div>
   );
 }
@@ -389,19 +478,22 @@ export default function RunningPage() {
   const [pendingNewTypes,  setPendingNewTypes] = useState(null);
   const [editingTarget,    setEditingTarget]   = useState(false);
   const [activeTypeId,     setActiveTypeId]    = useState(null);
+  const [activeTypeSurface, setActiveTypeSurface] = useState('list');
 
-  const parseGoalTarget = (value) => {
-    if (!value) return { distance: '10K', pace: '6:00' };
-    const [distance, pace] = value.includes('|') ? value.split('|') : ['10K', value];
-    return {
-      distance: (distance || '10K').toUpperCase(),
-      pace: pace || '6:00',
-    };
-  };
-
-  const { distance: goalDistance, pace: goalPace } = parseGoalTarget(config.ten_k_target);
-  const saveGoalTarget = (distance, pace) => {
-    updateConfig({ ten_k_target: `${(distance || '10K').toUpperCase()}|${pace || '6:00'}` });
+  const goals = parseGoalTargets(config.ten_k_target);
+  const goalsSummary = goals.map(goal => `${goal.distance} @ ${goal.pace}/km`).join(' · ');
+  const saveGoals = (nextGoals) => {
+    updateConfig({
+      ten_k_target: JSON.stringify(
+        nextGoals
+          .filter(goal => goal.distance.trim() || goal.pace.trim())
+          .map((goal, i) => ({
+            id: goal.id || `goal-${i + 1}`,
+            distance: (goal.distance || '10K').toUpperCase(),
+            pace: goal.pace || '6:00',
+          }))
+      ),
+    });
   };
 
   const weekData = runWeeks[currentWeek] ?? {};
@@ -463,17 +555,18 @@ export default function RunningPage() {
 
   // DnD — run types list
   const typeSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
-  const typeIds     = runTypes.map((_, i) => String(i));
+  const typeIds     = runTypes.map((rt, i) => getRunTypeId(rt, i));
 
   const handleTypeDragEnd = ({ active, over }) => {
     setActiveTypeId(null);
     if (!over || active.id === over.id) return;
-    const oldIdx = parseInt(active.id);
-    const newIdx = parseInt(over.id);
+    const oldIdx = typeIds.indexOf(active.id);
+    const newIdx = typeIds.indexOf(over.id);
+    if (oldIdx < 0 || newIdx < 0) return;
     updateConfig({ run_types: arrayMove([...runTypes], oldIdx, newIdx) });
   };
 
-  const activeRunType = activeTypeId == null ? null : runTypes[parseInt(activeTypeId)];
+  const activeRunType = activeTypeId == null ? null : runTypes[typeIds.indexOf(activeTypeId)];
 
   // 10K goal progress
   const parseMins = (str) => {
@@ -482,7 +575,7 @@ export default function RunningPage() {
     return parseInt(m || 0) + (parseInt(s || 0) / 60);
   };
   const paceMins       = parseMins(currentRunPace);
-  const targetPaceMins = parseMins(goalPace) || 6;
+  const targetPaceMins = Math.min(...goals.map(goal => parseMins(goal.pace) || 6));
   const pacePct        = paceMins > 0 ? Math.min(100, Math.max(0, ((targetPaceMins + 2 - paceMins) / 2) * 100)) : 0;
 
   // Save run types → detect new types with new day keys → prompt for weekly plan
@@ -543,7 +636,7 @@ export default function RunningPage() {
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
           className="text-[12px] font-body text-text-muted mt-2 tracking-wide font-light"
         >
-          {goalDistance} Goal · {goalPace}/km Target Pace
+          {goalsSummary}
         </motion.p>
         <motion.div
           initial={{ scaleX: 0 }} animate={{ scaleX: 1 }}
@@ -611,70 +704,66 @@ export default function RunningPage() {
             className="h-full bg-gradient-to-r from-cyan/60 to-mint/60" />
         </div>
 
-        <div className={`grid gap-2`} style={{ gridTemplateColumns: `repeat(${totalRuns}, minmax(0, 1fr))` }}>
-          {dayKeys.map((dayKey, i) => {
-            const done = weekCompletion[dayKey] ?? false;
-            return (
-              <motion.button key={dayKey}
-                whileHover={{ y: -2 }} whileTap={{ scale: 0.95, y: 0 }} transition={SPRING}
-                onClick={() => toggleRun(dayKey)}
-                className={`flex flex-col items-center gap-2 py-4 px-2 rounded-2xl border transition-colors duration-300 ${
-                  done ? 'bg-cyan/[0.07] border-cyan/20' : 'bg-bg-700 border-white/[0.04] hover:border-white/[0.08]'
-                }`}
-              >
-                <span className={`font-mono text-[10px] tracking-widest uppercase ${done ? 'text-cyan' : 'text-text-muted'}`}>
-                  {dayLabels[i]}
-                </span>
-                <motion.div animate={done ? { scale: [1, 1.2, 1] } : { scale: 1 }} transition={{ duration: 0.3 }}
-                  className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
-                    done ? 'bg-cyan' : 'border border-bg-400'
-                  }`}>
-                  {done && (
-                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}
-                      transition={{ type: 'spring', stiffness: 500, damping: 25 }}>
-                      <Check size={15} strokeWidth={3} className="text-bg-900" />
-                    </motion.div>
-                  )}
-                </motion.div>
-                <span className={`font-mono text-[9px] text-center leading-tight tracking-wide px-1 ${done ? 'text-cyan' : 'text-text-muted'}`}>
-                  {weekData[dayKey] ?? ''}
-                </span>
-              </motion.button>
-            );
-          })}
-        </div>
+        <DndContext
+          sensors={typeSensors}
+          collisionDetection={closestCenter}
+          onDragStart={({ active }) => { setActiveTypeId(active.id); setActiveTypeSurface('week'); }}
+          onDragCancel={() => setActiveTypeId(null)}
+          onDragEnd={handleTypeDragEnd}
+        >
+          <SortableContext items={typeIds} strategy={rectSortingStrategy}>
+            <div className={`grid gap-2`} style={{ gridTemplateColumns: `repeat(${totalRuns}, minmax(0, 1fr))` }}>
+              {runTypes.map((rt, i) => {
+                const dayKey = dayKeys[i];
+                return (
+                  <SortableThisWeekCard
+                    key={typeIds[i]}
+                    id={typeIds[i]}
+                    rt={rt}
+                    done={weekCompletion[dayKey] ?? false}
+                    content={weekData[dayKey] ?? ''}
+                    onToggle={() => toggleRun(dayKey)}
+                  />
+                );
+              })}
+            </div>
+          </SortableContext>
+          {typeof document !== 'undefined' && createPortal(
+            <DragOverlay dropAnimation={{
+              duration: 220,
+              easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+            }}>
+              {activeRunType ? (
+                activeTypeSurface === 'week'
+                  ? <ThisWeekCard rt={activeRunType} done={false} content={weekData[dayToKey(activeRunType.day)] ?? ''} onToggle={() => {}} isOverlay />
+                  : <RunTypeCard rt={activeRunType} isOverlay />
+              ) : null}
+            </DragOverlay>,
+            document.body
+          )}
+        </DndContext>
       </Section>
 
       {/* Goal */}
-      <Section icon={<Target size={15} />} title="Goal" accent="cyan">
+      <Section icon={<Target size={15} />} title="Goals" accent="cyan">
         <div className="bg-bg-700/60 border border-white/[0.06] rounded-2xl p-4 backdrop-blur-sm">
           <div className="flex items-center justify-between mb-3">
             <span className="font-display text-sm tracking-[2px] uppercase">Current Pace</span>
             {editingTarget ? (
-              <div className="flex items-center gap-1">
-                <input
-                  type="text"
-                  value={goalDistance}
-                  onChange={e => saveGoalTarget(e.target.value, goalPace)}
-                  className="w-16 bg-transparent border-b border-cyan/50 text-center font-mono text-[11px] text-text-primary outline-none"
-                />
-                <input
-                  type="text"
-                  value={goalPace}
-                  onChange={e => saveGoalTarget(goalDistance, e.target.value)}
-                  onBlur={() => setEditingTarget(false)}
-                  autoFocus={!goalDistance}
-                  className="w-14 bg-transparent border-b border-cyan/50 text-center font-mono text-[11px] text-text-primary outline-none"
-                />
-                <span className="font-mono text-[11px] text-text-muted">/km</span>
-              </div>
+              <motion.button
+                onClick={() => setEditingTarget(false)}
+                whileHover={{ scale: 1.02 }}
+                className="flex items-center gap-1 font-mono text-[11px] text-cyan transition-colors"
+              >
+                Done <Check size={10} />
+              </motion.button>
             ) : (
               <motion.button
                 onClick={() => setEditingTarget(true)}
                 whileHover={{ scale: 1.02 }}
                 className="flex items-center gap-1 font-mono text-[11px] text-text-muted hover:text-cyan transition-colors"
               >
-                {goalDistance} · {goalPace}/km <Pencil size={9} className="opacity-50 ml-0.5" />
+                Edit goals <Pencil size={9} className="opacity-50 ml-0.5" />
               </motion.button>
             )}
           </div>
@@ -690,6 +779,55 @@ export default function RunningPage() {
             </span>
           </div>
           <ProgressBar value={pacePct} max={100} accent="cyan" />
+
+          <div className="mt-4 pt-4 border-t border-white/[0.05] space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-[10px] tracking-[2px] uppercase text-text-muted">Targets</span>
+              {editingTarget && (
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => saveGoals([...goals, { id: `goal-${Date.now()}`, distance: '5K', pace: '5:00' }])}
+                  className="text-[11px] font-body text-cyan hover:text-text-primary transition-colors"
+                >
+                  Add Goal
+                </motion.button>
+              )}
+            </div>
+
+            {goals.map((goal) => (
+              <div key={goal.id} className="flex items-center gap-2 bg-bg-800/70 border border-white/[0.05] rounded-xl px-3 py-2.5">
+                {editingTarget ? (
+                  <>
+                    <input
+                      type="text"
+                      value={goal.distance}
+                      onChange={(e) => saveGoals(goals.map(item => item.id === goal.id ? { ...item, distance: e.target.value.toUpperCase() } : item))}
+                      className="w-16 bg-transparent border-b border-cyan/40 text-center font-mono text-[11px] text-text-primary outline-none"
+                    />
+                    <input
+                      type="text"
+                      value={goal.pace}
+                      onChange={(e) => saveGoals(goals.map(item => item.id === goal.id ? { ...item, pace: e.target.value } : item))}
+                      className="w-14 bg-transparent border-b border-cyan/40 text-center font-mono text-[11px] text-text-primary outline-none"
+                    />
+                    <span className="font-mono text-[11px] text-text-muted">/km</span>
+                    <button
+                      onClick={() => saveGoals(goals.filter(item => item.id !== goal.id))}
+                      disabled={goals.length === 1}
+                      className="ml-auto text-[11px] text-text-muted hover:text-red disabled:opacity-30 transition-colors"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span className="font-display text-sm tracking-[2px] uppercase text-text-primary">{goal.distance}</span>
+                    <span className="font-mono text-[11px] text-text-muted">{goal.pace}/km</span>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </Section>
 
@@ -712,14 +850,14 @@ export default function RunningPage() {
         <DndContext
           sensors={typeSensors}
           collisionDetection={closestCenter}
-          onDragStart={({ active }) => setActiveTypeId(active.id)}
+          onDragStart={({ active }) => { setActiveTypeId(active.id); setActiveTypeSurface('list'); }}
           onDragCancel={() => setActiveTypeId(null)}
           onDragEnd={handleTypeDragEnd}
         >
           <SortableContext items={typeIds} strategy={verticalListSortingStrategy}>
             <div className="space-y-2">
               {runTypes.map((rt, i) => (
-                <SortableRunType key={i} rt={rt} i={i} />
+                <SortableRunType key={typeIds[i]} id={typeIds[i]} rt={rt} i={i} />
               ))}
             </div>
           </SortableContext>
@@ -728,7 +866,7 @@ export default function RunningPage() {
               duration: 220,
               easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
             }}>
-              {activeRunType ? <RunTypeCard rt={activeRunType} isOverlay /> : null}
+              {activeRunType && activeTypeSurface === 'list' ? <RunTypeCard rt={activeRunType} isOverlay /> : null}
             </DragOverlay>,
             document.body
           )}

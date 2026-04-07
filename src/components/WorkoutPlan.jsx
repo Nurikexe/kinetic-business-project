@@ -19,6 +19,7 @@ const EASE_SMOOTH = [0.32, 0.72, 0, 1];
 export default function WorkoutPlan({ days, currentDayIdx, completedDays, onEditDay, onWeightChange, onSubmitWorkout }) {
   const effectiveCurrent = currentDayIdx < 0 ? 0 : currentDayIdx;
   const [selectedIdx, setSelectedIdx] = useState(effectiveCurrent);
+  const [notesByDay, setNotesByDay] = useState({});
   const dirRef = useRef(0);
 
   // Clamp selectedIdx if days shrank
@@ -33,6 +34,7 @@ export default function WorkoutPlan({ days, currentDayIdx, completedDays, onEdit
   const theme = DAY_THEME[safeIdx % DAY_THEME.length];
   const done  = completedDays[safeIdx];
   const total = day.exercises.reduce((s, e) => s + (e.sets || 0), 0);
+  const workoutNote = notesByDay[day.id] ?? '';
 
   return (
     <div>
@@ -218,23 +220,51 @@ export default function WorkoutPlan({ days, currentDayIdx, completedDays, onEdit
 
             {/* Submit workout button */}
             {day.exercises.length > 0 && onSubmitWorkout && (
-              <motion.button
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: day.exercises.length * 0.04 + 0.1 }}
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => onSubmitWorkout(day, safeIdx)}
-                className={`w-full mt-3 flex items-center justify-center gap-2.5 py-3 rounded-xl border text-sm font-body font-semibold transition-colors ${
-                  done
-                    ? 'border-mint/15 bg-mint/[0.05] text-mint/50 cursor-default'
-                    : 'border-mint/25 bg-mint/[0.08] text-mint hover:bg-mint/[0.14]'
-                }`}
-                disabled={done}
-              >
-                <Send size={14} />
-                {done ? 'Workout Submitted' : 'Submit Workout'}
-              </motion.button>
+              <>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: day.exercises.length * 0.04 + 0.06 }}
+                  className="mt-3 bg-bg-700/60 border border-white/[0.05] rounded-xl p-3"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-mono text-[10px] tracking-[2px] uppercase text-text-muted">Workout Note</span>
+                    <span className={`font-mono text-[10px] ${workoutNote.length > 250 ? 'text-red' : 'text-text-muted/50'}`}>
+                      {workoutNote.length}/250
+                    </span>
+                  </div>
+                  <textarea
+                    value={workoutNote}
+                    onChange={(e) => setNotesByDay(prev => ({ ...prev, [day.id]: e.target.value.slice(0, 250) }))}
+                    placeholder="How did the workout feel? Any pain, fatigue, or highlights?"
+                    maxLength={250}
+                    className="w-full min-h-[78px] resize-none px-3 py-2.5 bg-bg-600 border border-white/[0.07] rounded-xl text-sm text-text-primary font-body outline-none focus:border-mint/30 transition-colors placeholder:text-text-muted/40"
+                  />
+                </motion.div>
+
+                <motion.button
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: day.exercises.length * 0.04 + 0.1 }}
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={async () => {
+                    const ok = await onSubmitWorkout(day, safeIdx, workoutNote);
+                    if (ok) {
+                      setNotesByDay(prev => ({ ...prev, [day.id]: '' }));
+                    }
+                  }}
+                  className={`w-full mt-3 flex items-center justify-center gap-2.5 py-3 rounded-xl border text-sm font-body font-semibold transition-colors ${
+                    done
+                      ? 'border-mint/15 bg-mint/[0.05] text-mint/50 cursor-default'
+                      : 'border-mint/25 bg-mint/[0.08] text-mint hover:bg-mint/[0.14]'
+                  }`}
+                  disabled={done}
+                >
+                  <Send size={14} />
+                  {done ? 'Workout Submitted' : 'Submit Workout'}
+                </motion.button>
+              </>
             )}
 
             {/* Prev / Next */}

@@ -104,19 +104,23 @@ export default function GymPage() {
     setEditingProgression(false);
   };
 
-  const handleSubmitWorkout = async (day, dayIdx) => {
+  const handleSubmitWorkout = async (day, dayIdx, note = '') => {
     const { error } = await supabase.from('workouts').insert({
       user_id:   user.id,
       date:      new Date().toISOString().split('T')[0],
       day_num:   day.num,
       day_name:  day.name,
       day_focus: day.sub,
-      exercises: day.exercises.map(e => ({ name: e.name, sets: e.sets, reps: e.reps, weight: e.weight || '' })),
+      exercises: {
+        items: day.exercises.map(e => ({ name: e.name, sets: e.sets, reps: e.reps, weight: e.weight || '' })),
+        notes: note.trim().slice(0, 250),
+      },
     });
-    if (error) { console.error('Submit failed:', error.message); return; }
+    if (error) { console.error('Submit failed:', error.message); return false; }
     updateConfig({ completed: effectiveCompleted.map((v, i) => i === dayIdx ? true : v) });
     setToast('submitted');
     setTimeout(() => setToast(null), 3500);
+    return true;
   };
 
   // ── loading ────────────────────────────────────────────────────

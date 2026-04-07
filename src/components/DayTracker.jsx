@@ -1,7 +1,10 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { createPortal } from 'react-dom';
 import { Check, RotateCcw, GripVertical } from 'lucide-react';
 import {
   DndContext,
+  DragOverlay,
   closestCenter,
   PointerSensor,
   useSensor,
@@ -24,6 +27,73 @@ const GRID_COLS = {
 
 const SPRING = { type: 'spring', stiffness: 400, damping: 30, mass: 0.7 };
 
+function DayCard({ done, isCurrent, label, dayLabel, onToggle, attributes = {}, listeners = {}, isOverlay = false }) {
+  return (
+    <motion.div
+      whileHover={!isOverlay ? { y: -2 } : undefined}
+      transition={SPRING}
+      className={`relative flex flex-col items-center gap-2 py-3.5 px-1 rounded-2xl border transition-colors duration-300 ${
+        isOverlay
+          ? 'bg-bg-700/95 border-mint/25 shadow-[0_26px_70px_rgba(0,0,0,0.45)] ring-1 ring-white/[0.06] cursor-grabbing'
+          : done
+          ? 'bg-mint/[0.07] border-mint/20'
+          : isCurrent
+          ? 'bg-bg-600 border-white/[0.08]'
+          : 'bg-bg-700/60 border-white/[0.04] hover:border-white/[0.08]'
+      }`}
+    >
+      {isCurrent && !done && !isOverlay && (
+        <motion.div
+          className="absolute inset-0 rounded-2xl border border-mint/20"
+          animate={{ opacity: [0.3, 0.8, 0.3] }}
+          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+        />
+      )}
+
+      <div
+        {...attributes} {...listeners}
+        className={`absolute top-1.5 right-1.5 transition-colors touch-none ${
+          isOverlay
+            ? 'text-text-primary/60 cursor-grabbing'
+            : 'text-text-muted/30 hover:text-text-muted/70 cursor-grab active:cursor-grabbing'
+        }`}
+        onClick={e => e.stopPropagation()}
+      >
+        <GripVertical size={10} />
+      </div>
+
+      <span className={`font-mono text-[9px] tracking-widest uppercase leading-none ${
+        done ? 'text-mint' : isCurrent ? 'text-text-secondary' : 'text-text-muted'
+      }`}>
+        {dayLabel}
+      </span>
+
+      <motion.div
+        animate={done ? { scale: [1, 1.2, 1] } : { scale: 1 }}
+        transition={{ duration: 0.3 }}
+        onClick={onToggle}
+        className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
+          done ? 'bg-mint' : 'border border-bg-400'
+        }`}
+      >
+        <motion.div
+          initial={false}
+          animate={done ? { scale: 1, opacity: 1 } : { scale: 0, opacity: 0 }}
+          transition={{ type: 'spring', stiffness: 500, damping: 28 }}
+        >
+          <Check size={15} strokeWidth={3} className="text-bg-900" />
+        </motion.div>
+      </motion.div>
+
+      <span className={`font-display text-[10px] tracking-widest uppercase leading-none ${
+        done ? 'text-mint' : isCurrent ? 'text-text-secondary' : 'text-text-muted'
+      }`}>
+        {label}
+      </span>
+    </motion.div>
+  );
+}
+
 function SortableDay({ id, done, isCurrent, label, dayLabel, onToggle }) {
   const {
     attributes, listeners, setNodeRef,
@@ -32,70 +102,20 @@ function SortableDay({ id, done, isCurrent, label, dayLabel, onToggle }) {
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 50 : 'auto',
+    transition: transition || 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)',
   };
 
   return (
-    <div ref={setNodeRef} style={style}>
-      <motion.div
-        whileHover={{ y: -2 }}
-        transition={SPRING}
-        className={`relative flex flex-col items-center gap-2 py-3.5 px-1 rounded-2xl border transition-colors duration-300 cursor-pointer ${
-          done
-            ? 'bg-mint/[0.07] border-mint/20'
-            : isCurrent
-            ? 'bg-bg-600 border-white/[0.08]'
-            : 'bg-bg-700/60 border-white/[0.04] hover:border-white/[0.08]'
-        }`}
-      >
-        {isCurrent && !done && (
-          <motion.div
-            className="absolute inset-0 rounded-2xl border border-mint/20"
-            animate={{ opacity: [0.3, 0.8, 0.3] }}
-            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-          />
-        )}
-
-        {/* Drag handle — only shown on hover via CSS group */}
-        <div
-          {...attributes} {...listeners}
-          className="absolute top-1.5 right-1.5 text-text-muted/30 hover:text-text-muted/70 transition-colors cursor-grab active:cursor-grabbing touch-none"
-          onClick={e => e.stopPropagation()}
-        >
-          <GripVertical size={10} />
-        </div>
-
-        <span className={`font-mono text-[9px] tracking-widest uppercase leading-none ${
-          done ? 'text-mint' : isCurrent ? 'text-text-secondary' : 'text-text-muted'
-        }`}>
-          {dayLabel}
-        </span>
-
-        <motion.div
-          animate={done ? { scale: [1, 1.2, 1] } : { scale: 1 }}
-          transition={{ duration: 0.3 }}
-          onClick={onToggle}
-          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
-            done ? 'bg-mint' : 'border border-bg-400'
-          }`}
-        >
-          <motion.div
-            initial={false}
-            animate={done ? { scale: 1, opacity: 1 } : { scale: 0, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 500, damping: 28 }}
-          >
-            <Check size={15} strokeWidth={3} className="text-bg-900" />
-          </motion.div>
-        </motion.div>
-
-        <span className={`font-display text-[10px] tracking-widest uppercase leading-none ${
-          done ? 'text-mint' : isCurrent ? 'text-text-secondary' : 'text-text-muted'
-        }`}>
-          {label}
-        </span>
-      </motion.div>
+    <div ref={setNodeRef} style={style} className={isDragging ? 'scale-[0.985] opacity-30' : ''}>
+      <DayCard
+        done={done}
+        isCurrent={isCurrent}
+        label={label}
+        dayLabel={dayLabel}
+        onToggle={onToggle}
+        attributes={attributes}
+        listeners={listeners}
+      />
     </div>
   );
 }
@@ -109,9 +129,13 @@ export default function DayTracker({ completed, days, onToggle, onReset, onReord
     activationConstraint: { distance: 6 },
   }));
 
-  const ids = days ? days.map((_, i) => String(i)) : Array.from({ length: total }, (_, i) => String(i));
+  const ids = days
+    ? days.map((day, i) => String(day?.id ?? `day-${i}`))
+    : Array.from({ length: total }, (_, i) => String(i));
+  const [activeId, setActiveId] = useState(null);
 
   const handleDragEnd = ({ active, over }) => {
+    setActiveId(null);
     if (!over || active.id === over.id) return;
     const oldIdx = ids.indexOf(active.id);
     const newIdx = ids.indexOf(over.id);
@@ -127,6 +151,8 @@ export default function DayTracker({ completed, days, onToggle, onReset, onReord
     if (days?.[i]?.schedule) return days[i].schedule.slice(0, 3);
     return WEEK_DAYS[i % 7];
   };
+
+  const activeIdx = activeId == null ? -1 : ids.indexOf(activeId);
 
   return (
     <div>
@@ -160,7 +186,13 @@ export default function DayTracker({ completed, days, onToggle, onReset, onReord
         />
       </div>
 
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={({ active }) => setActiveId(active.id)}
+        onDragCancel={() => setActiveId(null)}
+        onDragEnd={handleDragEnd}
+      >
         <SortableContext items={ids} strategy={horizontalListSortingStrategy}>
           <div className={`grid gap-2 ${GRID_COLS[Math.min(total, 7)] || 'grid-cols-5'}`}>
             {ids.map((id, i) => (
@@ -176,6 +208,24 @@ export default function DayTracker({ completed, days, onToggle, onReset, onReord
             ))}
           </div>
         </SortableContext>
+        {typeof document !== 'undefined' && createPortal(
+          <DragOverlay dropAnimation={{
+            duration: 220,
+            easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+          }}>
+            {activeIdx >= 0 ? (
+              <DayCard
+                done={completed[activeIdx]}
+                isCurrent={activeIdx === currentIdx}
+                label={getShort(activeIdx)}
+                dayLabel={getDayLabel(activeIdx)}
+                onToggle={() => {}}
+                isOverlay
+              />
+            ) : null}
+          </DragOverlay>,
+          document.body
+        )}
       </DndContext>
     </div>
   );
