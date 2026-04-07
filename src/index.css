@@ -40,6 +40,7 @@ body {
   font-family: var(--font-body);
   min-height: 100dvh;
   overflow-x: hidden;
+  padding-bottom: env(safe-area-inset-bottom);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

@@ -60,7 +60,7 @@ function FitnessVisual({ icon: Icon, tone = 'mint', compact = false }) {
       };
 
   return (
-    <div className={`relative overflow-hidden ${compact ? 'h-full min-h-[170px]' : 'h-full min-h-[220px] md:min-h-[560px]'}`}>
+    <div className={`relative overflow-hidden ${compact ? 'h-full min-h-[132px] sm:min-h-[170px]' : 'h-full min-h-[170px] sm:min-h-[220px] md:min-h-[560px]'}`}>
       <div className={`absolute inset-0 ${toneClasses.halo}`} />
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,11,13,0.08)_0%,rgba(10,11,13,0.72)_72%,rgba(10,11,13,0.92)_100%)]" />
       <div className={`absolute right-[-10%] top-[10%] h-[45%] w-[45%] rounded-full bg-gradient-to-br ${toneClasses.orb} blur-2xl opacity-85`} />
@@ -81,11 +81,11 @@ function PhotoVisual({ tone = 'mint', compact = false }) {
     : 'from-mint/28 via-lime/12 to-transparent';
 
   return (
-    <div className={`relative overflow-hidden ${compact ? 'h-full min-h-[170px]' : 'h-full min-h-[220px] md:min-h-[560px]'}`}>
+    <div className={`relative overflow-hidden ${compact ? 'h-full min-h-[132px] sm:min-h-[170px]' : 'h-full min-h-[170px] sm:min-h-[220px] md:min-h-[560px]'}`}>
       <img
         src={heroImage}
         alt="Fitness athlete"
-        className="absolute inset-0 h-full w-full object-cover object-center"
+        className="absolute inset-0 h-full w-full object-cover object-[center_28%] sm:object-center"
       />
       <div className={`absolute inset-0 bg-gradient-to-br ${glowClass}`} />
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,10,12,0.06)_0%,rgba(8,10,12,0.34)_38%,rgba(8,10,12,0.78)_100%)]" />
@@ -133,7 +133,7 @@ export default function OnboardingModal({ displayName, onApply }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[120] flex items-end sm:items-center justify-center p-4"
+        className="fixed inset-0 z-[120] flex items-end sm:items-center justify-center p-2 sm:p-4"
         style={{ background: 'rgba(6,8,9,0.78)', backdropFilter: 'blur(20px)' }}
       >
         <motion.div
@@ -141,11 +141,11 @@ export default function OnboardingModal({ displayName, onApply }) {
           animate={{ y: 0, opacity: 1, scale: 1 }}
           exit={{ y: 20, opacity: 0, scale: 0.98 }}
           transition={SPRING}
-          className="w-full max-w-4xl overflow-hidden rounded-[36px] border border-white/[0.06] bg-bg-700/96 shadow-[0_30px_90px_rgba(0,0,0,0.35)]"
+          className="w-full max-w-4xl max-h-[calc(100dvh-16px)] overflow-y-auto rounded-[28px] sm:rounded-[36px] border border-white/[0.06] bg-bg-700/96 shadow-[0_30px_90px_rgba(0,0,0,0.35)]"
         >
           {!mode ? (
             <div className="grid md:grid-cols-[1.1fr_0.9fr]">
-              <div className="relative min-h-[280px] md:min-h-[640px] p-6 md:p-8 overflow-hidden">
+              <div className="relative min-h-[320px] p-4 sm:p-6 md:min-h-[640px] md:p-8 overflow-hidden">
                 <div className="absolute inset-0">
                   <PhotoVisual tone="mint" />
                 </div>
@@ -153,30 +153,30 @@ export default function OnboardingModal({ displayName, onApply }) {
                 <div className="relative z-10 flex h-full flex-col justify-between">
                   <div>
                     <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-cyan/80 mb-3">Fast onboarding</p>
-                    <h2 className="max-w-sm font-display text-[34px] leading-[1.02] text-text-primary mb-4">
+                    <h2 className="max-w-[16rem] sm:max-w-sm font-display text-[24px] sm:text-[34px] leading-[0.98] sm:leading-[1.02] text-text-primary mb-3 sm:mb-4">
                       {displayName ? `${displayName}, ` : ''}pick your start and get moving fast.
                     </h2>
-                    <p className="max-w-sm text-sm text-text-secondary">
+                    <p className="max-w-[16rem] sm:max-w-sm text-[13px] sm:text-sm text-text-secondary leading-relaxed">
                       One tap favourite, one fast quiz, or manual setup. Clean start, no wasted steps.
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-3 max-w-sm">
+                  <div className="grid grid-cols-3 gap-2 sm:gap-3 max-w-sm mt-5 md:mt-0">
                     {[
                       { value: '5', label: 'Gym Days' },
                       { value: '3', label: 'Run Days' },
                       { value: '4Q', label: 'Quiz' },
                     ].map((item) => (
-                      <div key={item.label} className="rounded-[24px] border border-white/[0.08] bg-bg-900/35 p-3 backdrop-blur-xl">
-                        <p className="font-display text-[22px] text-text-primary">{item.value}</p>
-                        <p className="font-mono text-[10px] tracking-[0.18em] uppercase text-text-secondary">{item.label}</p>
+                      <div key={item.label} className="rounded-[20px] sm:rounded-[24px] border border-white/[0.08] bg-bg-900/35 p-2.5 sm:p-3 backdrop-blur-xl">
+                        <p className="font-display text-[19px] sm:text-[22px] text-text-primary">{item.value}</p>
+                        <p className="font-mono text-[9px] sm:text-[10px] tracking-[0.16em] sm:tracking-[0.18em] uppercase text-text-secondary">{item.label}</p>
                       </div>
                     ))}
                   </div>
                 </div>
               </div>
 
-              <div className="p-5 md:p-6 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0))]">
+              <div className="p-3 sm:p-5 md:p-6 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0))]">
                 <div className="space-y-3">
                   {ONBOARDING_START_OPTIONS.map((option, idx) => {
                     const Icon = ICONS[option.id];
@@ -189,10 +189,10 @@ export default function OnboardingModal({ displayName, onApply }) {
                         whileTap={{ scale: 0.985 }}
                         transition={SPRING}
                         onClick={() => handleStart(option.id)}
-                        className="group relative w-full overflow-hidden rounded-[28px] border border-white/[0.06] bg-bg-800/92 text-left"
+                        className="group relative w-full overflow-hidden rounded-[24px] sm:rounded-[28px] border border-white/[0.06] bg-bg-800/92 text-left"
                       >
-                        <div className="grid grid-cols-[1fr_132px] min-h-[170px]">
-                          <div className="p-5 flex flex-col justify-between">
+                        <div className="grid min-h-[148px] grid-cols-1 sm:grid-cols-[1fr_132px]">
+                          <div className="p-4 sm:p-5 flex flex-col justify-between">
                             <div>
                               <div className="mb-3 flex items-center gap-3">
                                 <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${
@@ -204,18 +204,18 @@ export default function OnboardingModal({ displayName, onApply }) {
                                   Option {idx + 1}
                                 </span>
                               </div>
-                              <h3 className="max-w-[220px] font-display text-[24px] leading-tight text-text-primary">
+                              <h3 className="max-w-[240px] font-display text-[20px] sm:text-[24px] leading-tight text-text-primary">
                                 {option.title}
                               </h3>
                             </div>
-                            <span className={`inline-flex w-fit rounded-full px-3 py-1 text-[11px] font-body font-semibold ${
+                            <span className={`mt-3 inline-flex w-fit rounded-full px-3 py-1 text-[11px] font-body font-semibold ${
                               idx === 0 ? 'bg-mint/[0.14] text-mint' : idx === 1 ? 'bg-cyan/[0.14] text-cyan' : 'bg-white/[0.06] text-text-secondary'
                             }`}>
                               {visual.badge}
                             </span>
                           </div>
 
-                          <div className="relative overflow-hidden">
+                          <div className="relative hidden overflow-hidden sm:block">
                             <div className={`absolute inset-0 bg-gradient-to-br ${visual.accent}`} />
                             <FitnessVisual icon={VisualIcon} tone={visual.tone} compact />
                           </div>
@@ -243,19 +243,19 @@ export default function OnboardingModal({ displayName, onApply }) {
                   transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
                   className="grid md:col-span-2 md:grid-cols-[0.92fr_1.08fr]"
                 >
-                  <div className="relative min-h-[220px] md:min-h-[560px] overflow-hidden">
+                  <div className="relative min-h-[220px] sm:min-h-[280px] md:min-h-[560px] overflow-hidden">
                     <PhotoVisual tone={QUESTION_VISUALS[step].tone} />
-                    <div className="absolute left-5 right-5 bottom-5 rounded-[26px] border border-white/[0.08] bg-bg-900/38 p-4 backdrop-blur-xl">
+                    <div className="absolute left-3 right-3 bottom-3 sm:left-5 sm:right-5 sm:bottom-5 rounded-[22px] sm:rounded-[26px] border border-white/[0.08] bg-bg-900/38 p-3 sm:p-4 backdrop-blur-xl">
                       <p className="font-mono text-[10px] tracking-[0.28em] uppercase text-cyan/75 mb-2">
                         Question {step + 1} of {ONBOARDING_QUESTIONS.length}
                       </p>
-                      <h3 className="font-display text-[26px] leading-tight text-text-primary">
+                      <h3 className="font-display text-[20px] sm:text-[26px] leading-tight text-text-primary">
                         {currentQuestion.title}
                       </h3>
                     </div>
                   </div>
 
-                  <div className="p-5 md:p-6">
+                  <div className="p-4 sm:p-5 md:p-6">
                     <div className="flex items-center gap-3 mb-5">
                       <button
                         onClick={() => {
@@ -294,7 +294,7 @@ export default function OnboardingModal({ displayName, onApply }) {
                           whileHover={{ y: -2 }}
                           whileTap={{ scale: 0.98 }}
                           onClick={() => handleAnswer(option.id)}
-                          className="min-h-[112px] rounded-[26px] border border-white/[0.06] bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01))] px-4 py-4 text-left text-text-primary transition-colors hover:border-mint/18 hover:bg-bg-600/78"
+                          className="min-h-[92px] sm:min-h-[112px] rounded-[22px] sm:rounded-[26px] border border-white/[0.06] bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01))] px-4 py-3.5 sm:py-4 text-left text-text-primary transition-colors hover:border-mint/18 hover:bg-bg-600/78"
                         >
                           <span className="font-body text-[15px] font-semibold">{option.label}</span>
                         </motion.button>

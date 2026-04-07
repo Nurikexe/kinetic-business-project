@@ -148,14 +148,14 @@ export default function GymPage() {
         <motion.div
           initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, ...STAGGER }}
-          className="flex items-end justify-between gap-3"
+          className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end"
         >
-          <h1 className="font-display text-[44px] leading-none tracking-wide uppercase">
+          <h1 className="font-display text-[34px] sm:text-[44px] leading-none tracking-wide uppercase">
             Gym <span className="text-mint">Blueprint</span>
           </h1>
 
           {/* Split days stepper */}
-          <div className="flex flex-col items-end gap-1 mb-1">
+          <div className="mb-1 flex flex-col items-start gap-1 sm:items-end">
             <span className="font-mono text-[9px] tracking-[2px] text-text-muted/60 uppercase">Split</span>
             <div className="flex items-center gap-1 bg-bg-700 border border-white/[0.06] rounded-xl px-1 py-1">
               <motion.button whileTap={{ scale: 0.88 }}

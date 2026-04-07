@@ -61,18 +61,18 @@ export default function LoginPage() {
         <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-bg-900 to-transparent" />
       </div>
 
-      <div className="relative z-10 w-full max-w-sm">
+      <div className="relative z-10 w-full max-w-sm py-6">
         {/* Logo */}
         <motion.div
           initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05, ...SPRING }}
-          className="flex items-center justify-center gap-3 mb-10"
+          className="mb-8 flex items-center justify-center gap-3 sm:mb-10"
         >
           <div className="w-10 h-10 rounded-2xl bg-mint/[0.10] border border-mint/20 flex items-center justify-center">
             <Dumbbell size={20} className="text-mint" />
           </div>
           <div>
-            <p className="font-display text-2xl tracking-[4px] uppercase leading-none">
+            <p className="font-display text-xl sm:text-2xl tracking-[3px] sm:tracking-[4px] uppercase leading-none">
               <span className="text-mint">Hybrid</span>
               <span className="text-text-muted"> Athlete</span>
             </p>

@@ -51,7 +51,7 @@ export default function WorkoutPlan({ days, currentDayIdx, completedDays, onEdit
               <button
                 key={d.id}
                 onClick={() => handleSelect(i)}
-                className="relative flex-shrink-0 flex flex-col items-center gap-1.5 pt-2.5 pb-3 px-3.5 group"
+                className="relative flex-shrink-0 flex min-w-[68px] flex-col items-center gap-1.5 pt-2.5 pb-3 px-3 group sm:min-w-0 sm:px-3.5"
               >
                 {active && (
                   <motion.div
@@ -155,14 +155,14 @@ export default function WorkoutPlan({ days, currentDayIdx, completedDays, onEdit
                     whileTap={{ scale: 0.93 }}
                     transition={SPRING_FAST}
                     onClick={() => onEditDay(day)}
-                    className="p-2.5 rounded-xl bg-bg-600 border border-white/[0.07] text-text-muted hover:text-text-primary hover:border-white/[0.14] transition-colors"
+                    className="p-2.5 rounded-xl bg-bg-600 border border-white/[0.07] text-text-muted hover:text-text-primary hover:border-white/[0.14] transition-colors flex-shrink-0"
                   >
                     <Pencil size={15} />
                   </motion.button>
                 </div>
               </div>
 
-              <div className="relative flex items-center gap-4 mt-4 pt-3.5 border-t border-white/[0.05]">
+              <div className="relative mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-white/[0.05] pt-3.5">
                 <Dumbbell size={12} style={{ color: theme.color, opacity: 0.7 }} />
                 <span className="font-mono text-[11px] text-text-muted tracking-wider">
                   <span className="text-text-primary font-bold">{day.exercises.length}</span> exercises
@@ -187,7 +187,7 @@ export default function WorkoutPlan({ days, currentDayIdx, completedDays, onEdit
                     whileHover={{ x: 2 }}
                     whileTap={{ scale: 0.99 }}
                     transition={{ duration: 0.15 }}
-                    className="flex items-center gap-3 bg-bg-700/60 border border-white/[0.05] rounded-xl px-3.5 py-3 hover:border-white/[0.09] cursor-default"
+                    className="flex flex-wrap items-center gap-2.5 sm:flex-nowrap sm:gap-3 bg-bg-700/60 border border-white/[0.05] rounded-xl px-3 py-3 hover:border-white/[0.09] cursor-default"
                   >
                     <div className="w-0.5 h-7 rounded-full flex-shrink-0"
                       style={{ background: theme.color, opacity: 0.4 }}
@@ -195,7 +195,7 @@ export default function WorkoutPlan({ days, currentDayIdx, completedDays, onEdit
                     <span className="font-mono text-[10px] text-text-muted w-4 text-right flex-shrink-0 leading-none">
                       {String(i + 1).padStart(2, '0')}
                     </span>
-                    <span className="flex-1 min-w-0 text-[13.5px] font-body font-medium text-text-primary leading-snug">
+                    <span className="min-w-0 flex-[1_1_100%] text-[13.5px] font-body font-medium text-text-primary leading-snug sm:flex-1">
                       {ex.name}
                     </span>
                     <div className="flex-shrink-0 font-mono text-[11px] font-bold tracking-wider px-2.5 py-1.5 rounded-lg"
@@ -203,7 +203,7 @@ export default function WorkoutPlan({ days, currentDayIdx, completedDays, onEdit
                     >
                       {ex.sets}×{ex.reps}
                     </div>
-                    <div className="flex-shrink-0 flex items-center gap-1 bg-bg-600 border border-white/[0.06] rounded-lg px-2 py-1.5 focus-within:border-white/20 transition-all duration-200 w-[64px]">
+                    <div className="ml-auto flex w-[78px] flex-shrink-0 items-center gap-1 rounded-lg border border-white/[0.06] bg-bg-600 px-2 py-1.5 transition-all duration-200 focus-within:border-white/20 sm:ml-0 sm:w-[64px]">
                       <input
                         type="number"
                         value={ex.weight || ''}
@@ -266,14 +266,14 @@ export default function WorkoutPlan({ days, currentDayIdx, completedDays, onEdit
             )}
 
             {/* Prev / Next */}
-            <div className="flex justify-between mt-4 px-0.5">
+            <div className="mt-4 flex justify-between gap-4 px-0.5">
               <motion.button
                 whileHover={safeIdx > 0 ? { x: -2 } : {}}
                 whileTap={safeIdx > 0 ? { scale: 0.95 } : {}}
                 transition={SPRING_FAST}
                 onClick={() => safeIdx > 0 && handleSelect(safeIdx - 1)}
                 disabled={safeIdx === 0}
-                className="flex items-center gap-1.5 text-[11px] font-mono text-text-muted hover:text-text-secondary disabled:opacity-20 transition-colors py-1"
+                className="min-w-0 flex items-center gap-1.5 text-left text-[11px] font-mono text-text-muted hover:text-text-secondary disabled:opacity-20 transition-colors py-1"
               >
                 ← {safeIdx > 0 ? days[safeIdx - 1].name.split(' ')[0] : ''}
               </motion.button>
@@ -283,7 +283,7 @@ export default function WorkoutPlan({ days, currentDayIdx, completedDays, onEdit
                 transition={SPRING_FAST}
                 onClick={() => safeIdx < days.length - 1 && handleSelect(safeIdx + 1)}
                 disabled={safeIdx === days.length - 1}
-                className="flex items-center gap-1.5 text-[11px] font-mono text-text-muted hover:text-text-secondary disabled:opacity-20 transition-colors py-1"
+                className="min-w-0 flex items-center justify-end gap-1.5 text-right text-[11px] font-mono text-text-muted hover:text-text-secondary disabled:opacity-20 transition-colors py-1"
               >
                 {safeIdx < days.length - 1 ? days[safeIdx + 1].name.split(' ')[0] : ''} →
               </motion.button>

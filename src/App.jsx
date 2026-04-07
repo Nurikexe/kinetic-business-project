@@ -81,22 +81,22 @@ function AppContent({ page, setPage, displayName }) {
           <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-bg-900 to-transparent" />
         </div>
 
-        <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-5 h-14">
+        <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-3 sm:px-5 h-14">
           <div className="absolute inset-0 bg-bg-900/62 backdrop-blur-2xl border-b border-white/[0.05]" />
 
-          <div className="relative font-display text-[21px] font-semibold tracking-[-0.03em]">
+          <div className="relative min-w-0 font-display text-[17px] sm:text-[21px] font-semibold tracking-[-0.03em]">
             <span className={`transition-colors duration-500 ${page === 'running' ? 'text-cyan' : 'text-mint'}`}>
               Hybrid
             </span>
             <span className="text-text-secondary"> Athlete</span>
           </div>
 
-          <div className="relative flex gap-0.5 bg-bg-700/78 rounded-2xl p-1 border border-white/[0.06] shadow-[0_12px_32px_rgba(0,0,0,0.22)]">
+          <div className="relative ml-3 flex gap-0.5 rounded-2xl border border-white/[0.06] bg-bg-700/78 p-1 shadow-[0_12px_32px_rgba(0,0,0,0.22)]">
             {TABS.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setPage(tab.id)}
-                className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[13px] font-body font-semibold tracking-wide transition-colors duration-200 ${
+                className={`relative flex min-w-0 items-center gap-1 px-2 py-1.5 sm:gap-1.5 sm:px-3 rounded-xl text-[13px] font-body font-semibold tracking-wide transition-colors duration-200 ${
                   page === tab.id ? 'text-text-primary' : 'text-text-muted hover:text-text-secondary'
                 }`}
               >
@@ -111,8 +111,8 @@ function AppContent({ page, setPage, displayName }) {
                     }`}
                   />
                 )}
-                <tab.icon size={13} className="relative z-10 flex-shrink-0" />
-                <span className="relative z-10 font-body tracking-[0.08em] text-[12px] uppercase max-w-[72px] truncate">
+                <tab.icon size={12} className="relative z-10 flex-shrink-0 sm:size-[13px]" />
+                <span className="relative z-10 max-w-[56px] truncate font-body text-[10px] tracking-[0.08em] uppercase sm:max-w-[72px] sm:text-[12px]">
                   {tab.label}
                 </span>
               </button>
@@ -120,7 +120,7 @@ function AppContent({ page, setPage, displayName }) {
           </div>
         </nav>
 
-        <main className="relative z-10 pt-14 pb-16 px-4 max-w-xl mx-auto">
+        <main className="relative z-10 mx-auto max-w-xl px-3 pt-14 pb-20 sm:px-4 sm:pb-16">
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={page}

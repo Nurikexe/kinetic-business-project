@@ -20,11 +20,6 @@ import { CSS } from '@dnd-kit/utilities';
 
 const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-const GRID_COLS = {
-  1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-3',
-  4: 'grid-cols-4', 5: 'grid-cols-5', 6: 'grid-cols-6', 7: 'grid-cols-7',
-};
-
 const SPRING = { type: 'spring', stiffness: 400, damping: 30, mass: 0.7 };
 
 function DayCard({ done, isCurrent, label, dayLabel, onToggle, attributes = {}, listeners = {}, isOverlay = false }) {
@@ -156,7 +151,7 @@ export default function DayTracker({ completed, days, onToggle, onReset, onReord
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-3">
+      <div className="mb-3 flex items-center justify-between gap-3">
         <div className="flex items-baseline gap-1.5">
           <motion.span
             key={doneCount}
@@ -194,7 +189,7 @@ export default function DayTracker({ completed, days, onToggle, onReset, onReord
         onDragEnd={handleDragEnd}
       >
         <SortableContext items={ids} strategy={horizontalListSortingStrategy}>
-          <div className={`grid gap-2 ${GRID_COLS[Math.min(total, 7)] || 'grid-cols-5'}`}>
+          <div className="grid auto-cols-[minmax(88px,1fr)] grid-flow-col gap-2 overflow-x-auto pb-1 no-scrollbar sm:auto-cols-auto sm:grid-flow-row sm:grid-cols-5 md:grid-cols-7">
             {ids.map((id, i) => (
               <SortableDay
                 key={id}

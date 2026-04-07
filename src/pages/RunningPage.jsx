@@ -763,7 +763,7 @@ export default function RunningPage() {
         <motion.h1
           initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, ...SPRING }}
-          className="font-display text-[44px] leading-none tracking-wide uppercase"
+          className="font-display text-[34px] sm:text-[44px] leading-none tracking-wide uppercase"
         >
           Running <span className="text-cyan">Blueprint</span>
         </motion.h1>
@@ -783,7 +783,7 @@ export default function RunningPage() {
 
       {/* Week Tracker */}
       <Section icon={<CalendarCheck size={15} />} title="This Week" accent="cyan">
-        <div className="flex items-center gap-3 mb-4">
+        <div className="mb-4 flex flex-wrap items-center gap-3">
           <motion.button whileTap={{ scale: 0.9 }} transition={SPRING}
             onClick={() => updateConfig({ run_week: Math.max(0, currentWeek - 1) })}
             disabled={currentWeek === 0}
@@ -803,7 +803,7 @@ export default function RunningPage() {
             <ChevronRight size={15} />
           </motion.button>
 
-          <div className="flex gap-1.5 ml-auto">
+          <div className="ml-auto flex gap-1.5">
             {runWeeks.map((_, i) => {
               const wComp = getWeekCompletion(i);
               const wDone = dayKeys.length > 0 && dayKeys.every(k => wComp[k]);
@@ -847,7 +847,10 @@ export default function RunningPage() {
           onDragEnd={handleTypeDragEnd}
         >
           <SortableContext items={typeIds} strategy={rectSortingStrategy}>
-            <div className={`grid gap-2`} style={{ gridTemplateColumns: `repeat(${totalRuns}, minmax(0, 1fr))` }}>
+            <div
+              className="grid auto-cols-[minmax(92px,1fr)] grid-flow-col gap-2 overflow-x-auto pb-1 no-scrollbar sm:auto-cols-auto sm:grid-flow-row sm:[grid-template-columns:repeat(var(--run-cols),minmax(0,1fr))]"
+              style={{ '--run-cols': totalRuns }}
+            >
               {runTypes.map((rt, i) => {
                 const dayKey = dayKeys[i];
                 return (
@@ -955,7 +958,7 @@ export default function RunningPage() {
       {/* Goal */}
       <Section icon={<Target size={15} />} title="Goals" accent="cyan">
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <span className="font-mono text-[10px] tracking-[2px] uppercase text-text-muted">Current pace and targets</span>
             {editingTarget ? (
               <motion.button
@@ -977,10 +980,10 @@ export default function RunningPage() {
           </div>
 
           <div className="bg-bg-700/60 border border-white/[0.06] rounded-2xl p-4 backdrop-blur-sm">
-            <div className="flex items-center gap-3 mb-3">
+            <div className="mb-3 flex flex-wrap items-center gap-3">
               <span className="font-display text-sm tracking-[2px] uppercase">Current Pace</span>
               <div className="flex-1" />
-              <span className={`font-mono text-xs font-bold ${paceMins > 0 && paceMins <= targetPaceMins ? 'text-cyan' : 'text-text-muted'}`}>
+              <span className={`w-full sm:w-auto font-mono text-xs font-bold ${paceMins > 0 && paceMins <= targetPaceMins ? 'text-cyan' : 'text-text-muted'}`}>
                 {paceMins > 0 ? (paceMins <= targetPaceMins ? 'Goal pace reached!' : `${(paceMins - targetPaceMins).toFixed(2)} min/km to go`) : ''}
               </span>
             </div>
@@ -1027,7 +1030,7 @@ export default function RunningPage() {
                     Goal {idx + 1}
                   </p>
                   {editingTarget ? (
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <input
                         type="text"
                         value={goal.distance}
