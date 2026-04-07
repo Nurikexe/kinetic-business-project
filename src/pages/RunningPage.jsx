@@ -5,7 +5,7 @@ import {
   CalendarCheck, Target, Zap, Heart, Flame,
   ChevronLeft, ChevronRight, ChevronsRight, Check, RotateCcw,
   TableProperties, Pencil, GripVertical, X, Plus, Trash2,
-  TrendingUp, Timer, Wind, RefreshCw,
+  TrendingUp, Timer, Wind, RefreshCw, Send, CheckCircle2,
 } from 'lucide-react';
 import {
   DndContext, DragOverlay, closestCenter, PointerSensor, useSensor, useSensors,
@@ -17,6 +17,8 @@ import { CSS } from '@dnd-kit/utilities';
 import Section from '../components/Section';
 import ProgressBar from '../components/ProgressBar';
 import { useUserConfig } from '../context/UserConfigContext';
+import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
 import { DEFAULT_RUN_TYPES } from '../data/defaults';
 
 const SPRING = { type: 'spring', stiffness: 320, damping: 30, mass: 0.8 };
@@ -487,6 +489,7 @@ function AddToWeeklyPlanModal({ newTypes, onConfirm, onClose }) {
 
 // ── Main page ─────────────────────────────────────────────────
 export default function RunningPage() {
+  const { user } = useAuth();
   const { config, updateConfig } = useUserConfig();
   const currentWeek  = config.run_week     ?? 0;
   const runCompleted = config.run_completed ?? {};
@@ -502,6 +505,8 @@ export default function RunningPage() {
   const [editingTarget,    setEditingTarget]   = useState(false);
   const [activeTypeId,     setActiveTypeId]    = useState(null);
   const [activeTypeSurface, setActiveTypeSurface] = useState('list');
+  const [runNotesByDay, setRunNotesByDay] = useState({});
+  const [toast, setToast] = useState(null);
 
   const goals = parseGoalTargets(config.ten_k_target, config.ten_k_time ?? '');
   const goalsSummary = goals.map(goal => `${goal.distance} @ ${goal.pace}/km`).join(' · ');
@@ -669,6 +674,42 @@ export default function RunningPage() {
     updateConfig({ ten_k_time: nextPace }, { immediate: true });
   };
 
+  const handleSubmitRun = async (rt, dayKey, sessionText, note = '') => {
+    const sessionLabel = sessionText?.trim() || rt.name;
+    const { error } = await supabase.from('workouts').insert({
+      user_id: user.id,
+      date: new Date().toISOString().split('T')[0],
+      day_num: `Run ${currentWeek + 1}`,
+      day_name: rt.day,
+      day_focus: rt.name,
+      exercises: {
+        items: [
+          {
+            name: `${sessionLabel} · ${rt.name}`,
+            sets: 1,
+            reps: 'session',
+            weight: '',
+          },
+        ],
+        notes: note.trim().slice(0, 250),
+      },
+    });
+
+    if (error) {
+      console.error('Run submit failed:', error.message);
+      return false;
+    }
+
+    const cur = getWeekCompletion(currentWeek);
+    updateConfig({
+      run_completed: { ...runCompleted, [currentWeek]: { ...cur, [dayKey]: true } },
+    });
+    setRunNotesByDay(prev => ({ ...prev, [dayKey]: '' }));
+    setToast('submitted');
+    setTimeout(() => setToast(null), 3500);
+    return true;
+  };
+
   return (
     <>
       {/* Hero */}
@@ -797,6 +838,68 @@ export default function RunningPage() {
             document.body
           )}
         </DndContext>
+
+        <div className="mt-4 space-y-3">
+          {runTypes.map((rt, i) => {
+            const dayKey = dayKeys[i];
+            const sessionText = weekData[dayKey] ?? rt.name;
+            const note = runNotesByDay[dayKey] ?? '';
+            const submitted = weekCompletion[dayKey] ?? false;
+
+            return (
+              <div key={`submit-${typeIds[i]}`} className="rounded-2xl border border-white/[0.06] bg-bg-700/60 p-4 backdrop-blur-sm">
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="min-w-0">
+                    <p className="font-mono text-[10px] tracking-[0.22em] uppercase text-cyan/75 mb-1">
+                      {rt.day}
+                    </p>
+                    <p className="font-display text-[18px] leading-none text-text-primary mb-1">{rt.name}</p>
+                    <p className="text-[12px] text-text-secondary">{sessionText}</p>
+                  </div>
+                  <div className={`rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-[0.18em] ${
+                    submitted ? 'bg-cyan/[0.16] text-cyan' : 'bg-white/[0.05] text-text-muted'
+                  }`}>
+                    {submitted ? 'Submitted' : 'Ready'}
+                  </div>
+                </div>
+
+                <div className="mb-3 rounded-xl border border-white/[0.05] bg-bg-800/72 px-3 py-2.5">
+                  <p className="font-mono text-[9px] tracking-[0.2em] uppercase text-text-muted mb-1">Run session</p>
+                  <p className="text-[13px] font-body text-text-primary">{sessionText}</p>
+                </div>
+
+                <div className="mb-3 rounded-xl border border-white/[0.05] bg-bg-800/72 p-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="font-mono text-[9px] tracking-[0.2em] uppercase text-text-muted">Feedback</span>
+                    <span className="font-mono text-[10px] text-text-muted/60">{note.length}/250</span>
+                  </div>
+                  <textarea
+                    value={note}
+                    onChange={(e) => setRunNotesByDay(prev => ({ ...prev, [dayKey]: e.target.value.slice(0, 250) }))}
+                    placeholder="How did the run feel? Pace, fatigue, pain, or conditions."
+                    maxLength={250}
+                    className="min-h-[82px] w-full resize-none rounded-xl border border-white/[0.07] bg-bg-600 px-3 py-2.5 text-sm text-text-primary outline-none transition-colors placeholder:text-text-muted/40 focus:border-cyan/30"
+                  />
+                </div>
+
+                <motion.button
+                  whileHover={{ scale: submitted ? 1 : 1.01 }}
+                  whileTap={{ scale: submitted ? 1 : 0.98 }}
+                  onClick={() => handleSubmitRun(rt, dayKey, sessionText, note)}
+                  disabled={submitted}
+                  className={`flex w-full items-center justify-center gap-2.5 rounded-xl border py-3 text-sm font-body font-semibold transition-colors ${
+                    submitted
+                      ? 'cursor-default border-cyan/15 bg-cyan/[0.05] text-cyan/50'
+                      : 'border-cyan/25 bg-cyan/[0.09] text-cyan hover:bg-cyan/[0.14]'
+                  }`}
+                >
+                  <Send size={14} />
+                  {submitted ? 'Run Submitted' : 'Submit Run'}
+                </motion.button>
+              </div>
+            );
+          })}
+        </div>
       </Section>
 
       {/* Goal */}
@@ -1046,6 +1149,24 @@ export default function RunningPage() {
           onClose={() => setPendingNewTypes(null)}
         />
       )}
+
+      <AnimatePresence>
+        {toast === 'submitted' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+            className="fixed bottom-6 left-1/2 z-[200] flex -translate-x-1/2 items-center gap-2.5 rounded-2xl border border-cyan/25 bg-bg-700 px-5 py-3 shadow-2xl"
+            style={{ boxShadow: '0 0 40px rgba(214,238,99,0.12)' }}
+          >
+            <CheckCircle2 size={16} className="text-cyan flex-shrink-0" />
+            <span className="whitespace-nowrap text-sm font-body font-medium text-text-primary">
+              Run saved to your cabinet!
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
