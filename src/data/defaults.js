@@ -65,6 +65,15 @@ export const DEFAULT_LIFTS = [
   { key: 'dip', name: 'Weighted Dip', current: 0, target: 80, unit: 'kg', prefix: '+' },
 ];
 
+export const DEFAULT_GYM_GOALS = '100kg Bench · 120kg Squat · +60kg Pull-up · +80kg Dip';
+
+export const DEFAULT_GYM_RULES = [
+  'Barbell lifts: +2.5kg/week. Fail 5×5 → repeat the weight.',
+  'Calisthenics: Top Set (max 2-3 reps) → drop 20% for volume.',
+  'Accessories: 3-sec eccentric on curls, raises, pushdowns.',
+  'Hip Thrust to 140kg+ to make 120kg squat lighter.',
+];
+
 export const RUN_WEEKS = [
   { week: 1, mon: '5×500m @ 6:00/km', thu: '30 min easy', sat: '6 km' },
   { week: 2, mon: '6×500m @ 6:00/km', thu: '35 min easy', sat: '7 km' },

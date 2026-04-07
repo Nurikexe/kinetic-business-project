@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Plus, Trash2 } from 'lucide-react';
+import { X, Trash2, ChevronDown } from 'lucide-react';
+import ExercisePicker from './ExercisePicker';
 
 const SPRING = { type: 'spring', stiffness: 380, damping: 32, mass: 0.8 };
 
 export default function EditWorkoutModal({ day, onSave, onClose }) {
   const [exercises, setExercises] = useState(() => day.exercises.map(e => ({ ...e })));
   const [dayName, setDayName] = useState(day.name);
-  const [daySub, setDaySub] = useState(day.sub);
+  const [daySub, setDaySub]   = useState(day.sub);
+  const [showPicker, setShowPicker] = useState(false);
 
   const updateExercise = (idx, field, value) => {
     setExercises(prev => prev.map((e, i) =>
@@ -17,9 +19,12 @@ export default function EditWorkoutModal({ day, onSave, onClose }) {
 
   const removeExercise = (idx) => setExercises(prev => prev.filter((_, i) => i !== idx));
 
-  const addExercise = () => setExercises(prev => [...prev, {
-    id: 'e_' + Date.now(), name: '', sets: 3, reps: '10', weight: '',
-  }]);
+  const addFromPicker = ({ name, sets, reps }) => {
+    setExercises(prev => [...prev, {
+      id: 'e_' + Date.now(), name, sets, reps, weight: '',
+    }]);
+    setShowPicker(false);
+  };
 
   const moveExercise = (idx, dir) => {
     const next = idx + dir;
@@ -48,7 +53,7 @@ export default function EditWorkoutModal({ day, onSave, onClose }) {
           exit={{ y: 40, opacity: 0, scale: 0.97 }}
           transition={SPRING}
           onClick={e => e.stopPropagation()}
-          className="bg-bg-700 border border-white/[0.07] rounded-2xl w-full max-w-lg max-h-[86dvh] flex flex-col overflow-hidden"
+          className="bg-bg-700 border border-white/[0.07] rounded-2xl w-full max-w-lg max-h-[90dvh] flex flex-col overflow-hidden"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.05]">
@@ -64,6 +69,7 @@ export default function EditWorkoutModal({ day, onSave, onClose }) {
 
           {/* Body */}
           <div className="flex-1 overflow-y-auto p-5 space-y-5">
+            {/* Name / Focus */}
             <div className="grid grid-cols-2 gap-3">
               {[
                 { label: 'Name', value: dayName, set: setDayName },
@@ -80,6 +86,7 @@ export default function EditWorkoutModal({ day, onSave, onClose }) {
               ))}
             </div>
 
+            {/* Exercises */}
             <div className="space-y-2">
               <label className="text-[10px] font-mono text-text-muted tracking-[2px] uppercase block">Exercises</label>
               <AnimatePresence>
@@ -102,28 +109,68 @@ export default function EditWorkoutModal({ day, onSave, onClose }) {
                         </button>
                       ))}
                     </div>
-                    <input value={ex.name} onChange={e => updateExercise(idx, 'name', e.target.value)}
+                    <input
+                      value={ex.name}
+                      onChange={e => updateExercise(idx, 'name', e.target.value)}
                       placeholder="Exercise name"
-                      className="flex-1 min-w-0 px-2 py-1.5 bg-transparent text-sm text-text-primary font-body outline-none placeholder:text-text-muted/40" />
-                    <input type="number" value={ex.sets} onChange={e => updateExercise(idx, 'sets', e.target.value)}
-                      className="w-10 px-1 py-1.5 bg-bg-600 border border-white/[0.06] rounded text-xs text-center text-text-primary font-mono outline-none focus:border-mint/30" />
+                      className="flex-1 min-w-0 px-2 py-1.5 bg-transparent text-sm text-text-primary font-body outline-none placeholder:text-text-muted/40"
+                    />
+                    <input
+                      type="number"
+                      value={ex.sets}
+                      onChange={e => updateExercise(idx, 'sets', e.target.value)}
+                      className="w-10 px-1 py-1.5 bg-bg-600 border border-white/[0.06] rounded text-xs text-center text-text-primary font-mono outline-none focus:border-mint/30"
+                    />
                     <span className="text-text-muted text-xs">×</span>
-                    <input value={ex.reps} onChange={e => updateExercise(idx, 'reps', e.target.value)}
+                    <input
+                      value={ex.reps}
+                      onChange={e => updateExercise(idx, 'reps', e.target.value)}
                       className="w-14 px-1 py-1.5 bg-bg-600 border border-white/[0.06] rounded text-xs text-center text-text-primary font-mono outline-none focus:border-mint/30"
-                      placeholder="reps" />
-                    <motion.button whileTap={{ scale: 0.88 }} onClick={() => removeExercise(idx)}
-                      className="p-1 rounded text-text-muted hover:text-red hover:bg-red/10 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
+                      placeholder="reps"
+                    />
+                    <motion.button
+                      whileTap={{ scale: 0.88 }}
+                      onClick={() => removeExercise(idx)}
+                      className="p-1 rounded text-text-muted hover:text-red hover:bg-red/10 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                    >
                       <Trash2 size={14} />
                     </motion.button>
                   </motion.div>
                 ))}
               </AnimatePresence>
 
-              <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
-                onClick={addExercise}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-dashed border-white/[0.08] text-text-muted hover:text-mint hover:border-mint/25 transition-colors text-sm font-body">
-                <Plus size={14} />Add Exercise
+              {/* Picker toggle */}
+              <motion.button
+                whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
+                onClick={() => setShowPicker(v => !v)}
+                className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border transition-colors text-sm font-body ${
+                  showPicker
+                    ? 'border-mint/20 text-mint bg-mint/[0.05]'
+                    : 'border-dashed border-white/[0.08] text-text-muted hover:text-mint hover:border-mint/25'
+                }`}
+              >
+                <motion.div animate={{ rotate: showPicker ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                  <ChevronDown size={14} />
+                </motion.div>
+                {showPicker ? 'Close Picker' : 'Add Exercise'}
               </motion.button>
+
+              <AnimatePresence>
+                {showPicker && (
+                  <motion.div
+                    key="picker"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+                    className="overflow-hidden"
+                  >
+                    <div className="pt-1">
+                      <ExercisePicker onAdd={addFromPicker} />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
 

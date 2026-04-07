@@ -1,8 +1,6 @@
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Pencil, Check, Dumbbell } from 'lucide-react';
-
-const SCHEDULE = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+import { Pencil, Check, Dumbbell, Send } from 'lucide-react';
 
 const DAY_THEME = [
   { color: '#00ffaa', glow: 'rgba(0,255,170,0.07)' },
@@ -10,27 +8,30 @@ const DAY_THEME = [
   { color: '#ffb020', glow: 'rgba(255,176,32,0.07)' },
   { color: '#ff3b5c', glow: 'rgba(255,59,92,0.07)' },
   { color: '#a064ff', glow: 'rgba(160,100,255,0.07)' },
+  { color: '#00e5ff', glow: 'rgba(0,229,255,0.07)' },
+  { color: '#ff9f43', glow: 'rgba(255,159,67,0.07)' },
 ];
-
-const SHORT = ['Push', 'Pull', 'Legs', 'Arms', 'Chest'];
 
 const SPRING_FAST = { type: 'spring', stiffness: 450, damping: 36, mass: 0.7 };
 const SPRING_MED  = { type: 'spring', stiffness: 280, damping: 30, mass: 0.9 };
 const EASE_SMOOTH = [0.32, 0.72, 0, 1];
 
-export default function WorkoutPlan({ days, currentDayIdx, completedDays, onEditDay, onWeightChange }) {
+export default function WorkoutPlan({ days, currentDayIdx, completedDays, onEditDay, onWeightChange, onSubmitWorkout }) {
   const effectiveCurrent = currentDayIdx < 0 ? 0 : currentDayIdx;
   const [selectedIdx, setSelectedIdx] = useState(effectiveCurrent);
   const dirRef = useRef(0);
 
+  // Clamp selectedIdx if days shrank
+  const safeIdx = Math.min(selectedIdx, days.length - 1);
+
   const handleSelect = (idx) => {
-    dirRef.current = idx > selectedIdx ? 1 : -1;
+    dirRef.current = idx > safeIdx ? 1 : -1;
     setSelectedIdx(idx);
   };
 
-  const day   = days[selectedIdx];
-  const theme = DAY_THEME[selectedIdx];
-  const done  = completedDays[selectedIdx];
+  const day   = days[safeIdx];
+  const theme = DAY_THEME[safeIdx % DAY_THEME.length];
+  const done  = completedDays[safeIdx];
   const total = day.exercises.reduce((s, e) => s + (e.sets || 0), 0);
 
   return (
@@ -40,9 +41,10 @@ export default function WorkoutPlan({ days, currentDayIdx, completedDays, onEdit
         <div className="absolute bottom-0 left-0 right-0 h-px bg-white/[0.04]" />
         <div className="flex gap-0 overflow-x-auto no-scrollbar">
           {days.map((d, i) => {
-            const active = i === selectedIdx;
+            const active = i === safeIdx;
             const isCur  = i === currentDayIdx;
             const isDone = completedDays[i];
+            const t      = DAY_THEME[i % DAY_THEME.length];
             return (
               <button
                 key={d.id}
@@ -54,7 +56,7 @@ export default function WorkoutPlan({ days, currentDayIdx, completedDays, onEdit
                     layoutId="workout-underline"
                     transition={SPRING_FAST}
                     className="absolute bottom-0 inset-x-2 h-[2px] rounded-full"
-                    style={{ background: theme.color }}
+                    style={{ background: t.color }}
                   />
                 )}
                 <div className={`relative w-[26px] h-[26px] rounded-full flex items-center justify-center transition-all duration-300 ${
@@ -81,7 +83,7 @@ export default function WorkoutPlan({ days, currentDayIdx, completedDays, onEdit
                 <span className={`font-display text-xs tracking-[2px] uppercase transition-colors duration-200 ${
                   active ? 'text-text-primary' : 'text-text-muted group-hover:text-text-secondary'
                 }`}>
-                  {SHORT[i]}
+                  {d.name.split(' ')[0].slice(0, 5)}
                 </span>
               </button>
             );
@@ -93,7 +95,7 @@ export default function WorkoutPlan({ days, currentDayIdx, completedDays, onEdit
       <div className="overflow-hidden">
         <AnimatePresence custom={dirRef.current} mode="wait">
           <motion.div
-            key={selectedIdx}
+            key={safeIdx}
             custom={dirRef.current}
             variants={{
               enter:  d => ({ x: d > 0 ? 56 : -56, opacity: 0, filter: 'blur(6px)' }),
@@ -127,7 +129,7 @@ export default function WorkoutPlan({ days, currentDayIdx, completedDays, onEdit
                 <div>
                   <p className="font-mono text-[10px] tracking-[3px] uppercase mb-1.5"
                     style={{ color: theme.color, opacity: 0.75 }}>
-                    {day.num} · {SCHEDULE[selectedIdx]}
+                    {day.num} · {day.schedule || `Day ${safeIdx + 1}`}
                   </p>
                   <h3 className="font-display text-[32px] leading-none tracking-wide uppercase text-text-primary">
                     {day.name}
@@ -214,27 +216,48 @@ export default function WorkoutPlan({ days, currentDayIdx, completedDays, onEdit
               ))}
             </div>
 
+            {/* Submit workout button */}
+            {day.exercises.length > 0 && onSubmitWorkout && (
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: day.exercises.length * 0.04 + 0.1 }}
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => onSubmitWorkout(day, safeIdx)}
+                className={`w-full mt-3 flex items-center justify-center gap-2.5 py-3 rounded-xl border text-sm font-body font-semibold transition-colors ${
+                  done
+                    ? 'border-mint/15 bg-mint/[0.05] text-mint/50 cursor-default'
+                    : 'border-mint/25 bg-mint/[0.08] text-mint hover:bg-mint/[0.14]'
+                }`}
+                disabled={done}
+              >
+                <Send size={14} />
+                {done ? 'Workout Submitted' : 'Submit Workout'}
+              </motion.button>
+            )}
+
             {/* Prev / Next */}
             <div className="flex justify-between mt-4 px-0.5">
               <motion.button
-                whileHover={selectedIdx > 0 ? { x: -2 } : {}}
-                whileTap={selectedIdx > 0 ? { scale: 0.95 } : {}}
+                whileHover={safeIdx > 0 ? { x: -2 } : {}}
+                whileTap={safeIdx > 0 ? { scale: 0.95 } : {}}
                 transition={SPRING_FAST}
-                onClick={() => selectedIdx > 0 && handleSelect(selectedIdx - 1)}
-                disabled={selectedIdx === 0}
+                onClick={() => safeIdx > 0 && handleSelect(safeIdx - 1)}
+                disabled={safeIdx === 0}
                 className="flex items-center gap-1.5 text-[11px] font-mono text-text-muted hover:text-text-secondary disabled:opacity-20 transition-colors py-1"
               >
-                ← {selectedIdx > 0 ? days[selectedIdx - 1].name.split(' ')[0] : ''}
+                ← {safeIdx > 0 ? days[safeIdx - 1].name.split(' ')[0] : ''}
               </motion.button>
               <motion.button
-                whileHover={selectedIdx < days.length - 1 ? { x: 2 } : {}}
-                whileTap={selectedIdx < days.length - 1 ? { scale: 0.95 } : {}}
+                whileHover={safeIdx < days.length - 1 ? { x: 2 } : {}}
+                whileTap={safeIdx < days.length - 1 ? { scale: 0.95 } : {}}
                 transition={SPRING_FAST}
-                onClick={() => selectedIdx < days.length - 1 && handleSelect(selectedIdx + 1)}
-                disabled={selectedIdx === days.length - 1}
+                onClick={() => safeIdx < days.length - 1 && handleSelect(safeIdx + 1)}
+                disabled={safeIdx === days.length - 1}
                 className="flex items-center gap-1.5 text-[11px] font-mono text-text-muted hover:text-text-secondary disabled:opacity-20 transition-colors py-1"
               >
-                {selectedIdx < days.length - 1 ? days[selectedIdx + 1].name.split(' ')[0] : ''} →
+                {safeIdx < days.length - 1 ? days[safeIdx + 1].name.split(' ')[0] : ''} →
               </motion.button>
             </div>
           </motion.div>

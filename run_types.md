@@ -1,0 +1,11 @@
+run_type/zone_2_easy
+run_type/long_run
+run_type/tempo
+run_type/threshold
+run_type/intervals
+run_type/fartlek
+run_type/hill_repeats
+run_type/recovery_run
+run_type/progression_run
+run_type/strides
+run_type/sprint_accelerations
