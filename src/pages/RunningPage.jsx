@@ -16,6 +16,7 @@ import { CSS } from '@dnd-kit/utilities';
 import Section from '../components/Section';
 import ProgressBar from '../components/ProgressBar';
 import { useUserConfig } from '../context/UserConfigContext';
+import { DEFAULT_RUN_TYPES } from '../data/defaults';
 
 const SPRING = { type: 'spring', stiffness: 320, damping: 30, mass: 0.8 };
 
@@ -48,12 +49,6 @@ const RUN_TYPE_CATALOG = [
 ];
 
 const PRESET_COLORS = ['#ffb020', '#00ccff', '#ff3b5c', '#a855f7', '#00ffaa', '#ff6b35', '#10b981', '#6b7280'];
-
-const DEFAULT_RUN_TYPES = [
-  { day: 'Monday',   name: 'Tempo Run',  desc: 'Speed intervals — builds lactate threshold', iconKey: 'zap',   color: '#ffb020' },
-  { day: 'Thursday', name: 'Zone 2 Run', desc: 'Easy pace — builds aerobic engine',          iconKey: 'heart', color: '#00ccff' },
-  { day: 'Saturday', name: 'Long Run',   desc: 'Distance focus — builds raw endurance',       iconKey: 'flame', color: '#ff3b5c' },
-];
 
 // Resolve iconKey by catalog match for types that lack it (e.g. loaded from Supabase)
 const enrichRunType = (rt) => {

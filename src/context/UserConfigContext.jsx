@@ -1,7 +1,10 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
-import { DEFAULT_GYM_DAYS, DEFAULT_LIFTS, DEFAULT_GYM_GOALS, DEFAULT_GYM_RULES, RUN_WEEKS } from '../data/defaults';
+import {
+  DEFAULT_GYM_DAYS, DEFAULT_LIFTS, DEFAULT_GYM_GOALS, DEFAULT_GYM_RULES,
+  RUN_WEEKS, DEFAULT_RUN_TYPES,
+} from '../data/defaults';
 
 const DEFAULTS = {
   gym_days:      DEFAULT_GYM_DAYS,
@@ -13,11 +16,19 @@ const DEFAULTS = {
   run_week:      0,
   run_completed: Object.fromEntries(Array.from({ length: 8 }, (_, i) => [i, [false, false, false]])),
   run_weeks:     RUN_WEEKS,
+  run_types:     DEFAULT_RUN_TYPES,
   ten_k_time:    '',
   ten_k_target:  '60:00',
 };
 
 const UserConfigContext = createContext(null);
+
+const normalizeConfig = (data = {}) => ({
+  ...DEFAULTS,
+  ...data,
+  run_weeks: Array.isArray(data.run_weeks) && data.run_weeks.length > 0 ? data.run_weeks : DEFAULTS.run_weeks,
+  run_types: Array.isArray(data.run_types) && data.run_types.length > 0 ? data.run_types : DEFAULTS.run_types,
+});
 
 export function UserConfigProvider({ children }) {
   const { user } = useAuth();
@@ -45,7 +56,7 @@ export function UserConfigProvider({ children }) {
       .maybeSingle()
       .then(({ data, error }) => {
         if (error) console.error('Failed to load config:', error.message);
-        if (data) setConfig({ ...DEFAULTS, ...data });
+        if (data) setConfig(normalizeConfig(data));
         setLoaded(true);
       });
   }, [user?.id]);

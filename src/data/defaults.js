@@ -84,3 +84,9 @@ export const RUN_WEEKS = [
   { week: 7, mon: '5km tempo @ 6:15/km', thu: '45 min easy', sat: '8 km' },
   { week: 8, mon: '3km easy + strides', thu: '30 min easy', sat: '10 km @ goal pace' },
 ];
+
+export const DEFAULT_RUN_TYPES = [
+  { day: 'Monday',   name: 'Tempo Run',  desc: 'Speed intervals — builds lactate threshold', iconKey: 'zap',   color: '#ffb020' },
+  { day: 'Thursday', name: 'Zone 2 Run', desc: 'Easy pace — builds aerobic engine',          iconKey: 'heart', color: '#00ccff' },
+  { day: 'Saturday', name: 'Long Run',   desc: 'Distance focus — builds raw endurance',       iconKey: 'flame', color: '#ff3b5c' },
+];
