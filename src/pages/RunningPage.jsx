@@ -504,7 +504,7 @@ export default function RunningPage() {
     updateConfig({
       ten_k_target: JSON.stringify(nextGoals),
       ten_k_time: nextSelected?.pace || '',
-    });
+    }, { immediate: true });
   };
   const saveGoals = (nextGoals) => {
     const sanitizedGoals = nextGoals
@@ -522,7 +522,7 @@ export default function RunningPage() {
 
     updateConfig({
       ten_k_target: JSON.stringify(sanitizedGoals),
-    });
+    }, { immediate: true });
   };
 
   const weekData = runWeeks[currentWeek] ?? {};
@@ -606,7 +606,9 @@ export default function RunningPage() {
   };
   const paceMins       = parseMins(currentRunPace);
   const targetPaceMins = parseMins(selectedGoal?.pace) || 6;
-  const pacePct        = paceMins > 0 ? Math.min(100, Math.max(0, ((targetPaceMins + 2 - paceMins) / 2) * 100)) : 0;
+  const pacePct        = paceMins > 0
+    ? Math.min(100, Math.max(8, (targetPaceMins / paceMins) * 100))
+    : 0;
 
   // Save run types → detect new types with new day keys → prompt for weekly plan
   const handleSaveRunTypes = (updated) => {
@@ -808,7 +810,7 @@ export default function RunningPage() {
             </div>
             <div className="flex items-center gap-3 mb-3">
               <input type="text" value={currentRunPace}
-                onChange={e => updateConfig({ ten_k_time: e.target.value })}
+                onChange={e => updateConfig({ ten_k_time: e.target.value }, { immediate: true })}
                 placeholder="5:00"
                 className="w-24 px-3 py-2 bg-bg-600 border border-white/[0.07] rounded-lg text-sm text-center text-text-primary font-mono font-bold outline-none focus:border-cyan/35 transition-colors" />
               <span className="text-xs text-text-muted font-body">min/km</span>

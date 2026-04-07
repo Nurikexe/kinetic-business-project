@@ -136,13 +136,21 @@ export function UserConfigProvider({ children }) {
     };
   }, [flushSave]);
 
-  const updateConfig = useCallback((updates) => {
+  const updateConfig = useCallback((updates, options = {}) => {
     setConfig(prev => {
       const next = { ...prev, ...updates };
-      scheduleSave(next);
+      if (options.immediate) {
+        pendingRef.current = next;
+        clearTimeout(timerRef.current);
+        if (user && loaded && !savingRef.current) {
+          void flushSave();
+        }
+      } else {
+        scheduleSave(next);
+      }
       return next;
     });
-  }, [scheduleSave]);
+  }, [flushSave, loaded, scheduleSave, user]);
 
   const resetConfigSlice = useCallback((sliceDefaults) => {
     setConfig(prev => {
