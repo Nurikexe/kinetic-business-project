@@ -1,7 +1,7 @@
-import { DEFAULT_GYM_GOALS, DEFAULT_GYM_RULES, DEFAULT_LIFTS, RUN_WEEKS } from './defaults';
+import { DEFAULT_GYM_GOALS, DEFAULT_GYM_RULES, DEFAULT_LIFTS, DEFAULT_RUN_TYPES, RUN_WEEKS } from './defaults';
 
 export const ONBOARDING_START_OPTIONS = [
-  { id: 'favorite', title: "Go with Nurassyl's Favourite" },
+  { id: 'favorite', title: "Go with Nurassyl's Favourite 😎" },
   { id: 'generate', title: 'Generate Workout Plan' },
   { id: 'manual', title: 'Put My Workout Manually' },
 ];
@@ -119,11 +119,7 @@ const PRESETS = {
         { id: 'fav-mix-6', name: 'Reverse Flyes', sets: 3, reps: '15', weight: '' },
       ] },
     ],
-    runTypes: [
-      { id: 'fav-run-1', day: 'Monday', name: 'Zone 2 Run', desc: 'Easy aerobic builder', iconKey: 'heart', color: '#71d7c9' },
-      { id: 'fav-run-2', day: 'Thursday', name: 'Tempo Run', desc: 'Controlled threshold effort', iconKey: 'zap', color: '#d6ee63' },
-      { id: 'fav-run-3', day: 'Saturday', name: 'Long Run', desc: 'Distance focus and endurance', iconKey: 'flame', color: '#ff6b6b' },
-    ],
+    runTypes: DEFAULT_RUN_TYPES.map((item, idx) => ({ ...item, id: `fav-run-${idx + 1}` })),
   },
   PPL_3: {
     title: 'Push Pull Legs',
