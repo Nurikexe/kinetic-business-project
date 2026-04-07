@@ -40,6 +40,7 @@ export default function OnboardingModal({ displayName, onApply }) {
   const [mode, setMode] = useState(null);
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState({});
+  const [direction, setDirection] = useState(1);
 
   const currentQuestion = ONBOARDING_QUESTIONS[step];
 
@@ -50,6 +51,7 @@ export default function OnboardingModal({ displayName, onApply }) {
     }
     setMode(nextMode);
     setStep(0);
+    setDirection(1);
     setAnswers({});
   };
 
@@ -60,6 +62,7 @@ export default function OnboardingModal({ displayName, onApply }) {
       return;
     }
     setAnswers(nextAnswers);
+    setDirection(1);
     setStep(step + 1);
   };
 
@@ -170,63 +173,83 @@ export default function OnboardingModal({ displayName, onApply }) {
             </div>
           ) : (
             <div className="grid md:grid-cols-[0.92fr_1.08fr]">
-              <div className="relative min-h-[220px] md:min-h-[560px] overflow-hidden">
-                <img src={QUESTION_VISUALS[step]} alt="" className="h-full w-full object-cover" />
-                <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,11,13,0.12)_0%,rgba(10,11,13,0.7)_70%,rgba(10,11,13,0.9)_100%)]" />
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(113,215,201,0.28),transparent_34%)]" />
-                <div className="absolute left-5 right-5 bottom-5 rounded-[26px] border border-white/[0.08] bg-bg-900/38 p-4 backdrop-blur-xl">
-                  <p className="font-mono text-[10px] tracking-[0.28em] uppercase text-cyan/75 mb-2">
-                    Question {step + 1} of {ONBOARDING_QUESTIONS.length}
-                  </p>
-                  <h3 className="font-display text-[26px] leading-tight text-text-primary">
-                    {currentQuestion.title}
-                  </h3>
-                </div>
-              </div>
-
-              <div className="p-5 md:p-6">
-                <div className="flex items-center gap-3 mb-5">
-                  <button
-                    onClick={() => {
-                      if (step === 0) {
-                        setMode(null);
-                      } else {
-                        setStep(step - 1);
-                      }
-                    }}
-                    className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/[0.06] bg-bg-800/80 text-text-secondary hover:text-text-primary transition-colors"
-                  >
-                    <ArrowLeft size={16} />
-                  </button>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-mono text-[10px] tracking-[0.28em] uppercase text-cyan/70">
-                      Generate workout plan
-                    </p>
-                    <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/[0.05]">
-                      <motion.div
-                        animate={{ width: `${((step + 1) / ONBOARDING_QUESTIONS.length) * 100}%` }}
-                        transition={SPRING}
-                        className="h-full rounded-full bg-gradient-to-r from-mint to-cyan"
-                      />
+              <AnimatePresence mode="wait" custom={direction}>
+                <motion.div
+                  key={step}
+                  custom={direction}
+                  variants={{
+                    enter: (dir) => ({ opacity: 0, x: dir > 0 ? 34 : -34, filter: 'blur(6px)' }),
+                    center: { opacity: 1, x: 0, filter: 'blur(0px)' },
+                    exit: (dir) => ({ opacity: 0, x: dir > 0 ? -24 : 24, filter: 'blur(4px)' }),
+                  }}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
+                  className="grid md:col-span-2 md:grid-cols-[0.92fr_1.08fr]"
+                >
+                  <div className="relative min-h-[220px] md:min-h-[560px] overflow-hidden">
+                    <img src={QUESTION_VISUALS[step]} alt="" className="h-full w-full object-cover" />
+                    <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,11,13,0.12)_0%,rgba(10,11,13,0.7)_70%,rgba(10,11,13,0.9)_100%)]" />
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(113,215,201,0.28),transparent_34%)]" />
+                    <div className="absolute left-5 right-5 bottom-5 rounded-[26px] border border-white/[0.08] bg-bg-900/38 p-4 backdrop-blur-xl">
+                      <p className="font-mono text-[10px] tracking-[0.28em] uppercase text-cyan/75 mb-2">
+                        Question {step + 1} of {ONBOARDING_QUESTIONS.length}
+                      </p>
+                      <h3 className="font-display text-[26px] leading-tight text-text-primary">
+                        {currentQuestion.title}
+                      </h3>
                     </div>
                   </div>
-                </div>
 
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {currentQuestion.options.map((option) => (
-                    <motion.button
-                      key={option.id}
-                      whileHover={{ y: -2 }}
-                      whileTap={{ scale: 0.98 }}
-                      transition={SPRING}
-                      onClick={() => handleAnswer(option.id)}
-                      className="min-h-[112px] rounded-[26px] border border-white/[0.06] bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01))] px-4 py-4 text-left text-text-primary transition-colors hover:border-mint/18 hover:bg-bg-600/78"
-                    >
-                      <span className="font-body text-[15px] font-semibold">{option.label}</span>
-                    </motion.button>
-                  ))}
-                </div>
-              </div>
+                  <div className="p-5 md:p-6">
+                    <div className="flex items-center gap-3 mb-5">
+                      <button
+                        onClick={() => {
+                          if (step === 0) {
+                            setMode(null);
+                          } else {
+                            setDirection(-1);
+                            setStep(step - 1);
+                          }
+                        }}
+                        className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/[0.06] bg-bg-800/80 text-text-secondary hover:text-text-primary transition-colors"
+                      >
+                        <ArrowLeft size={16} />
+                      </button>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-mono text-[10px] tracking-[0.28em] uppercase text-cyan/70">
+                          Generate workout plan
+                        </p>
+                        <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/[0.05]">
+                          <motion.div
+                            animate={{ width: `${((step + 1) / ONBOARDING_QUESTIONS.length) * 100}%` }}
+                            transition={SPRING}
+                            className="h-full rounded-full bg-gradient-to-r from-mint to-cyan"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {currentQuestion.options.map((option, optionIdx) => (
+                        <motion.button
+                          key={option.id}
+                          initial={{ opacity: 0, y: 14 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: optionIdx * 0.05, duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
+                          whileHover={{ y: -2 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => handleAnswer(option.id)}
+                          className="min-h-[112px] rounded-[26px] border border-white/[0.06] bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01))] px-4 py-4 text-left text-text-primary transition-colors hover:border-mint/18 hover:bg-bg-600/78"
+                        >
+                          <span className="font-body text-[15px] font-semibold">{option.label}</span>
+                        </motion.button>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
             </div>
           )}
         </motion.div>

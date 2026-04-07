@@ -20,6 +20,8 @@ import { useUserConfig } from '../context/UserConfigContext';
 import { DEFAULT_RUN_TYPES } from '../data/defaults';
 
 const SPRING = { type: 'spring', stiffness: 320, damping: 30, mass: 0.8 };
+const RUN_PACE_MIN = 3;
+const RUN_PACE_MAX = 12;
 
 // ── Icon system ────────────────────────────────────────────────
 const ICON_MAP = {
@@ -611,6 +613,12 @@ export default function RunningPage() {
     const [m, s] = str.split(':');
     return parseInt(m || 0) + (parseInt(s || 0) / 60);
   };
+  const formatMins = (value) => {
+    const totalSeconds = Math.max(0, Math.round(value * 60));
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${String(seconds).padStart(2, '0')}`;
+  };
   const paceMins       = parseMins(currentRunPace);
   const targetPaceMins = parseMins(selectedGoal?.pace) || 6;
   const pacePct        = paceMins > 0
@@ -651,6 +659,14 @@ export default function RunningPage() {
     }
     updateConfig({ run_weeks: newWeeks, run_completed: { ...runCompleted, ...newCompleted } });
     setPendingNewTypes(null);
+  };
+
+  const updateSelectedGoalPace = (nextValue) => {
+    const nextPace = formatMins(nextValue);
+    saveGoals(goals.map(goal =>
+      goal.id === selectedGoal?.id ? { ...goal, currentPace: nextPace } : goal
+    ));
+    updateConfig({ ten_k_time: nextPace }, { immediate: true });
   };
 
   return (
@@ -828,7 +844,15 @@ export default function RunningPage() {
                 className="w-24 px-3 py-2 bg-bg-600 border border-white/[0.07] rounded-lg text-sm text-center text-text-primary font-mono font-bold outline-none focus:border-cyan/35 transition-colors" />
               <span className="text-xs text-text-muted font-body">min/km</span>
             </div>
-            <ProgressBar value={pacePct} max={100} accent="cyan" />
+            <ProgressBar
+              value={paceMins || RUN_PACE_MAX}
+              min={RUN_PACE_MIN}
+              max={RUN_PACE_MAX}
+              step={1 / 12}
+              accent="cyan"
+              invert
+              onChange={updateSelectedGoalPace}
+            />
           </div>
 
           {goals.map((goal, idx) => (

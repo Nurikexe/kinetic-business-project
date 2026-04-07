@@ -252,7 +252,15 @@ export default function GymPage() {
                     → {lift.prefix || ''}{lift.target}{lift.unit}
                   </span>
                 </div>
-                <ProgressBar value={lift.current} max={lift.target} />
+                <ProgressBar
+                  value={lift.current}
+                  max={lift.target}
+                  onChange={(nextValue) => updateConfig({
+                    lifts: lifts.map(l =>
+                      l.key === lift.key ? { ...l, current: Math.round(nextValue) } : l
+                    )
+                  })}
+                />
               </motion.div>
             );
           })}
