@@ -61,6 +61,18 @@ const enrichRunType = (rt) => {
 const dayToKey    = (day) => (day || '').slice(0, 3).toLowerCase(); // 'Monday' → 'mon'
 const keyToLabel  = (key) => key.charAt(0).toUpperCase() + key.slice(1); // 'mon' → 'Mon'
 const getRunTypeId = (rt, i) => String(rt?.id || rt?.key || `${rt?.day || 'day'}-${rt?.name || 'run'}-${i}`);
+const WEEKDAY_ORDER = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const syncRunTypeDays = (items) => {
+  const orderedSlots = [...items.map(rt => rt.day || 'Monday')].sort(
+    (a, b) => WEEKDAY_ORDER.indexOf(a) - WEEKDAY_ORDER.indexOf(b)
+  );
+
+  return items.map((rt, idx) => ({
+    ...rt,
+    day: orderedSlots[idx] || rt.day || 'Monday',
+  }));
+};
+
 const parseGoalTargets = (value) => {
   const fallback = [{ id: 'goal-1', distance: '10K', pace: '6:00' }];
   if (!value) return fallback;
@@ -563,7 +575,8 @@ export default function RunningPage() {
     const oldIdx = typeIds.indexOf(active.id);
     const newIdx = typeIds.indexOf(over.id);
     if (oldIdx < 0 || newIdx < 0) return;
-    updateConfig({ run_types: arrayMove([...runTypes], oldIdx, newIdx) });
+    const reordered = arrayMove([...runTypes], oldIdx, newIdx);
+    updateConfig({ run_types: syncRunTypeDays(reordered) });
   };
 
   const activeRunType = activeTypeId == null ? null : runTypes[typeIds.indexOf(activeTypeId)];
@@ -746,9 +759,9 @@ export default function RunningPage() {
 
       {/* Goal */}
       <Section icon={<Target size={15} />} title="Goals" accent="cyan">
-        <div className="bg-bg-700/60 border border-white/[0.06] rounded-2xl p-4 backdrop-blur-sm">
-          <div className="flex items-center justify-between mb-3">
-            <span className="font-display text-sm tracking-[2px] uppercase">Current Pace</span>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-[10px] tracking-[2px] uppercase text-text-muted">Current pace and targets</span>
             {editingTarget ? (
               <motion.button
                 onClick={() => setEditingTarget(false)}
@@ -767,67 +780,77 @@ export default function RunningPage() {
               </motion.button>
             )}
           </div>
-          <div className="flex items-center gap-3 mb-3">
-            <input type="text" value={currentRunPace}
-              onChange={e => updateConfig({ ten_k_time: e.target.value })}
-              placeholder="5:00"
-              className="w-24 px-3 py-2 bg-bg-600 border border-white/[0.07] rounded-lg text-sm text-center text-text-primary font-mono font-bold outline-none focus:border-cyan/35 transition-colors" />
-            <span className="text-xs text-text-muted font-body">min/km</span>
-            <div className="flex-1" />
-            <span className={`font-mono text-xs font-bold ${paceMins > 0 && paceMins <= targetPaceMins ? 'text-cyan' : 'text-text-muted'}`}>
-              {paceMins > 0 ? (paceMins <= targetPaceMins ? 'Goal pace reached!' : `${(paceMins - targetPaceMins).toFixed(2)} min/km to go`) : ''}
-            </span>
-          </div>
-          <ProgressBar value={pacePct} max={100} accent="cyan" />
 
-          <div className="mt-4 pt-4 border-t border-white/[0.05] space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="font-mono text-[10px] tracking-[2px] uppercase text-text-muted">Targets</span>
-              {editingTarget && (
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => saveGoals([...goals, { id: `goal-${Date.now()}`, distance: '5K', pace: '5:00' }])}
-                  className="text-[11px] font-body text-cyan hover:text-text-primary transition-colors"
-                >
-                  Add Goal
-                </motion.button>
-              )}
+          <div className="bg-bg-700/60 border border-white/[0.06] rounded-2xl p-4 backdrop-blur-sm">
+            <div className="flex items-center gap-3 mb-3">
+              <span className="font-display text-sm tracking-[2px] uppercase">Current Pace</span>
+              <div className="flex-1" />
+              <span className={`font-mono text-xs font-bold ${paceMins > 0 && paceMins <= targetPaceMins ? 'text-cyan' : 'text-text-muted'}`}>
+                {paceMins > 0 ? (paceMins <= targetPaceMins ? 'Goal pace reached!' : `${(paceMins - targetPaceMins).toFixed(2)} min/km to go`) : ''}
+              </span>
             </div>
+            <div className="flex items-center gap-3 mb-3">
+              <input type="text" value={currentRunPace}
+                onChange={e => updateConfig({ ten_k_time: e.target.value })}
+                placeholder="5:00"
+                className="w-24 px-3 py-2 bg-bg-600 border border-white/[0.07] rounded-lg text-sm text-center text-text-primary font-mono font-bold outline-none focus:border-cyan/35 transition-colors" />
+              <span className="text-xs text-text-muted font-body">min/km</span>
+            </div>
+            <ProgressBar value={pacePct} max={100} accent="cyan" />
+          </div>
 
-            {goals.map((goal) => (
-              <div key={goal.id} className="flex items-center gap-2 bg-bg-800/70 border border-white/[0.05] rounded-xl px-3 py-2.5">
-                {editingTarget ? (
-                  <>
-                    <input
-                      type="text"
-                      value={goal.distance}
-                      onChange={(e) => saveGoals(goals.map(item => item.id === goal.id ? { ...item, distance: e.target.value.toUpperCase() } : item))}
-                      className="w-16 bg-transparent border-b border-cyan/40 text-center font-mono text-[11px] text-text-primary outline-none"
-                    />
-                    <input
-                      type="text"
-                      value={goal.pace}
-                      onChange={(e) => saveGoals(goals.map(item => item.id === goal.id ? { ...item, pace: e.target.value } : item))}
-                      className="w-14 bg-transparent border-b border-cyan/40 text-center font-mono text-[11px] text-text-primary outline-none"
-                    />
-                    <span className="font-mono text-[11px] text-text-muted">/km</span>
-                    <button
-                      onClick={() => saveGoals(goals.filter(item => item.id !== goal.id))}
-                      disabled={goals.length === 1}
-                      className="ml-auto text-[11px] text-text-muted hover:text-red disabled:opacity-30 transition-colors"
-                    >
-                      <Trash2 size={12} />
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <span className="font-display text-sm tracking-[2px] uppercase text-text-primary">{goal.distance}</span>
-                    <span className="font-mono text-[11px] text-text-muted">{goal.pace}/km</span>
-                  </>
+          {goals.map((goal, idx) => (
+            <div key={goal.id} className="bg-bg-700/60 border border-white/[0.06] rounded-2xl p-4 backdrop-blur-sm">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-mono text-[10px] tracking-[2px] uppercase text-text-muted mb-1">
+                    Goal {idx + 1}
+                  </p>
+                  {editingTarget ? (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={goal.distance}
+                        onChange={(e) => saveGoals(goals.map(item => item.id === goal.id ? { ...item, distance: e.target.value.toUpperCase() } : item))}
+                        className="w-16 px-2 py-1.5 bg-bg-600 border border-white/[0.07] rounded-lg text-center font-mono text-[11px] text-text-primary outline-none focus:border-cyan/35"
+                      />
+                      <input
+                        type="text"
+                        value={goal.pace}
+                        onChange={(e) => saveGoals(goals.map(item => item.id === goal.id ? { ...item, pace: e.target.value } : item))}
+                        className="w-16 px-2 py-1.5 bg-bg-600 border border-white/[0.07] rounded-lg text-center font-mono text-[11px] text-text-primary outline-none focus:border-cyan/35"
+                      />
+                      <span className="font-mono text-[11px] text-text-muted">/km</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-baseline gap-2">
+                      <span className="font-display text-xl tracking-[2px] uppercase text-text-primary">{goal.distance}</span>
+                      <span className="font-mono text-sm text-text-muted">{goal.pace}/km</span>
+                    </div>
+                  )}
+                </div>
+                {editingTarget && (
+                  <button
+                    onClick={() => saveGoals(goals.filter(item => item.id !== goal.id))}
+                    disabled={goals.length === 1}
+                    className="text-[11px] text-text-muted hover:text-red disabled:opacity-30 transition-colors"
+                  >
+                    <Trash2 size={13} />
+                  </button>
                 )}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
+
+          {editingTarget && (
+            <motion.button
+              whileTap={{ scale: 0.98 }}
+              onClick={() => saveGoals([...goals, { id: `goal-${Date.now()}`, distance: '5K', pace: '5:00' }])}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-cyan/20 text-cyan hover:bg-cyan/[0.06] transition-colors text-sm font-body"
+            >
+              <Plus size={13} /> Add Goal
+            </motion.button>
+          )}
         </div>
       </Section>
 

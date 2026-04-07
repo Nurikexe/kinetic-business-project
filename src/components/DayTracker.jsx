@@ -38,13 +38,13 @@ function DayCard({ done, isCurrent, label, dayLabel, onToggle, attributes = {}, 
           : done
           ? 'bg-mint/[0.07] border-mint/20'
           : isCurrent
-          ? 'bg-bg-600 border-white/[0.08]'
-          : 'bg-bg-700/60 border-white/[0.04] hover:border-white/[0.08]'
+          ? 'bg-bg-600 border-white/[0.08] cursor-pointer'
+          : 'bg-bg-700/60 border-white/[0.04] hover:border-white/[0.08] cursor-pointer'
       }`}
     >
       {isCurrent && !done && !isOverlay && (
         <motion.div
-          className="absolute inset-0 rounded-2xl border border-mint/20"
+          className="absolute inset-0 rounded-2xl border border-mint/20 pointer-events-none"
           animate={{ opacity: [0.3, 0.8, 0.3] }}
           transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
         />
