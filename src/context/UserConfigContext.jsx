@@ -21,6 +21,24 @@ const DEFAULTS = {
   ten_k_target:  '10K|6:00',
 };
 
+const DEFAULT_GYM_CONFIG = {
+  gym_days: DEFAULTS.gym_days,
+  gym_day_count: DEFAULTS.gym_day_count,
+  completed: DEFAULTS.completed,
+  lifts: DEFAULTS.lifts,
+  gym_goals: DEFAULTS.gym_goals,
+  gym_rules: DEFAULTS.gym_rules,
+};
+
+const DEFAULT_RUNNING_CONFIG = {
+  run_week: DEFAULTS.run_week,
+  run_completed: DEFAULTS.run_completed,
+  run_weeks: DEFAULTS.run_weeks,
+  run_types: DEFAULTS.run_types,
+  ten_k_time: DEFAULTS.ten_k_time,
+  ten_k_target: JSON.stringify([{ id: 'goal-1', distance: '10K', pace: '6:00', selected: true }]),
+};
+
 const UserConfigContext = createContext(null);
 
 const normalizeConfig = (data = {}) => ({
@@ -126,8 +144,28 @@ export function UserConfigProvider({ children }) {
     });
   }, [scheduleSave]);
 
+  const resetConfigSlice = useCallback((sliceDefaults) => {
+    setConfig(prev => {
+      const next = normalizeConfig({ ...prev, ...sliceDefaults });
+      pendingRef.current = next;
+      clearTimeout(timerRef.current);
+      if (user && loaded) {
+        void flushSave();
+      }
+      return next;
+    });
+  }, [flushSave, loaded, user]);
+
+  const resetGymConfig = useCallback(() => {
+    resetConfigSlice(DEFAULT_GYM_CONFIG);
+  }, [resetConfigSlice]);
+
+  const resetRunningConfig = useCallback(() => {
+    resetConfigSlice(DEFAULT_RUNNING_CONFIG);
+  }, [resetConfigSlice]);
+
   return (
-    <UserConfigContext.Provider value={{ config, updateConfig, loaded }}>
+    <UserConfigContext.Provider value={{ config, updateConfig, loaded, resetGymConfig, resetRunningConfig }}>
       {children}
     </UserConfigContext.Provider>
   );

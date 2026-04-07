@@ -5,9 +5,10 @@ import {
   Trophy, Dumbbell, Calendar, Loader2,
   Trash2, FileText, FileJson, Printer, AlignLeft,
   LayoutList, CalendarDays, CalendarRange,
-  CheckSquare, Square, X, Filter,
+  CheckSquare, Square, X, Filter, RotateCcw, Wind,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useUserConfig } from '../context/UserConfigContext';
 import { supabase } from '../lib/supabase';
 
 const SPRING = { type: 'spring', stiffness: 320, damping: 30, mass: 0.8 };
@@ -293,6 +294,7 @@ function GroupHeader({ label, count }) {
 
 export default function CabinetPage() {
   const { user, displayName, logout } = useAuth();
+  const { resetGymConfig, resetRunningConfig } = useUserConfig();
   const [workouts, setWorkouts] = useState([]);
   const [fetching, setFetching] = useState(true);
 
@@ -436,6 +438,43 @@ export default function CabinetPage() {
             <p className="font-mono text-[9px] tracking-[2px] uppercase text-text-muted">{label}</p>
           </div>
         ))}
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.18, ...SPRING }}
+        className="mb-4 bg-bg-700/50 border border-white/[0.06] rounded-2xl p-4"
+      >
+        <div className="flex items-center gap-2 mb-3">
+          <RotateCcw size={13} className="text-mint/70" />
+          <span className="font-mono text-[10px] tracking-[3px] uppercase text-text-muted">Restore Defaults</span>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={() => {
+              if (window.confirm('Reset your gym plan to the default template?')) {
+                resetGymConfig();
+              }
+            }}
+            className="flex items-center justify-center gap-2 rounded-xl border border-white/[0.06] bg-bg-800/70 px-3 py-3 text-sm text-text-secondary hover:text-mint hover:border-mint/20 transition-colors"
+          >
+            <Dumbbell size={13} />
+            Reset Gym
+          </motion.button>
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={() => {
+              if (window.confirm('Reset your running plan to the default template?')) {
+                resetRunningConfig();
+              }
+            }}
+            className="flex items-center justify-center gap-2 rounded-xl border border-white/[0.06] bg-bg-800/70 px-3 py-3 text-sm text-text-secondary hover:text-cyan hover:border-cyan/20 transition-colors"
+          >
+            <Wind size={13} />
+            Reset Running
+          </motion.button>
+        </div>
       </motion.div>
 
       {/* Export section */}

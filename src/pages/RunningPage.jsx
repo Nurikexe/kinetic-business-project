@@ -74,18 +74,21 @@ const syncRunTypeDays = (items) => {
 };
 
 const parseGoalTargets = (value) => {
-  const fallback = [{ id: 'goal-1', distance: '10K', pace: '6:00' }];
+  const fallback = [{ id: 'goal-1', distance: '10K', pace: '6:00', selected: true }];
   if (!value) return fallback;
 
   if (value.trim().startsWith('[')) {
     try {
       const parsed = JSON.parse(value);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed.map((goal, i) => ({
+        const normalized = parsed.map((goal, i) => ({
           id: goal.id || `goal-${i + 1}`,
           distance: (goal.distance || '10K').toUpperCase(),
           pace: goal.pace || '6:00',
+          selected: Boolean(goal.selected),
         }));
+        if (!normalized.some(goal => goal.selected)) normalized[0].selected = true;
+        return normalized;
       }
     } catch {
       return fallback;
@@ -93,7 +96,7 @@ const parseGoalTargets = (value) => {
   }
 
   const [distance, pace] = value.includes('|') ? value.split('|') : ['10K', value];
-  return [{ id: 'goal-1', distance: (distance || '10K').toUpperCase(), pace: pace || '6:00' }];
+  return [{ id: 'goal-1', distance: (distance || '10K').toUpperCase(), pace: pace || '6:00', selected: true }];
 };
 
 // ── Sortable run type card ─────────────────────────────────────
@@ -494,17 +497,23 @@ export default function RunningPage() {
 
   const goals = parseGoalTargets(config.ten_k_target);
   const goalsSummary = goals.map(goal => `${goal.distance} @ ${goal.pace}/km`).join(' · ');
+  const selectedGoal = goals.find(goal => goal.selected) || goals[0];
   const saveGoals = (nextGoals) => {
+    const sanitizedGoals = nextGoals
+      .filter(goal => goal.distance.trim() || goal.pace.trim())
+      .map((goal, i) => ({
+        id: goal.id || `goal-${i + 1}`,
+        distance: (goal.distance || '10K').toUpperCase(),
+        pace: goal.pace || '6:00',
+        selected: Boolean(goal.selected),
+      }));
+
+    if (sanitizedGoals.length > 0 && !sanitizedGoals.some(goal => goal.selected)) {
+      sanitizedGoals[0].selected = true;
+    }
+
     updateConfig({
-      ten_k_target: JSON.stringify(
-        nextGoals
-          .filter(goal => goal.distance.trim() || goal.pace.trim())
-          .map((goal, i) => ({
-            id: goal.id || `goal-${i + 1}`,
-            distance: (goal.distance || '10K').toUpperCase(),
-            pace: goal.pace || '6:00',
-          }))
-      ),
+      ten_k_target: JSON.stringify(sanitizedGoals),
     });
   };
 
@@ -588,7 +597,7 @@ export default function RunningPage() {
     return parseInt(m || 0) + (parseInt(s || 0) / 60);
   };
   const paceMins       = parseMins(currentRunPace);
-  const targetPaceMins = Math.min(...goals.map(goal => parseMins(goal.pace) || 6));
+  const targetPaceMins = parseMins(selectedGoal?.pace) || 6;
   const pacePct        = paceMins > 0 ? Math.min(100, Math.max(0, ((targetPaceMins + 2 - paceMins) / 2) * 100)) : 0;
 
   // Save run types → detect new types with new day keys → prompt for weekly plan
@@ -800,10 +809,21 @@ export default function RunningPage() {
           </div>
 
           {goals.map((goal, idx) => (
-            <div key={goal.id} className="bg-bg-700/60 border border-white/[0.06] rounded-2xl p-4 backdrop-blur-sm">
+            <button
+              key={goal.id}
+              type="button"
+              onClick={() => !editingTarget && saveGoals(goals.map(item => ({ ...item, selected: item.id === goal.id })))}
+              className={`w-full text-left bg-bg-700/60 border rounded-2xl p-4 backdrop-blur-sm transition-colors ${
+                goal.id === selectedGoal?.id
+                  ? 'border-cyan/25 bg-cyan/[0.08]'
+                  : 'border-white/[0.06] hover:border-white/[0.12]'
+              }`}
+            >
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="font-mono text-[10px] tracking-[2px] uppercase text-text-muted mb-1">
+                  <p className={`font-mono text-[10px] tracking-[2px] uppercase mb-1 ${
+                    goal.id === selectedGoal?.id ? 'text-cyan/80' : 'text-text-muted'
+                  }`}>
                     Goal {idx + 1}
                   </p>
                   {editingTarget ? (
@@ -811,12 +831,14 @@ export default function RunningPage() {
                       <input
                         type="text"
                         value={goal.distance}
+                        onClick={(e) => e.stopPropagation()}
                         onChange={(e) => saveGoals(goals.map(item => item.id === goal.id ? { ...item, distance: e.target.value.toUpperCase() } : item))}
                         className="w-16 px-2 py-1.5 bg-bg-600 border border-white/[0.07] rounded-lg text-center font-mono text-[11px] text-text-primary outline-none focus:border-cyan/35"
                       />
                       <input
                         type="text"
                         value={goal.pace}
+                        onClick={(e) => e.stopPropagation()}
                         onChange={(e) => saveGoals(goals.map(item => item.id === goal.id ? { ...item, pace: e.target.value } : item))}
                         className="w-16 px-2 py-1.5 bg-bg-600 border border-white/[0.07] rounded-lg text-center font-mono text-[11px] text-text-primary outline-none focus:border-cyan/35"
                       />
@@ -831,7 +853,12 @@ export default function RunningPage() {
                 </div>
                 {editingTarget && (
                   <button
-                    onClick={() => saveGoals(goals.filter(item => item.id !== goal.id))}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const nextGoals = goals.filter(item => item.id !== goal.id);
+                      saveGoals(nextGoals);
+                    }}
                     disabled={goals.length === 1}
                     className="text-[11px] text-text-muted hover:text-red disabled:opacity-30 transition-colors"
                   >
@@ -839,7 +866,7 @@ export default function RunningPage() {
                   </button>
                 )}
               </div>
-            </div>
+            </button>
           ))}
 
           {editingTarget && (
