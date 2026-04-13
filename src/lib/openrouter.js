@@ -6,6 +6,29 @@ function getKey() {
 }
 
 /**
+ * Gemma doesn't support the 'system' role — merge system prompt
+ * into the first user message so it works with Gemma models.
+ */
+function normalizeMessages(messages) {
+  const systemMsg = messages.find(m => m.role === 'system');
+  if (!systemMsg) return messages;
+
+  const rest = messages.filter(m => m.role !== 'system');
+  const firstUser = rest.findIndex(m => m.role === 'user');
+
+  if (firstUser === -1) {
+    return [{ role: 'user', content: systemMsg.content }, ...rest];
+  }
+
+  const merged = [...rest];
+  merged[firstUser] = {
+    ...merged[firstUser],
+    content: `${systemMsg.content}\n\n${merged[firstUser].content}`,
+  };
+  return merged;
+}
+
+/**
  * Stream a chat completion from Gemma via OpenRouter.
  * @param {Array} messages - OpenAI-format messages array
  * @param {function} onChunk - called with each text chunk as it arrives
@@ -20,7 +43,7 @@ export async function streamChat(messages, onChunk) {
       'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : '',
       'X-Title': 'KINETIC',
     },
-    body: JSON.stringify({ model: MODEL, messages, stream: true }),
+    body: JSON.stringify({ model: MODEL, messages: normalizeMessages(messages), stream: true }),
   });
 
   if (!res.ok) {
@@ -70,7 +93,7 @@ export async function chat(messages) {
       'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : '',
       'X-Title': 'KINETIC',
     },
-    body: JSON.stringify({ model: MODEL, messages }),
+    body: JSON.stringify({ model: MODEL, messages: normalizeMessages(messages) }),
   });
 
   if (!res.ok) {
