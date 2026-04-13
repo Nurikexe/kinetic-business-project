@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;700;900&amp;family=Inter:wght@300;400;600;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-container": "#4d5d00",
+                        "secondary-dim": "#00d4ec",
+                        "on-error-container": "#ffd2c8",
+                        "on-primary-fixed-variant": "#566800",
+                        "secondary": "#00e3fd",
+                        "on-primary-fixed": "#3d4a00",
+                        "primary-container": "#d4fb00",
+                        "on-secondary-fixed": "#003a42",
+                        "primary": "#f5ffc5",
+                        "on-tertiary": "#665600",
+                        "surface-dim": "#0e0e0e",
+                        "on-error": "#450900",
+                        "surface-container-high": "#1f1f1f",
+                        "background": "#0e0e0e",
+                        "surface-container-highest": "#262626",
+                        "primary-fixed": "#d4fb00",
+                        "on-surface-variant": "#ababab",
+                        "tertiary-fixed-dim": "#eecd34",
+                        "on-secondary": "#004d57",
+                        "on-surface": "#ffffff",
+                        "error-dim": "#d53d18",
+                        "on-tertiary-fixed": "#473b00",
+                        "surface-container-low": "#131313",
+                        "on-secondary-fixed-variant": "#005964",
+                        "surface-tint": "#f5ffc5",
+                        "error-container": "#b92902",
+                        "on-tertiary-fixed-variant": "#685700",
+                        "surface": "#0e0e0e",
+                        "on-tertiary-container": "#5c4d00",
+                        "outline-variant": "#484848",
+                        "inverse-on-surface": "#555555",
+                        "surface-container": "#191919",
+                        "outline": "#757575",
+                        "on-secondary-container": "#e8fbff",
+                        "surface-variant": "#262626",
+                        "surface-bright": "#2c2c2c",
+                        "surface-container-lowest": "#000000",
+                        "error": "#ff7351",
+                        "inverse-surface": "#f9f9f9",
+                        "tertiary-dim": "#eecd34",
+                        "on-background": "#ffffff",
+                        "secondary-container": "#006875",
+                        "tertiary-fixed": "#fddb42",
+                        "inverse-primary": "#556600",
+                        "tertiary": "#ffeba0",
+                        "on-primary": "#556600",
+                        "secondary-fixed-dim": "#00d7f0",
+                        "secondary-fixed": "#26e6ff",
+                        "primary-dim": "#c9ef00",
+                        "primary-fixed-dim": "#c7ec00",
+                        "tertiary-container": "#fddb42"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Lexend"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .text-glow {
+            text-shadow: 0 0 15px rgba(212, 251, 0, 0.4);
+        }
+        .glass-panel {
+            background: rgba(38, 38, 38, 0.6);
+            backdrop-filter: blur(20px);
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+        }
+    </style>
+<style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar -->
+<header class="bg-[#0e0e0e] docked full-width top-0 z-50 flex justify-between items-center w-full px-6 py-4 sticky">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full overflow-hidden bg-surface-container border border-outline-variant/20">
+<img alt="User athlete profile avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBOFNM-QSdENqYgXJokPuZaKDzpZpU85VYZtDJ4wOiVR2dXyYmPN-qfav5mhqg5QU_E6ExBho-u5zVE3DFZKB0GaVC7OhXux8esFzXrUCMHTGYE6NcQwAPY8SrL4RJEpvWXxBISYponqL6XY56yMXdUrb724XGYa5L3nQxFZUtFLjC_ToZj3vax-6n2pG4yOYciAnaSpoIZ7rDaKmHirj|SYyW9yXwETZwOYrKH8vHRd-DAnt_gsdudknuYttxB5VdOpgKJjbVJhIPL"/>
+</div>
+<span class="font-['Lexend'] font-bold tracking-tighter uppercase text-2xl font-black italic tracking-tighter text-[#d4fb00]">KINETIC</span>
+</div>
+<button class="text-zinc-500 hover:opacity-80 transition-opacity Active:scale-95 duration-150">
+<span class="material-symbols-outlined text-2xl">notifications</span>
+</button>
+</header>
+<main class="max-w-5xl mx-auto px-6 pt-8 pb-32">
+<!-- Profile Hero Section -->
+<section class="relative mb-12 flex flex-col md:flex-row items-end gap-8">
+<div class="w-full md:w-1/3 aspect-[4/5] rounded-lg overflow-hidden bg-surface-container-low group">
+<img class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700" data-alt="Full body shot of a muscular athlete standing in a dark industrial gym setting, high contrast shadows and cool blue rim lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCtNjnzExnR8AHrTgCoh8kpr9zHYpzxR2JNIKcL0XjgdZ9eR-Pta4wOAzxLM72sd9dEAHo9FZq83iuIuamyHuTiTwONnJZAqtOPuf8DDRNkCXrgi-aEEPTQgppM8IuDLcmkKK-AmeKXRF3wwjXbMc3QPwTbI3HAkYdaR3F6IAfKZsOneNigALEGLdxkqwdN8rQeYUtiSB9mi6n5isyNjJeCOyIcPXx9MUn42LQzyoRhWZJPBiz4r-SOblkPXYV19VzgVzLJUVchGj6M"/>
+<div class="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent"></div>
+</div>
+<div class="w-full md:w-2/3 pb-4">
+<div class="flex flex-col gap-2">
+<span class="font-headline font-black text-6xl md:text-8xl tracking-tighter uppercase italic leading-none text-glow">MARCUS REED</span>
+<p class="font-body text-on-surface-variant max-w-lg text-lg leading-relaxed mt-4">
+                        Hybrid performance athlete. Specializing in high-intensity functional strength and ultra-endurance trail running. Breaking limits, one session at a time.
+                    </p>
+<div class="flex gap-4 mt-6">
+<div class="flex flex-col">
+<span class="font-headline font-bold text-2xl">742</span>
+<span class="font-label text-[10px] uppercase tracking-widest text-on-surface-variant">Activities</span>
+</div>
+<div class="w-px h-10 bg-outline-variant/30"></div>
+<div class="flex flex-col">
+<span class="font-headline font-bold text-2xl">12.4k</span>
+<span class="font-label text-[10px] uppercase tracking-widest text-on-surface-variant">Followers</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Bento Grid: Personal Records -->
+<section class="mb-12">
+<div class="flex justify-between items-baseline mb-6">
+<h2 class="font-headline font-black text-3xl uppercase italic tracking-tighter">Personal Records</h2>
+<span class="font-label text-xs uppercase tracking-widest text-secondary">Verified Peak Performance</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+<!-- 5k Time -->
+<div class="md:col-span-2 md:row-span-2 bg-surface-container rounded-lg p-8 flex flex-col justify-between group hover:bg-surface-container-high transition-colors">
+<div class="flex justify-between items-start">
+<span class="material-symbols-outlined text-primary-container text-4xl">directions_run</span>
+<span class="font-label text-[10px] uppercase tracking-widest bg-primary-container text-on-primary-container px-3 py-1 rounded-full">Record</span>
+</div>
+<div>
+<div class="flex items-baseline gap-2">
+<span class="font-headline font-black text-7xl md:text-9xl tracking-tighter">18:42</span>
+</div>
+<p class="font-headline font-bold text-xl uppercase tracking-tighter text-on-surface">5KM Run Time</p>
+<p class="font-label text-xs text-on-surface-variant mt-2">Achieved: Oct 2023 • Trail Series</p>
+</div>
+</div>
+<!-- Deadlift -->
+<div class="bg-surface-container rounded-lg p-6 flex flex-col justify-between border-l-4 border-primary-container">
+<span class="material-symbols-outlined text-zinc-500">fitness_center</span>
+<div class="mt-4">
+<span class="font-headline font-black text-4xl">215</span>
+<span class="font-label text-sm uppercase text-on-surface-variant ml-1 font-bold">KG</span>
+<p class="font-label text-xs uppercase tracking-widest mt-1">Deadlift Max</p>
+</div>
+</div>
+<!-- Bench -->
+<div class="bg-surface-container-low rounded-lg p-6 flex flex-col justify-between">
+<span class="material-symbols-outlined text-zinc-500">exercise</span>
+<div class="mt-4">
+<span class="font-headline font-black text-4xl">130</span>
+<span class="font-label text-sm uppercase text-on-surface-variant ml-1 font-bold">KG</span>
+<p class="font-label text-xs uppercase tracking-widest mt-1">Bench Press</p>
+</div>
+</div>
+<!-- Marathon -->
+<div class="md:col-span-2 bg-secondary-container/20 rounded-lg p-6 flex flex-col justify-between border border-secondary/10">
+<div class="flex justify-between">
+<span class="material-symbols-outlined text-secondary">timer</span>
+<span class="text-secondary font-label text-[10px] font-bold uppercase tracking-widest">Endurance</span>
+</div>
+<div class="mt-8">
+<div class="flex items-baseline gap-2">
+<span class="font-headline font-black text-5xl">03:12:05</span>
+</div>
+<p class="font-headline font-bold text-lg uppercase tracking-tighter text-on-surface">Marathon PB</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Analytics & Report Generation -->
+<section class="mb-12">
+<div class="bg-surface-container rounded-xl overflow-hidden p-6 md:p-10 border border-outline-variant/20">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 mb-8">
+<div class="max-w-xl">
+<h3 class="font-headline font-black text-3xl uppercase italic tracking-tighter mb-3">Performance Analytics 2024</h3>
+<p class="font-body text-on-surface-variant text-sm md:text-base">Configure your custom performance audit. Choose a date range to analyze strength progression, VO2 max trends, and cardiovascular recovery metrics.</p>
+</div>
+<div class="w-full md:w-auto bg-surface-container-high p-4 rounded-xl flex flex-col sm:flex-row gap-4 items-end">
+<div class="w-full sm:w-auto flex flex-col gap-1.5">
+<label class="font-label text-[10px] uppercase tracking-widest text-on-surface-variant font-bold ml-1">From</label>
+<input class="bg-surface-container-low border-outline-variant/30 rounded-lg text-sm text-on-surface focus:ring-primary focus:border-primary px-3 py-2 w-full" type="date" value="2024-01-01"/>
+</div>
+<div class="w-full sm:w-auto flex flex-col gap-1.5">
+<label class="font-label text-[10px] uppercase tracking-widest text-on-surface-variant font-bold ml-1">To</label>
+<input class="bg-surface-container-low border-outline-variant/30 rounded-lg text-sm text-on-surface focus:ring-primary focus:border-primary px-3 py-2 w-full" type="date" value="2024-12-31"/>
+</div>
+</div>
+</div>
+<button class="w-full md:w-auto group relative flex items-center justify-center gap-4 bg-gradient-to-br from-primary to-primary-dim text-on-primary-fixed px-10 py-5 rounded-full font-headline font-black uppercase tracking-tighter text-xl hover:shadow-[0_0_40px_rgba(212,251,0,0.4)] transition-all Active:scale-95 duration-200">
+<span>Generate &amp; Download Full Report</span>
+<span class="material-symbols-outlined font-bold">analytics</span>
+</button>
+</div>
+</section>
+<!-- Recent Activity History -->
+<section class="mb-12">
+<div class="flex justify-between items-baseline mb-6">
+<h2 class="font-headline font-black text-3xl uppercase italic tracking-tighter">Activity History</h2>
+<button class="text-primary-container text-xs font-label font-bold uppercase tracking-widest hover:underline">View All</button>
+</div>
+<div class="space-y-8">
+<!-- October 2023 -->
+<div>
+<h4 class="font-label text-xs uppercase tracking-[0.2em] text-on-surface-variant font-black mb-4 flex items-center gap-4">
+<span>October 2023</span>
+<div class="h-px flex-1 bg-outline-variant/20"></div>
+</h4>
+<div class="grid gap-3">
+<div class="flex items-center justify-between p-4 rounded-xl bg-surface-container-low border border-outline-variant/10 hover:border-primary-container/30 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-primary-container/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary-container">directions_run</span>
+</div>
+<div>
+<p class="font-headline font-bold text-lg leading-tight uppercase tracking-tight">Sunset Ridge Trail Run</p>
+<p class="font-label text-xs text-on-surface-variant">Oct 24 • 12.4 km • 58:12</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+</div>
+<div class="flex items-center justify-between p-4 rounded-xl bg-surface-container-low border border-outline-variant/10 hover:border-primary-container/30 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-secondary-container/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary">fitness_center</span>
+</div>
+<div>
+<p class="font-headline font-bold text-lg leading-tight uppercase tracking-tight">Heavy Lower Body Power</p>
+<p class="font-label text-xs text-on-surface-variant">Oct 21 • 1h 15m • 14,200kg volume</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+</div>
+</div>
+</div>
+<!-- September 2023 -->
+<div>
+<h4 class="font-label text-xs uppercase tracking-[0.2em] text-on-surface-variant font-black mb-4 flex items-center gap-4">
+<span>September 2023</span>
+<div class="h-px flex-1 bg-outline-variant/20"></div>
+</h4>
+<div class="grid gap-3">
+<div class="flex items-center justify-between p-4 rounded-xl bg-surface-container-low border border-outline-variant/10 hover:border-primary-container/30 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-primary-container/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary-container">directions_run</span>
+</div>
+<div>
+<p class="font-headline font-bold text-lg leading-tight uppercase tracking-tight">Interval Speed Work</p>
+<p class="font-label text-xs text-on-surface-variant">Sep 15 • 8.0 km • 34:45</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+</div>
+<div class="flex items-center justify-between p-4 rounded-xl bg-surface-container-low border border-outline-variant/10 hover:border-primary-container/30 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-secondary-container/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary">exercise</span>
+</div>
+<div>
+<p class="font-headline font-bold text-lg leading-tight uppercase tracking-tight">Functional Mobility Flow</p>
+<p class="font-label text-xs text-on-surface-variant">Sep 12 • 45m • Zone 2</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Settings & Preferences -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="space-y-4">
+<h4 class="font-label text-xs uppercase tracking-[0.2em] text-on-surface-variant font-bold px-2">Account Settings</h4>
+<div class="flex flex-col gap-1">
+<button class="flex items-center justify-between p-4 rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors group">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary-container transition-colors">person_edit</span>
+<span class="font-body font-medium">Edit Profile</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant text-sm">chevron_right</span>
+</button>
+<button class="flex items-center justify-between p-4 rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors group">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary-container transition-colors">shield</span>
+<span class="font-body font-medium">Privacy &amp; Security</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant text-sm">chevron_right</span>
+</button>
+</div>
+</div>
+<div class="space-y-4">
+<h4 class="font-label text-xs uppercase tracking-[0.2em] text-on-surface-variant font-bold px-2">App Preferences</h4>
+<div class="flex flex-col gap-1">
+<button class="flex items-center justify-between p-4 rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors group">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary-container transition-colors">straighten</span>
+<span class="font-body font-medium">Measurement Units</span>
+</div>
+<span class="font-label text-[10px] text-zinc-500 uppercase tracking-widest">Metric (KG/KM)</span>
+</button>
+<button class="flex items-center justify-between p-4 rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors group text-error">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-body font-medium">Sign Out</span>
+</div>
+</button>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pt-3 pb-8 bg-[#131313]/90 backdrop-blur-xl z-50 rounded-t-[2.5rem] shadow-[0_-8px_30px_rgb(0,0,0,0.5)]">
+<div class="flex flex-col items-center justify-center text-zinc-500 px-4 py-2 hover:text-white transition-colors cursor-pointer">
+<span class="material-symbols-outlined">home</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase tracking-widest mt-1">Home</span>
+</div>
+<div class="flex flex-col items-center justify-center text-zinc-500 px-4 py-2 hover:text-white transition-colors cursor-pointer">
+<span class="material-symbols-outlined">fitness_center</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase tracking-widest mt-1">Gym</span>
+</div>
+<div class="flex flex-col items-center justify-center text-zinc-500 px-4 py-2 hover:text-white transition-colors cursor-pointer">
+<span class="material-symbols-outlined">directions_run</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase tracking-widest mt-1">Run</span>
+</div>
+<div class="flex flex-col items-center justify-center text-zinc-500 px-4 py-2 hover:text-white transition-colors cursor-pointer">
+<span class="material-symbols-outlined">monitoring</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase tracking-widest mt-1">Analytics</span>
+</div>
+<!-- Profile is Active -->
+<div class="flex flex-col items-center justify-center bg-[#d4fb00] text-[#0e0e0e] rounded-full px-6 py-2 transition-all duration-300 scale-90">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase tracking-widest mt-1">Profile</span>
+</div>
+</nav>
+</body></html>

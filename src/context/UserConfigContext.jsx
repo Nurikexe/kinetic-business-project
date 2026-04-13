@@ -17,6 +17,8 @@ const DEFAULTS = {
   run_completed: Object.fromEntries(Array.from({ length: 8 }, (_, i) => [i, [false, false, false]])),
   run_weeks:     RUN_WEEKS,
   run_types:     DEFAULT_RUN_TYPES,
+  active_gym_session: null,
+  active_run_session: null,
   ten_k_time:    '',
   ten_k_target:  '10K|6:00',
 };

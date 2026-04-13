@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;700;800;900&amp;family=Inter:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-dim": "#00d4ec",
+                        "secondary-container": "#006875",
+                        "on-secondary": "#004d57",
+                        "tertiary": "#ffeba0",
+                        "surface-container-low": "#131313",
+                        "secondary": "#00e3fd",
+                        "primary-fixed": "#d4fb00",
+                        "on-primary-fixed": "#3d4a00",
+                        "primary": "#f5ffc5",
+                        "surface-dim": "#0e0e0e",
+                        "on-secondary-fixed-variant": "#005964",
+                        "surface-container-highest": "#262626",
+                        "surface-tint": "#f5ffc5",
+                        "on-surface-variant": "#ababab",
+                        "error-dim": "#d53d18",
+                        "on-tertiary-container": "#5c4d00",
+                        "tertiary-container": "#fddb42",
+                        "surface-bright": "#2c2c2c",
+                        "surface": "#0e0e0e",
+                        "surface-container": "#191919",
+                        "inverse-surface": "#f9f9f9",
+                        "inverse-on-surface": "#555555",
+                        "on-primary-fixed-variant": "#566800",
+                        "primary-container": "#d4fb00",
+                        "inverse-primary": "#556600",
+                        "on-secondary-fixed": "#003a42",
+                        "on-error-container": "#ffd2c8",
+                        "on-primary-container": "#4d5d00",
+                        "tertiary-dim": "#eecd34",
+                        "on-tertiary-fixed": "#473b00",
+                        "on-error": "#450900",
+                        "on-background": "#ffffff",
+                        "surface-variant": "#262626",
+                        "on-secondary-container": "#e8fbff",
+                        "error-container": "#b92902",
+                        "secondary-fixed-dim": "#00d7f0",
+                        "secondary-fixed": "#26e6ff",
+                        "outline-variant": "#484848",
+                        "error": "#ff7351",
+                        "outline": "#757575",
+                        "primary-dim": "#c9ef00",
+                        "primary-fixed-dim": "#c7ec00",
+                        "surface-container-high": "#1f1f1f",
+                        "surface-container-lowest": "#000000",
+                        "on-primary": "#556600",
+                        "background": "#0e0e0e",
+                        "tertiary-fixed": "#fddb42",
+                        "on-tertiary": "#665600",
+                        "on-tertiary-fixed-variant": "#685700",
+                        "on-surface": "#ffffff",
+                        "tertiary-fixed-dim": "#eecd34"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Lexend"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .text-shadow-glow {
+            text-shadow: 0 0 20px rgba(212, 251, 0, 0.4);
+        }
+        .glass-card {
+            background: linear-gradient(135deg, rgba(25, 25, 25, 0.8) 0%, rgba(14, 14, 14, 0.9) 100%);
+            backdrop-filter: blur(12px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body selection:bg-primary-container selection:text-on-primary-fixed">
+<header class="fixed top-0 left-0 w-full z-50 bg-[#0e0e0e] flex justify-between items-center px-6 h-16 max-w-screen-xl mx-auto">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#d4fb00]" style="font-variation-settings: 'FILL' 1;">fitness_center</span>
+<h1 class="text-xl tracking-tighter font-black text-[#d4fb00] font-['Lexend'] uppercase">KINETIC</h1>
+</div>
+<button class="text-white/60 hover:text-[#d4fb00] transition-colors font-label font-bold text-xs uppercase tracking-widest">
+            Skip
+        </button>
+</header>
+<main class="min-h-screen pt-24 pb-12 px-6 flex flex-col items-center justify-center max-w-4xl mx-auto">
+<div class="text-center mb-12 space-y-4">
+<h2 class="text-4xl md:text-6xl font-black font-headline tracking-tighter uppercase leading-none">
+                Choose Your <span class="text-transparent bg-clip-text bg-gradient-to-br from-primary to-primary-dim">Path</span>
+</h2>
+<p class="text-on-surface-variant max-w-md mx-auto text-lg">
+                Select your starting point. Our engine will adapt to your physiology and goals.
+            </p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mb-12">
+<button class="group relative flex flex-col items-start text-left p-8 rounded-lg glass-card border border-outline-variant/10 hover:border-primary-container/30 transition-all duration-300 active:scale-95 overflow-hidden">
+<div class="absolute -right-8 -top-8 w-32 h-32 bg-primary-container/5 rounded-full blur-3xl group-hover:bg-primary-container/10 transition-colors"></div>
+<div class="mb-8 p-4 rounded-xl bg-surface-container-highest text-primary-container">
+<span class="material-symbols-outlined text-4xl" style="font-variation-settings: 'FILL' 1;">psychology</span>
+</div>
+<h3 class="text-2xl font-black font-headline tracking-tight uppercase mb-3 group-hover:text-primary-container transition-colors">AI Blueprint</h3>
+<p class="text-on-surface-variant text-sm leading-relaxed mb-6">
+                    Generate a hyper-personalized multi-week program driven by our neural performance engine.
+                </p>
+<div class="mt-auto flex items-center gap-2 text-primary-container font-bold text-xs uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
+                    Start Generation <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</div>
+</button>
+<button class="group relative flex flex-col items-start text-left p-8 rounded-lg glass-card border border-outline-variant/10 hover:border-primary-container/30 transition-all duration-300 active:scale-95 overflow-hidden">
+<div class="absolute -right-8 -top-8 w-32 h-32 bg-secondary/5 rounded-full blur-3xl group-hover:bg-secondary/10 transition-colors"></div>
+<div class="mb-8 p-4 rounded-xl bg-surface-container-highest text-secondary">
+<span class="material-symbols-outlined text-4xl" style="font-variation-settings: 'FILL' 1;">groups</span>
+</div>
+<h3 class="text-2xl font-black font-headline tracking-tight uppercase mb-3 group-hover:text-secondary transition-colors">Community Splits</h3>
+<p class="text-on-surface-variant text-sm leading-relaxed mb-6">
+                    Clone battle-tested workout routines from top-tier athletes and fitness specialists.
+                </p>
+<div class="mt-auto flex items-center gap-2 text-secondary font-bold text-xs uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
+                    Explore Splits <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</div>
+</button>
+<button class="group relative flex flex-col items-start text-left p-8 rounded-lg glass-card border border-outline-variant/10 hover:border-primary-container/30 transition-all duration-300 active:scale-95 overflow-hidden">
+<div class="absolute -right-8 -top-8 w-32 h-32 bg-white/5 rounded-full blur-3xl group-hover:bg-white/10 transition-colors"></div>
+<div class="mb-8 p-4 rounded-xl bg-surface-container-highest text-on-surface">
+<span class="material-symbols-outlined text-4xl" style="font-variation-settings: 'FILL' 1;">architecture</span>
+</div>
+<h3 class="text-2xl font-black font-headline tracking-tight uppercase mb-3 group-hover:text-white transition-colors">Build From Scratch</h3>
+<p class="text-on-surface-variant text-sm leading-relaxed mb-6">
+                    Architect your own sessions using our library of 500+ biomechanically tracked movements.
+                </p>
+<div class="mt-auto flex items-center gap-2 text-white font-bold text-xs uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
+                    Open Builder <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</div>
+</button>
+</div>
+<div class="w-full flex flex-col md:flex-row items-center justify-between gap-6 p-8 rounded-lg bg-surface-container-low border border-outline-variant/5">
+<div class="flex items-center gap-4">
+<div class="flex -space-x-3">
+<div class="w-10 h-10 rounded-full border-2 border-surface bg-surface-container" title="User Alpha">
+<img class="w-full h-full object-cover rounded-full" data-alt="close-up portrait of a determined male athlete with sweat on skin after workout" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOdOz5_NSzfzJsdbLVzMXNkjNyvsriiGVG_5HIOTe3mOfRSR2CPDBh8HcZuCaBY1yqu4ivAQRgTtR39R1TBTihFcEpjVMh3jJSTUoQcPCBrYYzAaeWXCPD5FE7_HZuN_UVDN5aQRKjBg7p46YfBeZwKWXLraiXgX9o87PwoOzauoQcjChGfGrIkA91VzgBD3rKfGFSdXS57cx2KNAuF0Zo8hd9nXLQXKntgxsdrWOsndKAk_DzBEbRllmEzOv8IeFnxWK7C0CW-3cQ"/>
+</div>
+<div class="w-10 h-10 rounded-full border-2 border-surface bg-surface-container" title="User Beta">
+<img class="w-full h-full object-cover rounded-full" data-alt="focused young woman performing strength training exercise with soft gym lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7NbprZAgGB2SOdFLND64nPs__UTFozyCWKaomAYJSTswa4PBdT4eQ4YTEKtr979jJyd98c9XKF6zLJBYSlcErrMSHF0XEfY_x9T-KCPd-qBGFJ6KvBdKAAH72zstvF8BSDbgBEqtK0bJu3R84Val1KIfuRV2lUYt7yPsKmkFZA1UEiIgaDUHDqct-jVbwgcEdMvZs-wP4YpyK7KFSmio9f9v6JAsvb6XDVaEPY-ZGS_Ma5-0D5BIBUI5gk8elFZDVXS6_yAUUTBzb"/>
+</div>
+<div class="w-10 h-10 rounded-full border-2 border-surface bg-surface-container" title="User Gamma">
+<img class="w-full h-full object-cover rounded-full" data-alt="man lifting heavy barbell in a modern industrial style fitness studio with harsh lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCGOy7UMVtd6iXilN5Hhuq5LX5d7jAMD2rrSh1TewOTE9kLECYPTu0ZEJ6AS--Vn7cy6aKpfSd_G3lS5S2dpSPlvXw9l5sBxNYOxrju2llqHWGhzMs7piRhz1AzPW8hQJH2Rwh13ajufW_lAIncRmk4UH0piLasidacT8N9GzbzP5CY0-1KBk1UTSGI15KT16UqZZxeXJeeWtwGhJEUgCLmeWwvW_apsA0evrIGg6G4E-Yj27TkAkcQ7Z8hdg3pcaeIOW5z2_frZ46B"/>
+</div>
+</div>
+<div>
+<p class="text-sm font-bold">Join 12k+ Athletes</p>
+<p class="text-xs text-on-surface-variant">Active now in the Kinetic ecosystem</p>
+</div>
+</div>
+<button class="w-full md:w-auto px-8 py-4 rounded-full bg-gradient-to-br from-primary to-primary-dim text-on-primary-fixed font-black uppercase tracking-tighter shadow-[0_16px_32px_rgba(212,251,0,0.15)] hover:scale-105 transition-transform">
+                Continue Journey
+            </button>
+</div>
+</main>
+<footer class="w-full py-8 text-center">
+<p class="text-[10px] font-bold uppercase tracking-[0.3em] text-white/20">
+            Engineered for high performance results © 2024 Kinetic
+        </p>
+</footer>
+</body></html>

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&amp;family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-high": "#1f1f1f",
+                    "on-secondary": "#004d57",
+                    "surface-bright": "#2c2c2c",
+                    "surface-container": "#191919",
+                    "on-error": "#450900",
+                    "error": "#ff7351",
+                    "primary": "#f5ffc5",
+                    "inverse-on-surface": "#555555",
+                    "on-tertiary-fixed": "#473b00",
+                    "secondary-fixed": "#26e6ff",
+                    "tertiary-fixed-dim": "#eecd34",
+                    "outline": "#757575",
+                    "primary-fixed-dim": "#c7ec00",
+                    "surface-container-lowest": "#000000",
+                    "tertiary-fixed": "#fddb42",
+                    "tertiary-dim": "#eecd34",
+                    "primary-dim": "#c9ef00",
+                    "on-primary-fixed-variant": "#566800",
+                    "background": "#0e0e0e",
+                    "on-secondary-container": "#e8fbff",
+                    "on-tertiary-container": "#5c4d00",
+                    "error-container": "#b92902",
+                    "surface-dim": "#0e0e0e",
+                    "outline-variant": "#484848",
+                    "error-dim": "#d53d18",
+                    "on-primary-fixed": "#3d4a00",
+                    "secondary-fixed-dim": "#00d7f0",
+                    "on-primary": "#556600",
+                    "on-secondary-fixed": "#003a42",
+                    "secondary-container": "#006875",
+                    "secondary": "#00e3fd",
+                    "tertiary-container": "#fddb42",
+                    "surface-tint": "#f5ffc5",
+                    "surface-container-low": "#131313",
+                    "on-surface": "#ffffff",
+                    "primary-container": "#d4fb00",
+                    "surface": "#0e0e0e",
+                    "secondary-dim": "#00d4ec",
+                    "surface-variant": "#262626",
+                    "on-tertiary-fixed-variant": "#685700",
+                    "on-error-container": "#ffd2c8",
+                    "on-background": "#ffffff",
+                    "surface-container-highest": "#262626",
+                    "tertiary": "#ffeba0",
+                    "inverse-surface": "#f9f9f9",
+                    "on-surface-variant": "#ababab",
+                    "inverse-primary": "#556600",
+                    "primary-fixed": "#d4fb00",
+                    "on-tertiary": "#665600",
+                    "on-primary-container": "#4d5d00",
+                    "on-secondary-fixed-variant": "#005964"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Lexend"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        display: inline-block;
+        line-height: 1;
+        text-transform: none;
+        letter-spacing: normal;
+        word-wrap: normal;
+        white-space: nowrap;
+        direction: ltr;
+      }
+      .glass-card {
+        background: rgba(38, 38, 38, 0.6);
+        backdrop-filter: blur(20px);
+      }
+      .no-border { border: none !important; }
+      .background-shift-tonal { background-color: #0e0e0e; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container">
+<!-- Top App Bar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-6 py-4 w-full bg-[#0e0e0e] no-border background-shift-tonal">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant/30">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="close up portrait of a focused athlete with sweat, dark cinematic lighting, high contrast" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBdA3-8j_-_4R9OMnrHl3p4RWf-6d1re7FVY9YGVixzLGFelEz4bxI2yS3Y5vSC2T8zTapyybDoJs5QFxEg2f3oZV_JhxMNHdTIY25oSC0AMmEkJn0V_wnZKKpMvsLmWSYUz084drZp8t7IsBVVhbln_gfcui9Vpvgwe8P8IW8pv-kBk_JU4nbJZG6npsJiMQVmikrfrWgnjKQ8ANsItDHf39emmB7BTV6uJOfZfrK31Ma1MdlhBa1U-PfLl2-1GYcqQF2kfTcuVMIh"/>
+</div>
+<span class="text-2xl font-black text-[#d4fb00] tracking-tighter font-['Lexend'] uppercase">KINETIC</span>
+</div>
+<button class="text-white hover:opacity-80 transition-opacity active:scale-95 duration-200">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</header>
+<main class="pb-32 pt-[72px]">
+<!-- Hero Section -->
+<section class="relative h-[530px] flex items-end px-6 pb-12 overflow-hidden">
+<div class="absolute inset-0 z-0">
+<img class="w-full h-full object-cover brightness-[0.4] scale-105" data-alt="moody dark gym interior with industrial lighting, heavy steel plates, and a power rack in the shadows" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDs51H3Lxng9yEOIjpGSOBwVkDb-63IQr-G6pqYH_UWIeQ-coSfnljh5Wxqj_d5qHkXnCNAYPARgtdnAxvfgHxCEwPEejFKgP2fXvjajI-v5ni2XIKSJqIS7k2pFz3jDZ_7YvFQoyqobqi1udAlrNzxDMSVgaupWVc1dhb3B_DC9_HXdfBGKsQW9csXqms6VdOwb1OQ5JBk9-A1sw5eS0xKq7zfEiFDEZjHYuhZr-dxf68F24BNIc72dNtMHXfvy9rtSMU1XoaiKh-o"/>
+<div class="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent"></div>
+</div>
+<div class="relative z-10 w-full">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-secondary text-sm" data-icon="timer">timer</span>
+<span class="font-['Lexend'] text-xs font-bold uppercase tracking-[0.2em] text-secondary">65 MIN VOLUME PHASE</span>
+</div>
+<h1 class="font-['Lexend'] text-7xl font-black uppercase tracking-tighter mb-8 leading-[0.9] text-white">
+                    UPPER A
+                </h1>
+<button class="w-full py-5 bg-gradient-to-r from-[#f5ffc5] to-[#c9ef00] rounded-full text-[#3d4a00] font-black text-xl uppercase tracking-widest shadow-[0_16px_32px_rgba(212,251,0,0.15)] active:scale-95 transition-transform">
+                    START WORKOUT
+                </button>
+</div>
+</section>
+<!-- Exercises List -->
+<section class="px-6 space-y-8 mt-4">
+<div class="flex justify-between items-end">
+<h2 class="font-['Lexend'] text-2xl font-extrabold uppercase tracking-tight">Scheduled Plan</h2>
+<span class="font-['Lexend'] text-xs font-bold text-on-surface-variant uppercase tracking-widest">6 Exercises</span>
+</div>
+<div class="space-y-4">
+<!-- Exercise 1 -->
+<div class="bg-surface-container rounded-lg p-5 flex items-center justify-between group hover:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-5">
+<div class="w-16 h-16 rounded-md overflow-hidden bg-surface-container-highest">
+<img class="w-full h-full object-cover opacity-80" data-alt="close up of a barbell with heavy weights on a bench press rack, dark athletic mood" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDbzIUOzyJaa2a_299hV41UVeBLvpFRMv19vP-0lyhyJ7fesiyT8ya_0DgPH_14PEj3MdQgM5pneJfNaKwoej_WLiMAPSTDRVdM0qGIeC0o4jKkcZ6uQI1nOm2nhTkW2xwv6nNuNjsZi93wGBEr5JVBhz2KOmV0BrP8AIJ_DkCHnIjF6m8dNJX7NOqI0FEc1SuCkZhOPyPqQpnw1-V2HPTDiUfwzN6P73RAtCvPDYd3yWUkWAky3QPqczxthnebDHzxPKeizwyYIW-P"/>
+</div>
+<div>
+<h3 class="font-['Lexend'] text-lg font-bold uppercase tracking-tight">Bench Press</h3>
+<p class="text-on-surface-variant font-medium text-sm flex items-center gap-2 mt-1">
+<span class="material-symbols-outlined text-xs" data-icon="fitness_center">fitness_center</span>
+                                3 Sets <span class="text-outline">×</span> 8-10 Reps
+                            </p>
+</div>
+</div>
+<button class="text-primary-fixed-dim opacity-40 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined" data-icon="info">info</span>
+</button>
+</div>
+<!-- Exercise 2 -->
+<div class="bg-surface-container rounded-lg p-5 flex items-center justify-between group hover:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-5">
+<div class="w-16 h-16 rounded-md overflow-hidden bg-surface-container-highest">
+<img class="w-full h-full object-cover opacity-80" data-alt="detail of a pull up bar in a dark warehouse gym with textured walls" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC9XHJm9C5JOjws21eSU0kvXW_dI_dit5hYVXWaEmAZK8yAUN6dA2w6QcXXS3vPKU1eOIkHMsL_EOHj-00ABu6cH0xE2qtolG_yYoPn5xIsMDfWbPqhOlocK_v95-Ij9XPUUllM2h07X5naIQS6boUbsPl-jTOxxQWLGdmsvmB4XBI4bf8IKzcOmaey9jF3vrOtGY_EkG4n_Ry5ZrenlOz2-GGPjsi5JqAZ8VF-pLLFCaC05m5lnTXXI50VRzLAPPdue40SE1WkhP5r"/>
+</div>
+<div>
+<h3 class="font-['Lexend'] text-lg font-bold uppercase tracking-tight">Weighted Pull-Ups</h3>
+<p class="text-on-surface-variant font-medium text-sm flex items-center gap-2 mt-1">
+<span class="material-symbols-outlined text-xs" data-icon="fitness_center">fitness_center</span>
+                                3 Sets <span class="text-outline">×</span> 6-8 Reps
+                            </p>
+</div>
+</div>
+<button class="text-primary-fixed-dim opacity-40 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined" data-icon="info">info</span>
+</button>
+</div>
+<!-- Exercise 3 -->
+<div class="bg-surface-container rounded-lg p-5 flex items-center justify-between group hover:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-5">
+<div class="w-16 h-16 rounded-md overflow-hidden bg-surface-container-highest">
+<img class="w-full h-full object-cover opacity-80" data-alt="metal dumbbells on a rack in a premium high contrast gym setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDM8sjj-C8SvxmgODXeOY9bXtJeag_tlk2lO5t5E9aXEggLcLEie3E-Oclz-qClKs8kfaytbpCSCWyIkwaDWMaDRjXAGcJlMNgYRqQxEkCRlFyXG0c6-rJO-wens3BH8NAbX-tW8lHtyrpUBJ1qxHFLGSAUjmwnR16jmZHBwGD-La2k9LvseE8mAPcCcpNU6Btr1goj8_YArhf-lQHbwtLLY-mcyTeM6R6nBfeRaMlhSQfFNoirNjwy_ht-yn69XeVdvn9NiLGIR9AU"/>
+</div>
+<div>
+<h3 class="font-['Lexend'] text-lg font-bold uppercase tracking-tight">Incline DB Press</h3>
+<p class="text-on-surface-variant font-medium text-sm flex items-center gap-2 mt-1">
+<span class="material-symbols-outlined text-xs" data-icon="fitness_center">fitness_center</span>
+                                3 Sets <span class="text-outline">×</span> 10-12 Reps
+                            </p>
+</div>
+</div>
+<button class="text-primary-fixed-dim opacity-40 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined" data-icon="info">info</span>
+</button>
+</div>
+<!-- Exercise 4 (Bento/Card Variant) -->
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-surface-container-low rounded-lg p-4">
+<span class="material-symbols-outlined text-secondary-fixed mb-4" data-icon="monitoring">monitoring</span>
+<h4 class="font-['Lexend'] text-sm font-bold uppercase mb-1">Previous 1RM</h4>
+<div class="flex items-baseline gap-1">
+<span class="text-2xl font-black font-['Lexend']">115</span>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase">KG</span>
+</div>
+</div>
+<div class="bg-surface-container-low rounded-lg p-4">
+<span class="material-symbols-outlined text-tertiary-fixed mb-4" data-icon="local_fire_department">local_fire_department</span>
+<h4 class="font-['Lexend'] text-sm font-bold uppercase mb-1">Target Est.</h4>
+<div class="flex items-baseline gap-1">
+<span class="text-2xl font-black font-['Lexend']">580</span>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase">KCAL</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Stats Overview Glass Overlay -->
+<section class="px-6 mt-12 mb-8">
+<div class="glass-card rounded-lg p-6 border border-outline-variant/10">
+<div class="flex justify-between items-center mb-6">
+<h2 class="font-['Lexend'] text-xl font-extrabold uppercase tracking-tighter">Preparation</h2>
+<span class="px-3 py-1 bg-primary-container text-on-primary-container rounded-full text-[10px] font-bold uppercase">Ready</span>
+</div>
+<div class="space-y-4">
+<div class="flex justify-between items-center">
+<span class="text-on-surface-variant text-sm">Suggested Warmup</span>
+<span class="font-bold text-sm">10 Min Mobility</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="w-3/4 h-full bg-primary-container"></div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pt-3 pb-6 bg-[#0e0e0e]/90 backdrop-blur-xl no-border bg-surface-container-low shadow-[0_-8px_32px_rgba(212,251,0,0.05)] rounded-t-[2rem] z-50">
+<a class="flex flex-col items-center justify-center text-gray-500 opacity-60 hover:text-[#f5ffc5] transition-colors active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="home_max">home_max</span>
+<span class="font-['Lexend'] text-[10px] font-bold uppercase tracking-widest">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#d4fb00] scale-110 transition-transform hover:text-[#f5ffc5] transition-colors active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="fitness_center">fitness_center</span>
+<span class="font-['Lexend'] text-[10px] font-bold uppercase tracking-widest">Gym</span>
+</a>
+<a class="flex flex-col items-center justify-center text-gray-500 opacity-60 hover:text-[#f5ffc5] transition-colors active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="directions_run">directions_run</span>
+<span class="font-['Lexend'] text-[10px] font-bold uppercase tracking-widest">Run</span>
+</a>
+<a class="flex flex-col items-center justify-center text-gray-500 opacity-60 hover:text-[#f5ffc5] transition-colors active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="analytics">analytics</span>
+<span class="font-['Lexend'] text-[10px] font-bold uppercase tracking-widest">Stats</span>
+</a>
+<a class="flex flex-col items-center justify-center text-gray-500 opacity-60 hover:text-[#f5ffc5] transition-colors active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="person">person</span>
+<span class="font-['Lexend'] text-[10px] font-bold uppercase tracking-widest">Profile</span>
+</a>
+</nav>
+</body></html>

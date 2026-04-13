@@ -2,47 +2,28 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useUserConfig } from '../context/UserConfigContext';
+import { useActiveSession } from '../context/ActiveSessionContext';
 import { supabase } from '../lib/supabase';
 
-const STORAGE_KEY = 'kinetic_active_gym_session';
-
-function saveSession(data) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...data, savedAt: Date.now() })); } catch {}
-}
-function loadSession() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const data = JSON.parse(raw);
-    if (Date.now() - data.savedAt > 3 * 60 * 60 * 1000) { clearSession(); return null; }
-    return data;
-  } catch { return null; }
-}
-function clearSession() {
-  try { localStorage.removeItem(STORAGE_KEY); } catch {}
-}
-
 // ── Active Gym Session ────────────────────────────────────────
-function ActiveGymSession({ day, onFinish, onCancel }) {
-  const { user } = useAuth();
-  const [sets, setSets] = useState(() => {
-    const saved = loadSession();
-    if (saved?.dayId === day.id) return saved.sets;
-    return (day.exercises || []).map(ex => ({
-      exId: ex.id,
-      exName: ex.name,
-      entries: [{ weight: ex.weight || '', reps: ex.reps || '' }],
-    }));
-  });
-  const [notes, setNotes]         = useState(() => loadSession()?.notes || '');
-  const [elapsed, setElapsed]     = useState(() => loadSession()?.elapsed || 0);
+function ActiveGymSession({ onFinish, onCancel }) {
+  const { user }                    = useAuth();
+  const { gymSession, setGymSession } = useActiveSession();
+
+  const { day, sets: savedSets, notes: savedNotes, elapsed: savedElapsed } = gymSession;
+
+  const [sets, setSets]         = useState(savedSets);
+  const [notes, setNotes]       = useState(savedNotes);
+  const [elapsed, setElapsed]   = useState(savedElapsed);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError]         = useState('');
+  const [error, setError]       = useState('');
 
+  // Keep context in sync so navigating away and back restores state
   useEffect(() => {
-    saveSession({ dayId: day.id, sets, notes, elapsed });
-  }, [sets, notes, elapsed, day.id]);
+    setGymSession(s => ({ ...s, sets, notes, elapsed }));
+  }, [sets, notes, elapsed]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Timer
   useEffect(() => {
     const id = setInterval(() => setElapsed(e => e + 1), 1000);
     return () => clearInterval(id);
@@ -58,10 +39,10 @@ function ActiveGymSession({ day, onFinish, onCancel }) {
     }));
 
   const addSet = (exIdx) =>
-    setSets(s => s.map((ex, i) => i !== exIdx ? ex : {
+    setSets(s => s.map((ex, i) => i !== exIdx ? ex : ({
       ...ex,
       entries: [...ex.entries, { weight: ex.entries.at(-1)?.weight || '', reps: ex.entries.at(-1)?.reps || '' }],
-    }));
+    })));
 
   const removeSet = (exIdx, entryIdx) =>
     setSets(s => s.map((ex, i) => i !== exIdx ? ex : ({
@@ -90,95 +71,122 @@ function ActiveGymSession({ day, onFinish, onCancel }) {
     });
     setSubmitting(false);
     if (dbErr) { setError(dbErr.message); return; }
-    clearSession();
+    setGymSession(null);
     onFinish();
   };
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="min-h-screen bg-background pb-36">
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="min-h-screen bg-background pb-44">
       {/* Active header */}
-      <div className="sticky top-0 z-50 bg-primary-container flex items-center justify-between px-6 py-4">
+      <div className="sticky top-0 z-50 bg-primary-container flex items-center justify-between px-6 py-4 shadow-md">
         <div>
           <p className="text-[10px] font-black uppercase tracking-widest text-on-primary-fixed/60">Active Session</p>
-          <h2 className="font-headline font-black text-xl uppercase tracking-tight text-on-primary-fixed">{day.name}</h2>
+          <h2 className="font-headline font-black text-xl uppercase tracking-tight text-on-primary-fixed line-clamp-1">{day.name}</h2>
         </div>
         <div className="flex items-center gap-4">
-          <span className="font-mono text-2xl font-bold text-on-primary-fixed">{formatTime(elapsed)}</span>
-          <button onClick={onCancel} className="text-on-primary-fixed/60 hover:text-on-primary-fixed transition-colors">
+          <div className="flex flex-col items-end">
+            <span className="font-mono text-2xl font-bold text-on-primary-fixed leading-none">{formatTime(elapsed)}</span>
+            <span className="text-[9px] uppercase font-black text-on-primary-fixed/40 tracking-tighter">Elapsed</span>
+          </div>
+          <button onClick={onCancel} className="w-10 h-10 rounded-full bg-on-primary-fixed/10 flex items-center justify-center text-on-primary-fixed hover:bg-on-primary-fixed/20 transition-colors">
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>
       </div>
 
-      <div className="px-6 pt-6 max-w-xl mx-auto space-y-5">
+      <div className="px-6 pt-6 max-w-xl mx-auto space-y-6">
         {sets.map((ex, exIdx) => (
-          <div key={ex.exId} className="bg-surface-container rounded-lg overflow-hidden">
-            <div className="px-5 py-3 bg-surface-container-high flex items-center justify-between">
-              <h3 className="font-headline font-bold uppercase tracking-tight">{ex.exName}</h3>
-              <span className="text-xs text-on-surface-variant font-bold uppercase">
+          <div key={ex.exId} className="bg-surface-container rounded-2xl overflow-hidden border border-outline-variant/10 shadow-sm">
+            <div className="px-5 py-4 bg-surface-container-high flex items-center justify-between border-b border-outline-variant/10">
+              <h3 className="font-headline font-bold uppercase tracking-tight text-on-surface">{ex.exName}</h3>
+              <div className="px-2.5 py-1 rounded-full bg-primary-container/20 text-[10px] text-primary-fixed font-black uppercase tracking-widest">
                 {ex.entries.length} set{ex.entries.length !== 1 ? 's' : ''}
-              </span>
+              </div>
             </div>
-            <div className="p-4 space-y-2">
-              <div className="grid grid-cols-[2rem_1fr_1fr_2rem] gap-2 px-1">
-                <span className="text-[10px] text-on-surface-variant font-bold uppercase text-center">Set</span>
-                <span className="text-[10px] text-on-surface-variant font-bold uppercase text-center">Weight (kg)</span>
-                <span className="text-[10px] text-on-surface-variant font-bold uppercase text-center">Reps</span>
+            <div className="p-4 space-y-3">
+              <div className="grid grid-cols-[2.5rem_1fr_1fr_2.5rem] gap-2 px-1">
+                <span className="text-[10px] text-on-surface-variant font-black uppercase text-center tracking-tighter">Set</span>
+                <span className="text-[10px] text-on-surface-variant font-black uppercase text-center tracking-tighter">Weight (kg)</span>
+                <span className="text-[10px] text-on-surface-variant font-black uppercase text-center tracking-tighter">Reps</span>
                 <span />
               </div>
               {ex.entries.map((entry, entryIdx) => (
-                <div key={entryIdx} className="grid grid-cols-[2rem_1fr_1fr_2rem] gap-2 items-center">
-                  <span className="text-center text-sm font-bold text-on-surface-variant">{entryIdx + 1}</span>
+                <div key={entryIdx} className="grid grid-cols-[2.5rem_1fr_1fr_2.5rem] gap-2 items-center">
+                  <span className="text-center text-sm font-black text-on-surface-variant bg-surface-container-highest w-8 h-8 flex items-center justify-center rounded-full mx-auto">{entryIdx + 1}</span>
                   <input
                     type="number"
+                    inputMode="decimal"
                     value={entry.weight}
                     onChange={e => updateEntry(exIdx, entryIdx, 'weight', e.target.value)}
                     placeholder="—"
-                    className="bg-surface-container-highest border border-outline-variant/20 rounded-lg px-3 py-2.5 text-center font-headline font-bold focus:outline-none focus:border-primary-container/60 transition-colors"
+                    className="bg-surface-container-highest border border-outline-variant/20 rounded-xl px-3 py-3 text-center font-headline font-bold focus:outline-none focus:ring-2 focus:ring-primary-container/40 transition-all"
                   />
                   <input
                     type="text"
+                    inputMode="numeric"
                     value={entry.reps}
                     onChange={e => updateEntry(exIdx, entryIdx, 'reps', e.target.value)}
                     placeholder="—"
-                    className="bg-surface-container-highest border border-outline-variant/20 rounded-lg px-3 py-2.5 text-center font-headline font-bold focus:outline-none focus:border-primary-container/60 transition-colors"
+                    className="bg-surface-container-highest border border-outline-variant/20 rounded-xl px-3 py-3 text-center font-headline font-bold focus:outline-none focus:ring-2 focus:ring-primary-container/40 transition-all"
                   />
-                  <button onClick={() => removeSet(exIdx, entryIdx)} className="text-outline hover:text-error transition-colors flex items-center justify-center">
-                    <span className="material-symbols-outlined text-lg">remove_circle</span>
+                  <button onClick={() => removeSet(exIdx, entryIdx)} className="text-outline/40 hover:text-error transition-colors flex items-center justify-center">
+                    <span className="material-symbols-outlined text-xl">remove_circle</span>
                   </button>
                 </div>
               ))}
-              <button onClick={() => addSet(exIdx)} className="flex items-center gap-2 text-primary-fixed text-sm font-bold uppercase tracking-wide hover:opacity-80 pt-1">
-                <span className="material-symbols-outlined text-sm">add_circle</span>
+              <button onClick={() => addSet(exIdx)} className="w-full mt-2 py-3 rounded-xl border-2 border-dashed border-outline-variant/30 flex items-center justify-center gap-2 text-on-surface-variant text-xs font-black uppercase tracking-widest hover:border-primary-container/50 hover:text-primary-fixed transition-all">
+                <span className="material-symbols-outlined text-sm">add</span>
                 Add Set
               </button>
             </div>
           </div>
         ))}
 
-        <div className="bg-surface-container rounded-lg p-5">
-          <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-2 block">Session Notes</label>
+        <div className="bg-surface-container rounded-2xl p-6 border border-outline-variant/10 shadow-sm">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="material-symbols-outlined text-primary-fixed text-sm">edit_note</span>
+            <label className="text-xs font-black uppercase tracking-widest text-on-surface-variant">Session Feedback</label>
+          </div>
           <textarea
             value={notes}
             onChange={e => setNotes(e.target.value)}
-            placeholder="How did the session feel? Any PRs?"
+            placeholder="How did you feel? Any pain? PRs? (e.g. 'felt knee pain', 'crushed it!')"
             rows={3}
-            className="w-full bg-surface-container-highest rounded-lg px-4 py-3 text-sm placeholder:text-outline resize-none focus:outline-none border border-outline-variant/20 focus:border-primary-container/50 transition-colors"
+            className="w-full bg-surface-container-highest rounded-xl px-4 py-4 text-sm placeholder:text-outline/50 resize-none focus:outline-none border border-outline-variant/20 focus:ring-2 focus:ring-primary-container/40 transition-all"
           />
         </div>
 
-        {error && <p className="text-error text-sm font-bold">{error}</p>}
+        {error && (
+          <div className="bg-error-container/20 border border-error/20 rounded-xl p-4 flex items-center gap-3">
+            <span className="material-symbols-outlined text-error">error</span>
+            <p className="text-error text-xs font-bold">{error}</p>
+          </div>
+        )}
+
+        <div className="h-10" />
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 p-6 bg-background/95 backdrop-blur-xl border-t border-outline-variant/10">
-        <button
-          onClick={handleSubmit}
-          disabled={submitting}
-          className="w-full py-4 rounded-full kinetic-gradient text-on-primary-fixed font-headline font-black uppercase tracking-tighter text-lg shadow-[0_8px_30px_rgba(212,251,0,0.2)] active:scale-95 transition-transform disabled:opacity-60 flex items-center justify-center gap-2"
-        >
-          {submitting ? 'Saving…' : 'Submit Workout'}
-          <span className="material-symbols-outlined">check_circle</span>
-        </button>
+      {/* Fixed Bottom Action Bar */}
+      <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-background via-background to-transparent pointer-events-none">
+        <div className="max-w-xl mx-auto pointer-events-auto">
+          <button
+            onClick={handleSubmit}
+            disabled={submitting}
+            className="w-full py-5 rounded-2xl kinetic-gradient text-on-primary-fixed font-headline font-black uppercase tracking-tighter text-xl shadow-[0_12px_40px_rgba(212,251,0,0.3)] active:scale-[0.98] transition-all disabled:opacity-60 flex items-center justify-center gap-3 group"
+          >
+            {submitting ? (
+              <>
+                <div className="w-5 h-5 border-2 border-on-primary-fixed/30 border-t-on-primary-fixed rounded-full animate-spin" />
+                <span>Saving Workout…</span>
+              </>
+            ) : (
+              <>
+                <span>Finish & Submit</span>
+                <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform" style={{ fontVariationSettings: "'FILL' 1" }}>arrow_forward</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </motion.div>
   );
@@ -187,8 +195,8 @@ function ActiveGymSession({ day, onFinish, onCancel }) {
 // ── Workout Plan View ─────────────────────────────────────────
 export default function GymPage() {
   const { config, updateConfig, loaded } = useUserConfig();
-  const [activeDay, setActiveDay]   = useState(null);
-  const [toast, setToast]           = useState(null);
+  const { gymSession, setGymSession }    = useActiveSession();
+  const [toast, setToast]               = useState(null);
 
   const {
     gym_days:      gymDays     = [],
@@ -201,17 +209,6 @@ export default function GymPage() {
   const effectiveDays      = gymDays.slice(0, gymDayCount);
   const effectiveCompleted = Array.from({ length: gymDayCount }, (_, i) => completed[i] ?? false);
   const currentDayIdx      = effectiveCompleted.indexOf(false);
-
-  // Resume saved session on mount
-  useEffect(() => {
-    if (!loaded) return;
-    const saved = loadSession();
-    if (saved) {
-      const day = effectiveDays.find(d => d.id === saved.dayId);
-      if (day) setActiveDay(day);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded]);
 
   const showToast = useCallback((msg) => {
     setToast(msg);
@@ -230,6 +227,19 @@ export default function GymPage() {
     showToast('Week reset!');
   };
 
+  const startDay = (day) => {
+    setGymSession({
+      day,
+      sets: (day.exercises || []).map(ex => ({
+        exId: ex.id,
+        exName: ex.name,
+        entries: [{ weight: ex.weight || '', reps: ex.reps || '' }],
+      })),
+      notes: '',
+      elapsed: 0,
+    });
+  };
+
   if (!loaded) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -238,17 +248,16 @@ export default function GymPage() {
     );
   }
 
-  if (activeDay) {
-    const dayIdx = effectiveDays.findIndex(d => d.id === activeDay.id);
+  // Show active session if one is in progress
+  if (gymSession) {
+    const dayIdx = effectiveDays.findIndex(d => d.id === gymSession.day.id);
     return (
       <ActiveGymSession
-        day={activeDay}
         onFinish={() => {
-          setActiveDay(null);
           if (dayIdx >= 0) markComplete(dayIdx);
-          else showToast('Workout submitted!');
+          showToast('Workout submitted!');
         }}
-        onCancel={() => setActiveDay(null)}
+        onCancel={() => setGymSession(null)}
       />
     );
   }
@@ -281,7 +290,9 @@ export default function GymPage() {
         {gymGoals && (
           <div className="bg-surface-container rounded-lg p-5 mb-6">
             <p className="text-[10px] font-black uppercase tracking-widest text-primary-fixed mb-2">Current Goals</p>
-            <p className="text-on-surface-variant text-sm">{typeof gymGoals === 'string' ? gymGoals : (Array.isArray(gymGoals) ? gymGoals.join(' · ') : '')}</p>
+            <p className="text-on-surface-variant text-sm">
+              {typeof gymGoals === 'string' ? gymGoals : Array.isArray(gymGoals) ? gymGoals.join(' · ') : ''}
+            </p>
           </div>
         )}
 
@@ -323,7 +334,7 @@ export default function GymPage() {
                       )}
                     </div>
                     <button
-                      onClick={() => setActiveDay(day)}
+                      onClick={() => startDay(day)}
                       className="w-full py-3.5 rounded-full kinetic-gradient text-on-primary-fixed font-headline font-black uppercase tracking-tighter shadow-[0_8px_24px_rgba(212,251,0,0.2)] active:scale-95 transition-transform"
                     >
                       Start Workout
@@ -336,7 +347,7 @@ export default function GymPage() {
                     <span className="text-on-surface-variant text-xs">{(day.exercises || []).length} exercises</span>
                     <div className="flex gap-2">
                       <button
-                        onClick={() => setActiveDay(day)}
+                        onClick={() => startDay(day)}
                         className="px-4 py-2 rounded-full bg-surface-container-highest text-on-surface font-bold text-xs uppercase tracking-wide hover:bg-surface-bright transition-colors active:scale-95"
                       >
                         Start

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed-dim": "#c7ec00",
+                        "on-surface": "#ffffff",
+                        "error": "#ff7351",
+                        "primary": "#f5ffc5",
+                        "tertiary-dim": "#eecd34",
+                        "on-tertiary": "#665600",
+                        "tertiary-container": "#fddb42",
+                        "on-tertiary-container": "#5c4d00",
+                        "surface-dim": "#0e0e0e",
+                        "secondary": "#00e3fd",
+                        "primary-container": "#d4fb00",
+                        "tertiary-fixed-dim": "#eecd34",
+                        "tertiary": "#ffeba0",
+                        "on-error": "#450900",
+                        "surface-bright": "#2c2c2c",
+                        "secondary-fixed": "#26e6ff",
+                        "surface-container-high": "#1f1f1f",
+                        "on-error-container": "#ffd2c8",
+                        "surface-container-highest": "#262626",
+                        "secondary-fixed-dim": "#00d7f0",
+                        "on-primary": "#556600",
+                        "on-primary-fixed": "#3d4a00",
+                        "surface-container-low": "#131313",
+                        "on-primary-fixed-variant": "#566800",
+                        "on-surface-variant": "#ababab",
+                        "surface-container": "#191919",
+                        "inverse-on-surface": "#555555",
+                        "on-background": "#ffffff",
+                        "on-tertiary-fixed": "#473b00",
+                        "secondary-container": "#006875",
+                        "error-dim": "#d53d18",
+                        "on-secondary-fixed-variant": "#005964",
+                        "error-container": "#b92902",
+                        "surface": "#0e0e0e",
+                        "inverse-surface": "#f9f9f9",
+                        "secondary-dim": "#00d4ec",
+                        "on-tertiary-fixed-variant": "#685700",
+                        "on-secondary": "#004d57",
+                        "surface-variant": "#262626",
+                        "surface-tint": "#f5ffc5",
+                        "primary-fixed": "#d4fb00",
+                        "on-secondary-fixed": "#003a42",
+                        "outline-variant": "#484848",
+                        "on-primary-container": "#4d5d00",
+                        "background": "#0e0e0e",
+                        "outline": "#757575",
+                        "inverse-primary": "#556600",
+                        "primary-dim": "#c9ef00",
+                        "on-secondary-container": "#e8fbff",
+                        "tertiary-fixed": "#fddb42",
+                        "surface-container-lowest": "#000000"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Lexend"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #0e0e0e; color: #ffffff; }
+        .lexend { font-family: 'Lexend', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .glass-panel { background: rgba(38, 38, 38, 0.6); backdrop-filter: blur(20px); }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#131313] flex items-center justify-between px-6 h-16">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#d4fb00] text-2xl" data-icon="bolt">bolt</span>
+<h1 class="font-['Lexend'] tracking-tighter uppercase font-bold text-2xl text-[#d4fb00] tracking-widest">KINETIC</h1>
+</div>
+<div class="w-10 h-10 rounded-full overflow-hidden bg-surface-container-highest">
+<img class="w-full h-full object-cover" data-alt="close-up portrait of a fit woman with sweat on her brow, cinematic lighting, dark background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDAcBIJi0wEb5RCZjw_Hp5uaTS08uk6D44RdRzAkVA6MnPYFFY2iSTS2re8J8qzKnuJgaB7rYvyskgebh7qSyt1FLub7uxdJ_aKQFiFVGkRMBi6qDXnhZ65O-BjQmWYiDtCuImyrHAz3xVUbhGjGt0a_u669RQn9y5IOr0TMT8Nbw6crllHfGQCZiLNqng2ggcztxdQwgCDZdiGuiPEFx52HStvLUKQlx6B7s3UQiAFwskEG32Q1AT83ECh0qNw_qdbgsm8VvtFIO2m"/>
+</div>
+</header>
+<main class="pt-24 pb-32 px-6 max-w-2xl mx-auto">
+<!-- Header Section -->
+<div class="mb-12">
+<h2 class="lexend text-4xl font-black tracking-tight uppercase leading-none">Running Plan</h2>
+<p class="text-on-surface-variant font-medium mt-2 tracking-wide uppercase text-sm">Level 3 • Advanced Marathoner</p>
+</div>
+<!-- Weekly Selector (Asymmetric/Bento style) -->
+<div class="mb-10 flex gap-4 overflow-x-auto no-scrollbar pb-4 -mx-6 px-6">
+<div class="flex-shrink-0 w-24 h-24 rounded-lg bg-primary-container flex flex-col items-center justify-center text-on-primary-fixed cursor-pointer transition-transform active:scale-95">
+<span class="lexend font-bold text-xs uppercase opacity-70">Week</span>
+<span class="lexend font-black text-4xl tracking-tighter">04</span>
+</div>
+<div class="flex-shrink-0 w-24 h-24 rounded-lg bg-surface-container flex flex-col items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer">
+<span class="lexend font-bold text-xs uppercase">Week</span>
+<span class="lexend font-black text-4xl tracking-tighter">05</span>
+</div>
+<div class="flex-shrink-0 w-24 h-24 rounded-lg bg-surface-container flex flex-col items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer">
+<span class="lexend font-bold text-xs uppercase">Week</span>
+<span class="lexend font-black text-4xl tracking-tighter">06</span>
+</div>
+<div class="flex-shrink-0 w-24 h-24 rounded-lg bg-surface-container flex flex-col items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer">
+<span class="lexend font-bold text-xs uppercase">Week</span>
+<span class="lexend font-black text-4xl tracking-tighter">07</span>
+</div>
+</div>
+<!-- Progress Overview Bento -->
+<div class="grid grid-cols-2 gap-4 mb-12">
+<div class="col-span-1 bg-surface-container p-6 rounded-lg flex flex-col justify-between aspect-square">
+<span class="lexend text-xs font-bold uppercase tracking-widest text-[#d4fb00]">Total Dist</span>
+<div>
+<span class="lexend text-5xl font-black leading-none">42.8</span>
+<span class="lexend text-sm font-bold text-on-surface-variant ml-1 uppercase">KM</span>
+</div>
+</div>
+<div class="col-span-1 bg-surface-container p-6 rounded-lg flex flex-col justify-between aspect-square">
+<span class="lexend text-xs font-bold uppercase tracking-widest text-secondary">Avg Pace</span>
+<div>
+<span class="lexend text-5xl font-black leading-none">5:12</span>
+<span class="lexend text-sm font-bold text-on-surface-variant ml-1 uppercase">/KM</span>
+</div>
+</div>
+</div>
+<!-- Daily Sessions List -->
+<div class="space-y-6">
+<h3 class="lexend text-xl font-bold uppercase tracking-tight">This Week</h3>
+<!-- Day 1: Completed -->
+<div class="group relative bg-surface-container rounded-lg overflow-hidden p-6 transition-all active:scale-[0.98]">
+<div class="flex justify-between items-start mb-4">
+<div>
+<span class="lexend text-xs font-bold text-primary-fixed-dim uppercase tracking-widest">Mon • Recovery</span>
+<h4 class="lexend text-2xl font-black uppercase mt-1">30 min easy run</h4>
+</div>
+<div class="bg-primary-container/10 p-2 rounded-full">
+<span class="material-symbols-outlined text-[#d4fb00]" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+</div>
+<div class="flex gap-6">
+<div class="flex flex-col">
+<span class="text-[10px] uppercase font-bold text-on-surface-variant tracking-wider">Heart Rate</span>
+<span class="lexend font-bold text-lg">132 <small class="text-[10px] font-medium opacity-50">BPM</small></span>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] uppercase font-bold text-on-surface-variant tracking-wider">Pace</span>
+<span class="lexend font-bold text-lg">6:15 <small class="text-[10px] font-medium opacity-50">/KM</small></span>
+</div>
+</div>
+</div>
+<!-- Day 2: Focused Interval (High Intensity) -->
+<div class="group relative bg-[#131313] p-[1px] rounded-lg bg-gradient-to-br from-primary-container/30 to-transparent">
+<div class="bg-surface-container-highest p-6 rounded-[calc(2rem-1px)]">
+<div class="flex justify-between items-start mb-4">
+<div>
+<div class="flex items-center gap-2">
+<span class="lexend text-xs font-bold text-secondary uppercase tracking-widest">Tue • Intervals</span>
+<span class="px-2 py-0.5 bg-secondary/10 text-secondary text-[8px] font-bold rounded-full uppercase">Today</span>
+</div>
+<h4 class="lexend text-2xl font-black uppercase mt-1">5x500m @ 4:20/km</h4>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="directions_run">directions_run</span>
+</div>
+<p class="text-on-surface-variant text-sm mb-6 leading-relaxed">
+                        High intensity bursts with 90s active recovery between sets. Focus on knee drive and explosive form.
+                    </p>
+<button class="w-full py-4 bg-gradient-to-r from-primary to-primary-fixed-dim rounded-full text-on-primary-fixed font-black uppercase lexend text-sm tracking-widest shadow-[0_8px_32px_rgba(212,251,0,0.25)] active:scale-95 transition-transform">
+                        Start Session
+                    </button>
+</div>
+</div>
+<!-- Day 3: Rest/Upcoming -->
+<div class="group bg-surface-container-low p-6 rounded-lg opacity-60">
+<div class="flex justify-between items-center">
+<div>
+<span class="lexend text-xs font-bold text-on-surface-variant uppercase tracking-widest">Wed • Rest</span>
+<h4 class="lexend text-2xl font-black uppercase mt-1">Active Mobility</h4>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="event_available">event_available</span>
+</div>
+</div>
+<!-- Day 4: Threshold -->
+<div class="group bg-surface-container p-6 rounded-lg">
+<div class="flex justify-between items-start mb-4">
+<div>
+<span class="lexend text-xs font-bold text-tertiary uppercase tracking-widest">Thu • Threshold</span>
+<h4 class="lexend text-2xl font-black uppercase mt-1">8KM Tempo Run</h4>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="timer">timer</span>
+</div>
+<div class="bg-surface-container-highest/50 rounded-lg p-3 inline-flex items-center gap-2">
+<span class="material-symbols-outlined text-[14px] text-tertiary" data-icon="target">target</span>
+<span class="lexend text-xs font-bold uppercase tracking-tight">Goal Pace: 4:55/KM</span>
+</div>
+</div>
+</div>
+<!-- Featured Plan Image (Editorial Feel) -->
+<div class="mt-16 relative h-64 rounded-xl overflow-hidden group">
+<img class="w-full h-full object-cover grayscale transition-all duration-700 group-hover:grayscale-0" data-alt="athlete runner on a mountain trail at sunrise, dramatic long shadows and golden hour atmosphere" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCX3PcjUhggrqGsrmJUo4h4IRQDXudqhrr8RdW7hm2sX6DzTJKcW44Sc0DT-wXgN676hc-c8JTTlFctFZv5PNMDMS_9gMKo89lRIQUcf7aE-lJocSLb_fF77Aqksw87GwuIZ6e5esinaqVtZSsSH1Qd8RzEeAU2QdElVXAuWUDMjtbeoNPQiCn3z-k0k8HySjz4Z_gf5UALUzEV5ISvwQwo7eS-RXaA5VPEZOtHB9fe5RDq4ObwtCbzBGhdw_VTk3u-ysGF0rWruAdk"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent"></div>
+<div class="absolute bottom-6 left-6 right-6">
+<h5 class="lexend text-2xl font-black uppercase leading-none">The Science of Speed</h5>
+<p class="text-on-surface-variant text-xs font-bold mt-2 uppercase tracking-widest">Pro Tips: Master your recovery</p>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pt-3 pb-8 bg-[#0e0e0e]/90 backdrop-blur-xl z-50 rounded-t-[2rem] shadow-[0_-8px_32px_rgba(212,251,0,0.05)]">
+<div class="flex flex-col items-center justify-center text-gray-400 px-5 py-2 hover:text-[#d4fb00] transition-colors cursor-pointer">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-['Lexend'] text-[10px] uppercase tracking-widest font-medium mt-1">Home</span>
+</div>
+<div class="flex flex-col items-center justify-center text-gray-400 px-5 py-2 hover:text-[#d4fb00] transition-colors cursor-pointer">
+<span class="material-symbols-outlined" data-icon="fitness_center">fitness_center</span>
+<span class="font-['Lexend'] text-[10px] uppercase tracking-widest font-medium mt-1">Gym</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#d4fb00] bg-[#191919] rounded-full px-5 py-2 cursor-pointer active:scale-90 duration-300 ease-out">
+<span class="material-symbols-outlined" data-icon="directions_run" style="font-variation-settings: 'FILL' 1;">directions_run</span>
+<span class="font-['Lexend'] text-[10px] uppercase tracking-widest font-medium mt-1">Run</span>
+</div>
+<div class="flex flex-col items-center justify-center text-gray-400 px-5 py-2 hover:text-[#d4fb00] transition-colors cursor-pointer">
+<span class="material-symbols-outlined" data-icon="insights">insights</span>
+<span class="font-['Lexend'] text-[10px] uppercase tracking-widest font-medium mt-1">Analytics</span>
+</div>
+<div class="flex flex-col items-center justify-center text-gray-400 px-5 py-2 hover:text-[#d4fb00] transition-colors cursor-pointer">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-['Lexend'] text-[10px] uppercase tracking-widest font-medium mt-1">Profile</span>
+</div>
+</nav>
+</body></html>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { UserConfigProvider, useUserConfig } from './context/UserConfigContext';
+import { ActiveSessionProvider } from './context/ActiveSessionContext';
 import { useLocalStorage } from './hooks/useLocalStorage';
 
 import LoginPage        from './pages/LoginPage';
@@ -127,7 +128,9 @@ function AppShell() {
 
   return (
     <UserConfigProvider>
-      <AppContent page={page} setPage={setPage} />
+      <ActiveSessionProvider>
+        <AppContent page={page} setPage={setPage} />
+      </ActiveSessionProvider>
     </UserConfigProvider>
   );
 }

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed-dim": "#c7ec00",
+                        "on-surface": "#ffffff",
+                        "error": "#ff7351",
+                        "primary": "#f5ffc5",
+                        "tertiary-dim": "#eecd34",
+                        "on-tertiary": "#665600",
+                        "tertiary-container": "#fddb42",
+                        "on-tertiary-container": "#5c4d00",
+                        "surface-dim": "#0e0e0e",
+                        "secondary": "#00e3fd",
+                        "primary-container": "#d4fb00",
+                        "tertiary-fixed-dim": "#eecd34",
+                        "tertiary": "#ffeba0",
+                        "on-error": "#450900",
+                        "surface-bright": "#2c2c2c",
+                        "secondary-fixed": "#26e6ff",
+                        "surface-container-high": "#1f1f1f",
+                        "on-error-container": "#ffd2c8",
+                        "surface-container-highest": "#262626",
+                        "secondary-fixed-dim": "#00d7f0",
+                        "on-primary": "#556600",
+                        "on-primary-fixed": "#3d4a00",
+                        "surface-container-low": "#131313",
+                        "on-primary-fixed-variant": "#566800",
+                        "on-surface-variant": "#ababab",
+                        "surface-container": "#191919",
+                        "inverse-on-surface": "#555555",
+                        "on-background": "#ffffff",
+                        "on-tertiary-fixed": "#473b00",
+                        "secondary-container": "#006875",
+                        "error-dim": "#d53d18",
+                        "on-secondary-fixed-variant": "#005964",
+                        "error-container": "#b92902",
+                        "surface": "#0e0e0e",
+                        "inverse-surface": "#f9f9f9",
+                        "secondary-dim": "#00d4ec",
+                        "on-tertiary-fixed-variant": "#685700",
+                        "on-secondary": "#004d57",
+                        "surface-variant": "#262626",
+                        "surface-tint": "#f5ffc5",
+                        "primary-fixed": "#d4fb00",
+                        "on-secondary-fixed": "#003a42",
+                        "outline-variant": "#484848",
+                        "on-primary-container": "#4d5d00",
+                        "background": "#0e0e0e",
+                        "outline": "#757575",
+                        "inverse-primary": "#556600",
+                        "primary-dim": "#c9ef00",
+                        "on-secondary-container": "#e8fbff",
+                        "tertiary-fixed": "#fddb42",
+                        "surface-container-lowest": "#000000"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Lexend"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { background-color: #0e0e0e; font-family: 'Inter', sans-serif; color: #ffffff; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .glass-panel { background: rgba(38, 38, 38, 0.6); backdrop-filter: blur(20px); }
+        .neon-glow { text-shadow: 0 0 10px rgba(212, 251, 0, 0.3); }
+        .primary-gradient { background: linear-gradient(135deg, #f5ffc5 0%, #c9ef00 100%); }
+        input:focus, textarea:focus { outline: none; background-color: #2c2c2c !important; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface min-h-screen pb-32">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 w-full z-50 flex items-center justify-between px-6 h-16 bg-[#131313]">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#d4fb00]" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<h1 class="font-['Lexend'] tracking-tighter uppercase font-bold text-2xl text-[#d4fb00] tracking-widest">KINETIC</h1>
+</div>
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-container-highest border border-outline-variant/20">
+<img alt="Profile" class="w-full h-full object-cover" data-alt="portrait of a determined athlete in high-contrast cinematic lighting with a dark moody background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuATRdLvuZ1vLsKeIMq85zCs89HpRfXOKWPkm8TyVCemfRMacagb7bMnWGHIwchoRikemj-gBysN-2u6efadlaM0k4v7kIzVfUqIPUgyCbjwaYDT6Nr6rCuLN9scW7FTxsF3f_3eyhJ65NdwN27MMPA9fnQzqzNPFBN_yw_dYzpmcTVOPFjDchYfyeJox0SIRWRzUg1x78iUDrJt1wVFP2moDnkf678k8xOUDExRN1t64c04os9mC1FP6v5nendjcW2iFwgpXDvpgsM0"/>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="pt-24 px-6 max-w-2xl mx-auto">
+<div class="mb-10">
+<h2 class="font-headline text-4xl font-extrabold tracking-tighter mb-2 italic">Active Run</h2>
+<div class="h-1 w-12 bg-primary-container rounded-full"></div>
+</div>
+<form class="space-y-8">
+<!-- Asymmetric Hero Data Grid -->
+<div class="grid grid-cols-12 gap-4">
+<!-- Main Distance Input -->
+<div class="col-span-12 md:col-span-7 bg-surface-container rounded-lg p-6 flex flex-col justify-between">
+<label class="font-headline text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-4">Distance (KM)</label>
+<div class="flex items-baseline gap-2">
+<input class="bg-transparent border-none p-0 font-headline text-6xl font-black w-full text-primary-container placeholder:text-surface-container-highest" placeholder="0.00" step="0.01" type="number"/>
+<span class="font-headline text-xl font-bold text-primary-fixed-dim">KM</span>
+</div>
+</div>
+<!-- Run Type Selection -->
+<div class="col-span-12 md:col-span-5 space-y-4">
+<label class="font-headline text-xs font-bold uppercase tracking-widest text-on-surface-variant px-2">Run Type</label>
+<div class="grid grid-cols-1 gap-2">
+<label class="relative flex items-center group cursor-pointer">
+<input checked="" class="peer hidden" name="run_type" type="radio"/>
+<div class="w-full py-4 px-6 rounded-lg bg-surface-container-low border border-transparent peer-checked:bg-surface-container peer-checked:border-primary-container/30 transition-all duration-300">
+<span class="font-headline font-semibold text-sm uppercase tracking-wide group-active:scale-95 transition-transform block">Road</span>
+</div>
+</label>
+<label class="relative flex items-center group cursor-pointer">
+<input class="peer hidden" name="run_type" type="radio"/>
+<div class="w-full py-4 px-6 rounded-lg bg-surface-container-low border border-transparent peer-checked:bg-surface-container peer-checked:border-primary-container/30 transition-all duration-300">
+<span class="font-headline font-semibold text-sm uppercase tracking-wide block">Trail</span>
+</div>
+</label>
+<label class="relative flex items-center group cursor-pointer">
+<input class="peer hidden" name="run_type" type="radio"/>
+<div class="w-full py-4 px-6 rounded-lg bg-surface-container-low border border-transparent peer-checked:bg-surface-container peer-checked:border-primary-container/30 transition-all duration-300">
+<span class="font-headline font-semibold text-sm uppercase tracking-wide block">Treadmill</span>
+</div>
+</label>
+</div>
+</div>
+<!-- Duration Metrics -->
+<div class="col-span-6 bg-surface-container-low rounded-lg p-6">
+<label class="font-headline text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-2">Duration (MM:SS)</label>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-secondary text-lg">timer</span>
+<input class="bg-transparent border-none p-0 font-headline text-2xl font-bold w-full text-on-surface placeholder:text-outline-variant" placeholder="00:00" type="text"/>
+</div>
+</div>
+<!-- Pace Metrics -->
+<div class="col-span-6 bg-surface-container-low rounded-lg p-6">
+<label class="font-headline text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-2">Avg Pace</label>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-secondary text-lg">speed</span>
+<input class="bg-transparent border-none p-0 font-headline text-2xl font-bold w-full text-on-surface placeholder:text-outline-variant" placeholder="--:--" type="text"/>
+</div>
+</div>
+</div>
+<!-- Contextual Performance Notes -->
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<label class="font-headline text-sm font-bold uppercase tracking-widest text-on-surface-variant">Performance Notes</label>
+<span class="text-[10px] font-medium text-outline uppercase tracking-tighter">Optional</span>
+</div>
+<div class="relative">
+<textarea class="w-full bg-surface-container-highest rounded-lg p-5 font-body text-sm text-on-surface placeholder:text-outline-variant border-none focus:ring-1 focus:ring-primary-container/20 transition-all resize-none" placeholder="How did it feel? Any pain points or breakthrough moments?" rows="4"></textarea>
+<div class="absolute bottom-4 right-4 flex gap-2">
+<span class="px-3 py-1 bg-surface-container rounded-full text-[10px] font-bold text-error uppercase">Felt Knee Pain</span>
+<span class="px-3 py-1 bg-surface-container rounded-full text-[10px] font-bold text-secondary uppercase">High Energy</span>
+</div>
+</div>
+</div>
+<!-- Submit Action -->
+<div class="pt-8">
+<button class="w-full primary-gradient h-16 rounded-full flex items-center justify-center gap-3 active:scale-[0.98] transition-all duration-300 shadow-[0_16px_32px_rgba(212,251,0,0.15)]" type="submit">
+<span class="font-headline font-black text-on-primary-fixed uppercase tracking-widest text-lg">Submit Run</span>
+<span class="material-symbols-outlined text-on-primary-fixed" style="font-variation-settings: 'wght' 700;">arrow_forward</span>
+</button>
+<p class="text-center mt-6 font-label text-[10px] text-outline-variant uppercase tracking-widest">Run data will be synced with Kinetic Cloud</p>
+</div>
+</form>
+<!-- Visual Decorative Element (Map Preview Placeholder) -->
+<div class="mt-12 rounded-xl overflow-hidden h-40 relative group">
+<img alt="Activity Map" class="w-full h-full object-cover opacity-40 grayscale group-hover:grayscale-0 transition-all duration-700" data-alt="abstract top-down view of city streets at night with glowing blue and lime data paths overlay" data-location="Berlin" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAjy0t1he6n-blSo2G7zY2dIuB4G49jS9TNYSYRzDlOX_BjKP3vGl8uUWFdoGXgygl8rxYUQC1VjOLHIMEU55tCrBDM5S8qJurWulbizpxdk4Ol1sVS_zu2R_tonDdQjwXVu2j1dKIL4q4CE6pjnc2ZYejl6R8Jy2DnbGtW3ZrQd9M8QKpj9ROgrqUybYPdU68xgxiQI_cXHZEBPT0crMIcbEGNOW3OUUZ5HxnHCYckQPOBEAclTc1dStpxNGgEW31M5cgoS3-b5Qev"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface to-transparent"></div>
+<div class="absolute bottom-4 left-6">
+<span class="font-headline text-[10px] font-bold text-primary-container uppercase tracking-widest flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary-container animate-pulse"></span>
+                    Live GPS Tracking
+                </span>
+</div>
+</div>
+</main>
+<!-- Navigation Shell (BottomNavBar) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pt-3 pb-8 bg-[#0e0e0e]/90 backdrop-blur-xl z-50 rounded-t-[2rem] shadow-[0_-8px_32px_rgba(212,251,0,0.05)]">
+<button class="flex flex-col items-center justify-center text-gray-400 px-5 py-2 hover:text-[#d4fb00] transition-colors active:scale-90 duration-300 ease-out">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-['Lexend'] text-[10px] uppercase tracking-widest font-medium mt-1">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-gray-400 px-5 py-2 hover:text-[#d4fb00] transition-colors active:scale-90 duration-300 ease-out">
+<span class="material-symbols-outlined" data-icon="fitness_center">fitness_center</span>
+<span class="font-['Lexend'] text-[10px] uppercase tracking-widest font-medium mt-1">Gym</span>
+</button>
+<button class="flex flex-col items-center justify-center text-[#d4fb00] bg-[#191919] rounded-full px-5 py-2 active:scale-90 duration-300 ease-out">
+<span class="material-symbols-outlined" data-icon="directions_run" style="font-variation-settings: 'FILL' 1;">directions_run</span>
+<span class="font-['Lexend'] text-[10px] uppercase tracking-widest font-medium mt-1">Run</span>
+</button>
+<button class="flex flex-col items-center justify-center text-gray-400 px-5 py-2 hover:text-[#d4fb00] transition-colors active:scale-90 duration-300 ease-out">
+<span class="material-symbols-outlined" data-icon="insights">insights</span>
+<span class="font-['Lexend'] text-[10px] uppercase tracking-widest font-medium mt-1">Analytics</span>
+</button>
+<button class="flex flex-col items-center justify-center text-gray-400 px-5 py-2 hover:text-[#d4fb00] transition-colors active:scale-90 duration-300 ease-out">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-['Lexend'] text-[10px] uppercase tracking-widest font-medium mt-1">Profile</span>
+</button>
+</nav>
+</body></html>

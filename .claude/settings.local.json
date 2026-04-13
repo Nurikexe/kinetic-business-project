@@ -19,7 +19,10 @@
       "Bash(vercel --version)",
       "Bash(vercel whoami:*)",
       "Bash(vercel:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(cat /Users/nurasylartykbay/Projects/GYM/supabase/*.sql)",
+      "Bash(npm ls:*)",
+      "Bash(pkill -f \"vite --port 5175\")"
     ]
   }
 }

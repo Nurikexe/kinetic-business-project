@@ -17,10 +17,15 @@ CREATE TABLE IF NOT EXISTS user_config (
   run_weeks      JSONB    NOT NULL DEFAULT '[]',
   run_types      JSONB    NOT NULL DEFAULT '[]',
   run_completed  JSONB    NOT NULL DEFAULT '{}',
+  active_gym_session JSONB DEFAULT NULL,
+  active_run_session JSONB DEFAULT NULL,
   ten_k_time     TEXT     NOT NULL DEFAULT '',
   ten_k_target   TEXT     NOT NULL DEFAULT '60:00',
   updated_at     TIMESTAMPTZ DEFAULT NOW()
 );
+
+ALTER TABLE user_config ADD COLUMN IF NOT EXISTS active_gym_session JSONB DEFAULT NULL;
+ALTER TABLE user_config ADD COLUMN IF NOT EXISTS active_run_session JSONB DEFAULT NULL;
 
 ALTER TABLE user_config ADD COLUMN IF NOT EXISTS gym_goals JSONB NOT NULL DEFAULT '[]';
 ALTER TABLE user_config ADD COLUMN IF NOT EXISTS gym_rules JSONB NOT NULL DEFAULT '[]';
