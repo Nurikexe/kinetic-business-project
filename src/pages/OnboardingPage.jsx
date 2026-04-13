@@ -406,31 +406,76 @@ export default function OnboardingPage({ onComplete }) {
 
   // ── AI: generating ────────────────────────────────────────
   if (step === 'ai_generating') {
+    if (aiError) {
+      return (
+        <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 text-center">
+          <span className="material-symbols-outlined text-6xl text-error mb-4">error</span>
+          <p className="text-on-surface-variant mb-8">{aiError}</p>
+          <button
+            onClick={() => setStep('ai_quiz')}
+            className="px-8 py-4 rounded-full bg-primary-container text-on-primary-fixed font-headline font-bold uppercase"
+          >
+            Try Again
+          </button>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 text-center">
-        {aiError ? (
-          <div>
-            <span className="material-symbols-outlined text-5xl text-error mb-4 block">error</span>
-            <p className="text-on-surface-variant mb-6">{aiError}</p>
-            <button
-              onClick={() => setStep('ai_quiz')}
-              className="px-8 py-4 rounded-full bg-primary-container text-on-primary-fixed font-headline font-bold uppercase"
+        {/* Orbital animation */}
+        <div className="relative w-36 h-36 mb-10">
+          {/* Outer slow ring */}
+          <div className="absolute inset-0 rounded-full border-2 border-primary-container/15 animate-spin" style={{ animationDuration: '3s' }} />
+          {/* Middle dashed ring */}
+          <div className="absolute inset-3 rounded-full border-2 border-dashed border-primary-container/30 animate-spin" style={{ animationDuration: '2s', animationDirection: 'reverse' }} />
+          {/* Inner solid arc */}
+          <div className="absolute inset-6 rounded-full border-4 border-transparent border-t-primary-container border-r-primary-container/40 animate-spin" style={{ animationDuration: '1s' }} />
+          {/* Center icon */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="material-symbols-outlined text-3xl text-primary-container" style={{ fontVariationSettings: "'FILL' 1" }}>psychology</span>
+          </div>
+          {/* Orbiting dot */}
+          <div className="absolute inset-0 animate-spin" style={{ animationDuration: '1.8s' }}>
+            <div className="w-3 h-3 rounded-full bg-primary-container shadow-[0_0_8px_rgba(212,251,0,0.8)] absolute -top-1.5 left-1/2 -translate-x-1/2" />
+          </div>
+        </div>
+
+        <h2 className="text-3xl font-black font-headline uppercase tracking-tighter mb-3">
+          Generating Your Plan
+        </h2>
+        <p className="text-on-surface-variant max-w-xs leading-relaxed">
+          Our AI is analysing your goals and crafting a personalised blueprint just for you…
+        </p>
+
+        {/* Animated step hints */}
+        <div className="mt-10 space-y-3 w-full max-w-xs text-left">
+          {[
+            { icon: 'analytics',      label: 'Analysing your goals' },
+            { icon: 'fitness_center', label: 'Selecting optimal exercises' },
+            { icon: 'directions_run', label: 'Structuring your schedule' },
+          ].map((item, i) => (
+            <div
+              key={i}
+              className="flex items-center gap-3 px-4 py-3 rounded-lg bg-surface-container"
+              style={{ opacity: 0.4 + i * 0.2, animation: `pulse ${1.5 + i * 0.4}s ease-in-out infinite` }}
             >
-              Try Again
-            </button>
-          </div>
-        ) : (
-          <div>
-            <div className="w-16 h-16 rounded-full border-2 border-primary-container/30 border-t-primary-container animate-spin mb-6 mx-auto" />
-            <h2 className="text-2xl font-black font-headline uppercase tracking-tighter mb-2">Generating Your Plan</h2>
-            <p className="text-on-surface-variant text-sm">Our AI is crafting your personalized blueprint…</p>
-            {aiText && (
-              <div className="mt-6 max-w-sm text-left bg-surface-container rounded-lg p-4 text-xs text-on-surface-variant font-mono max-h-32 overflow-hidden">
-                {aiText.slice(0, 200)}…
+              <span className="material-symbols-outlined text-primary-container text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>
+                {item.icon}
+              </span>
+              <span className="text-sm font-medium text-on-surface-variant">{item.label}</span>
+              <div className="ml-auto flex gap-1">
+                {[0,1,2].map(d => (
+                  <div
+                    key={d}
+                    className="w-1 h-1 rounded-full bg-primary-container/50 animate-bounce"
+                    style={{ animationDelay: `${d * 0.15}s` }}
+                  />
+                ))}
               </div>
-            )}
-          </div>
-        )}
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
