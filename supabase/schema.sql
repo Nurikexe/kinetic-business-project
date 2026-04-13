@@ -55,3 +55,55 @@ CREATE POLICY "Users manage own workouts"
   ON workouts FOR ALL
   USING  (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
+
+-- ── run_sessions ───────────────────────────────────────────────
+-- One row per submitted running session.
+
+CREATE TABLE IF NOT EXISTS run_sessions (
+  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id          UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  date             DATE NOT NULL,
+  submitted_at     TIMESTAMPTZ DEFAULT NOW(),
+  title            TEXT NOT NULL DEFAULT 'Run',
+  run_type         TEXT,
+  segments         JSONB NOT NULL DEFAULT '[]',
+  total_distance   NUMERIC(6,2) DEFAULT 0,
+  avg_pace         TEXT DEFAULT '',
+  notes            TEXT DEFAULT '',
+  duration_seconds INT  DEFAULT 0
+);
+
+ALTER TABLE run_sessions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users manage own run sessions"
+  ON run_sessions FOR ALL
+  USING  (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+-- ── community_plans ────────────────────────────────────────────
+-- Workout plans created and shared by users.
+
+CREATE TABLE IF NOT EXISTS community_plans (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id     UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  title       TEXT NOT NULL,
+  description TEXT DEFAULT '',
+  plan_type   TEXT NOT NULL DEFAULT 'gym',   -- 'gym' | 'running' | 'hybrid'
+  difficulty  TEXT DEFAULT 'intermediate',    -- 'beginner' | 'intermediate' | 'advanced'
+  plan_data   JSONB NOT NULL DEFAULT '{}',
+  likes       INT NOT NULL DEFAULT 0,
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE community_plans ENABLE ROW LEVEL SECURITY;
+
+-- Anyone can read community plans
+CREATE POLICY "Anyone can read community plans"
+  ON community_plans FOR SELECT
+  USING (true);
+
+-- Only the author can insert/update/delete their own plans
+CREATE POLICY "Users manage own community plans"
+  ON community_plans FOR ALL
+  USING  (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
