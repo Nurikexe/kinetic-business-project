@@ -437,75 +437,188 @@ export default function OnboardingPage({ onComplete }) {
 
   // ── AI: result ────────────────────────────────────────────
   if (step === 'ai_result' && aiPlan) {
+    // Color-code run types for visual clarity
+    const runTypeColor = (type = '') => {
+      const t = type.toLowerCase();
+      if (t.includes('easy') || t.includes('recovery')) return { color: '#10b981', bg: '#10b98115', label: 'Easy' };
+      if (t.includes('long'))      return { color: '#ff3b5c', bg: '#ff3b5c15', label: 'Long Run' };
+      if (t.includes('tempo'))     return { color: '#ffb020', bg: '#ffb02015', label: 'Tempo' };
+      if (t.includes('interval'))  return { color: '#a855f7', bg: '#a855f715', label: 'Intervals' };
+      if (t.includes('threshold')) return { color: '#ff6b35', bg: '#ff6b3515', label: 'Threshold' };
+      if (t.includes('hill'))      return { color: '#f59e0b', bg: '#f59e0b15', label: 'Hills' };
+      return { color: '#00e3fd', bg: '#00e3fd15', label: type || 'Run' };
+    };
+
+    const hasGym     = aiPlan.gymDays?.length > 0;
+    const hasRunning = aiPlan.runningDays?.length > 0;
+
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <header className="flex items-center gap-3 px-6 py-4 border-b border-outline-variant/10">
+        {/* Header */}
+        <header className="flex items-center gap-3 px-6 py-4 border-b border-outline-variant/10 sticky top-0 z-10 bg-background/95 backdrop-blur-xl">
           <button onClick={() => setStep('ai_quiz')} className="text-on-surface-variant hover:text-on-surface transition-colors">
             <span className="material-symbols-outlined">arrow_back</span>
           </button>
           <span className="font-headline font-bold text-xl uppercase tracking-tight text-primary-fixed">Your Blueprint</span>
         </header>
 
-        <div className="flex-1 px-6 pt-6 pb-32 max-w-xl mx-auto w-full overflow-y-auto">
-          <div className="mb-6">
-            <h2 className="text-3xl font-black font-headline uppercase tracking-tighter mb-2">{aiPlan.title}</h2>
-            <p className="text-on-surface-variant">{aiPlan.description}</p>
+        <div className="flex-1 pb-32 overflow-y-auto">
+          {/* Hero */}
+          <div className="px-6 pt-6 pb-5 max-w-xl mx-auto">
+            <div className="flex flex-wrap gap-2 mb-4">
+              {hasGym && (
+                <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-container/15 text-primary-fixed text-xs font-black uppercase tracking-widest">
+                  <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>fitness_center</span>
+                  Gym
+                </span>
+              )}
+              {hasRunning && (
+                <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary/10 text-secondary text-xs font-black uppercase tracking-widest">
+                  <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>directions_run</span>
+                  Running
+                </span>
+              )}
+              {answers.difficulty && (
+                <span className="px-3 py-1 rounded-full bg-surface-container-highest text-on-surface-variant text-xs font-black uppercase tracking-widest">
+                  {answers.experience || 'Custom'}
+                </span>
+              )}
+            </div>
+
+            <h2 className="text-4xl font-black font-headline uppercase tracking-tighter leading-none mb-3">
+              {aiPlan.title}
+            </h2>
+            <p className="text-on-surface-variant leading-relaxed">{aiPlan.description}</p>
           </div>
 
+          {/* Weekly Schedule strip */}
           {aiPlan.weeklySchedule && (
-            <div className="bg-surface-container rounded-lg p-4 mb-6">
-              <p className="text-xs font-bold uppercase tracking-widest text-primary-fixed mb-2">Weekly Schedule</p>
-              <p className="text-on-surface-variant text-sm">{aiPlan.weeklySchedule}</p>
+            <div className="px-6 mb-6 max-w-xl mx-auto">
+              <div className="bg-surface-container-low rounded-lg p-4 border border-outline-variant/10">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="material-symbols-outlined text-primary-fixed text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>calendar_month</span>
+                  <p className="text-xs font-black uppercase tracking-widest text-primary-fixed">Weekly Schedule</p>
+                </div>
+                <p className="text-on-surface-variant text-sm leading-relaxed">{aiPlan.weeklySchedule}</p>
+              </div>
             </div>
           )}
 
-          {aiPlan.gymDays?.length > 0 && (
-            <div className="mb-6">
-              <h3 className="font-headline font-bold text-lg uppercase tracking-tight text-primary-fixed mb-3">Gym Days</h3>
+          {/* Gym Days */}
+          {hasGym && (
+            <section className="px-6 mb-8 max-w-xl mx-auto">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="material-symbols-outlined text-primary-fixed" style={{ fontVariationSettings: "'FILL' 1" }}>fitness_center</span>
+                <h3 className="font-headline font-black text-base uppercase tracking-widest text-primary-fixed">Gym Days</h3>
+                <div className="flex-1 h-px bg-primary-container/20" />
+              </div>
+
               <div className="space-y-3">
                 {aiPlan.gymDays.map((day, i) => (
-                  <div key={i} className="bg-surface-container rounded-lg p-5">
-                    <p className="font-headline font-bold uppercase tracking-tight mb-1">{day.name}</p>
-                    <p className="text-on-surface-variant text-xs mb-3 uppercase tracking-widest">{day.focus}</p>
-                    <div className="space-y-2">
+                  <div key={i} className="bg-surface-container rounded-lg overflow-hidden border border-outline-variant/10">
+                    {/* Day header */}
+                    <div className="px-5 py-3 bg-surface-container-high flex justify-between items-center">
+                      <div>
+                        <p className="font-headline font-black uppercase tracking-tight">{day.name}</p>
+                        {day.focus && (
+                          <p className="text-primary-fixed text-[10px] font-black uppercase tracking-widest mt-0.5">{day.focus}</p>
+                        )}
+                      </div>
+                      <span className="text-xs font-bold text-on-surface-variant uppercase">{day.exercises?.length ?? 0} exercises</span>
+                    </div>
+                    {/* Exercises */}
+                    <div className="p-4 space-y-2.5">
                       {day.exercises?.map((ex, j) => (
-                        <div key={j} className="flex justify-between items-center text-sm">
-                          <span>{ex.name}</span>
-                          <span className="text-primary-fixed font-bold">{ex.sets}×{ex.reps}</span>
+                        <div key={j} className="flex justify-between items-center">
+                          <span className="text-sm text-on-surface">{ex.name}</span>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="bg-primary-container/15 text-primary-fixed text-xs font-black px-2.5 py-1 rounded-full">
+                              {ex.sets}×{ex.reps}
+                            </span>
+                            {ex.rest && (
+                              <span className="text-on-surface-variant text-[10px] font-bold">{ex.rest}</span>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
+            </section>
           )}
 
-          {aiPlan.runningDays?.length > 0 && (
-            <div className="mb-6">
-              <h3 className="font-headline font-bold text-lg uppercase tracking-tight text-secondary mb-3">Running Days</h3>
-              <div className="space-y-3">
-                {aiPlan.runningDays.map((day, i) => (
-                  <div key={i} className="bg-surface-container rounded-lg p-5">
-                    <div className="flex justify-between items-start mb-1">
-                      <p className="font-headline font-bold uppercase tracking-tight">{day.name}</p>
-                      <span className="text-secondary text-xs font-bold">{day.distance}</span>
-                    </div>
-                    <p className="text-on-surface-variant text-xs mb-1 uppercase tracking-widest">{day.type} · {day.pace}</p>
-                    <p className="text-on-surface-variant text-sm">{day.description}</p>
-                  </div>
-                ))}
+          {/* Running Days */}
+          {hasRunning && (
+            <section className="px-6 mb-8 max-w-xl mx-auto">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="material-symbols-outlined text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>directions_run</span>
+                <h3 className="font-headline font-black text-base uppercase tracking-widest text-secondary">Running Days</h3>
+                <div className="flex-1 h-px bg-secondary/20" />
               </div>
-            </div>
+
+              <div className="space-y-3">
+                {aiPlan.runningDays.map((day, i) => {
+                  const tc = runTypeColor(day.type);
+                  return (
+                    <div
+                      key={i}
+                      className="rounded-lg overflow-hidden border border-outline-variant/10"
+                      style={{ background: '#191919', borderLeftColor: tc.color, borderLeftWidth: 4 }}
+                    >
+                      <div className="p-5">
+                        {/* Top row: day name + distance */}
+                        <div className="flex justify-between items-start mb-3">
+                          <h4 className="font-headline font-black text-lg uppercase tracking-tight leading-tight pr-3">
+                            {day.name}
+                          </h4>
+                          {day.distance && (
+                            <span
+                              className="shrink-0 text-sm font-black px-3 py-1 rounded-full"
+                              style={{ background: tc.bg, color: tc.color }}
+                            >
+                              {day.distance}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Type + pace badges */}
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          <span
+                            className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full"
+                            style={{ background: tc.bg, color: tc.color }}
+                          >
+                            {tc.label}
+                          </span>
+                          {day.pace && (
+                            <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center gap-1">
+                              <span className="material-symbols-outlined text-xs">timer</span>
+                              {day.pace}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Description */}
+                        {day.description && (
+                          <p className="text-on-surface-variant text-sm leading-relaxed">{day.description}</p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
           )}
         </div>
 
+        {/* CTA */}
         <div className="fixed bottom-0 left-0 right-0 p-6 bg-background/95 backdrop-blur-xl border-t border-outline-variant/10">
           <button
             onClick={() => onComplete('ai', { plan: aiPlan, answers })}
-            className="w-full py-4 rounded-full kinetic-gradient text-on-primary-fixed font-headline font-black uppercase tracking-tight text-lg shadow-[0_8px_30px_rgba(212,251,0,0.2)] active:scale-95 transition-transform"
+            className="w-full py-4 rounded-full kinetic-gradient text-on-primary-fixed font-headline font-black uppercase tracking-tighter text-lg shadow-[0_8px_30px_rgba(212,251,0,0.2)] active:scale-95 transition-transform flex items-center justify-center gap-2"
           >
             Use This Plan
+            <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>arrow_forward</span>
           </button>
         </div>
       </div>
