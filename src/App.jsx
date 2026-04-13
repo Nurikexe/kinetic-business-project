@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { UserConfigProvider, useUserConfig } from './context/UserConfigContext';
-import { ActiveSessionProvider } from './context/ActiveSessionContext';
+import { ActiveSessionProvider, useActiveSession } from './context/ActiveSessionContext';
 import { useLocalStorage } from './hooks/useLocalStorage';
 
 import LoginPage        from './pages/LoginPage';
@@ -22,6 +22,7 @@ const NAV_PAGES = ['home', 'gym', 'running', 'analytics', 'cabinet'];
 
 function AppContent({ page, setPage }) {
   const { loaded, hasConfigRow, updateConfig } = useUserConfig();
+  const { hasActive }                          = useActiveSession();
   const [onboardingDone, setOnboardingDone]    = useState(false);
   const [forceOnboarding, setForceOnboarding]  = useState(
     () => sessionStorage.getItem('ha_force_onboarding') === '1'
@@ -77,7 +78,7 @@ function AppContent({ page, setPage }) {
     return <OnboardingPage onComplete={handleOnboardingComplete} />;
   }
 
-  const showNav = NAV_PAGES.includes(page);
+  const showNav = NAV_PAGES.includes(page) && !hasActive;
 
   return (
     <div className="min-h-dvh bg-background">
