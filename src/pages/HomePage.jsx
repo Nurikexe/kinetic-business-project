@@ -246,7 +246,7 @@ function downloadPlanAsPDF(plan) {
 }
 
 /* ── Community plan modal ── */
-function CommunityPlanModal({ plan, onClose, onUsePlan, isLiked, onLike }) {
+function CommunityPlanModal({ plan, onClose, onUsePlan, isLiked, onLike, isOwn }) {
   const [confirming, setConfirming] = useState(false);
   const [applied, setApplied] = useState(false);
   if (!plan) return null;
@@ -304,8 +304,10 @@ function CommunityPlanModal({ plan, onClose, onUsePlan, isLiked, onLike }) {
               </div>
             </div>
             <button
-              onClick={() => onLike(plan.id)}
-              className="flex items-center gap-1.5 active:scale-90 transition-transform"
+              onClick={() => { if (!isOwn) onLike(plan.id); }}
+              disabled={isOwn}
+              title={isOwn ? "You can't like your own plan" : undefined}
+              className={`flex items-center gap-1.5 transition-transform ${isOwn ? 'opacity-40 cursor-default' : 'active:scale-90'}`}
             >
               <span
                 className={`material-symbols-outlined text-xl transition-colors ${isLiked ? 'text-error' : 'text-on-surface-variant'}`}
@@ -477,7 +479,7 @@ function CommunityPlanModal({ plan, onClose, onUsePlan, isLiked, onLike }) {
 }
 
 /* ── Community plan card ── */
-function CommunityPlanCard({ plan, onClick, isLiked, onLike }) {
+function CommunityPlanCard({ plan, onClick, isLiked, onLike, isOwn }) {
   const isRun = plan.plan_type === 'running';
   const isHybrid = plan.plan_type === 'hybrid';
   const avatarSrc = isRun ? '/run_activity.jpg' : '/community_avatar1.jpg';
@@ -506,8 +508,10 @@ function CommunityPlanCard({ plan, onClick, isLiked, onLike }) {
       </button>
       <div className="flex items-center gap-3 shrink-0 ml-3">
         <button
-          onClick={e => { e.stopPropagation(); onLike(plan.id); }}
-          className="flex items-center gap-1 active:scale-90 transition-transform"
+          onClick={e => { e.stopPropagation(); if (!isOwn) onLike(plan.id); }}
+          disabled={isOwn}
+          title={isOwn ? "You can't like your own plan" : undefined}
+          className={`flex items-center gap-1 transition-transform ${isOwn ? 'opacity-40 cursor-default' : 'active:scale-90'}`}
         >
           <span
             className={`material-symbols-outlined text-base transition-colors ${isLiked ? 'text-error' : 'text-on-surface-variant'}`}
@@ -550,7 +554,7 @@ export default function HomePage({ setPage }) {
     Promise.all([
       supabase.from('workouts').select('*').eq('user_id', user.id).gte('date', startDate).order('submitted_at', { ascending: false }),
       supabase.from('run_sessions').select('*').eq('user_id', user.id).gte('date', startDate).order('submitted_at', { ascending: false }),
-      supabase.from('community_plans').select('id, title, description, plan_type, difficulty, likes, plan_data').order('likes', { ascending: false }).limit(4),
+      supabase.from('community_plans').select('id, user_id, title, description, plan_type, difficulty, likes, plan_data').order('likes', { ascending: false }).limit(4),
     ]).then(([gymRes, runRes, communityRes]) => {
       const gyms = gymRes.data ?? [];
       const runs = runRes.data ?? [];
@@ -771,6 +775,7 @@ export default function HomePage({ setPage }) {
                   onClick={setSelectedPlan}
                   isLiked={likedPlans.includes(plan.id)}
                   onLike={handleLike}
+                  isOwn={plan.user_id === user?.id}
                 />
               ))}
             </div>
@@ -794,6 +799,7 @@ export default function HomePage({ setPage }) {
           onUsePlan={handleUsePlan}
           isLiked={likedPlans.includes(selectedPlan.id)}
           onLike={handleLike}
+          isOwn={selectedPlan.user_id === user?.id}
         />
       )}
     </div>
