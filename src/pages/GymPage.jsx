@@ -311,6 +311,7 @@ export default function GymPage() {
     gym_goals:     gymGoals    = '',
     gym_rules:     gymRules    = [],
     lifts          = [],
+    show_performance = true,
   } = config;
 
   const effectiveDays      = gymDays.slice(0, gymDayCount);
@@ -439,7 +440,18 @@ export default function GymPage() {
       <div className="px-6 pt-6 max-w-xl mx-auto">
         {/* Week progress */}
         <section className="mb-8">
-          <h2 className="font-headline font-extrabold text-3xl tracking-tighter uppercase mb-1">Gym Plan</h2>
+          <div className="flex items-end justify-between mb-1">
+            <h2 className="font-headline font-extrabold text-3xl tracking-tighter uppercase">Gym Plan</h2>
+            <button
+              onClick={() => updateConfig({ show_performance: !show_performance })}
+              className="mb-1 text-[9px] text-on-surface-variant hover:text-primary-fixed uppercase font-black tracking-[0.2em] transition-colors flex items-center gap-1.5"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
+                {show_performance ? 'visibility_off' : 'visibility'}
+              </span>
+              {show_performance ? 'Hide Stats' : 'Show Stats'}
+            </button>
+          </div>
           <div className="flex items-center justify-between mb-3">
             <p className="text-on-surface-variant text-sm">{doneCount}/{gymDayCount} days complete this week</p>
             <button onClick={resetWeek} className="text-xs text-on-surface-variant hover:text-on-surface uppercase font-bold tracking-widest transition-colors">
@@ -454,138 +466,149 @@ export default function GymPage() {
         </section>
 
         {/* ── Performance Targets ──────────────────────── */}
-        {lifts.length > 0 && (
-          <section className="mb-8">
-            <div className="flex items-end justify-between mb-4">
-              <div>
-                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-on-surface-variant/40 mb-0.5">
-                  Performance
-                </p>
-                <h3 className="font-headline font-extrabold text-2xl uppercase tracking-tighter leading-none">
-                  Targets
-                </h3>
-              </div>
-              <button
-                onClick={() => setShowProgressionEdit(true)}
-                className="flex items-center gap-1.5 text-[10px] text-on-surface-variant/60 hover:text-primary-fixed uppercase font-black tracking-widest transition-colors pb-0.5"
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>edit</span>
-                Edit
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              {lifts.map((lift, i) => {
-                const maxVal  = Math.ceil((lift.target * 1.25) / 5) * 5;
-                const pct     = lift.target > 0 ? Math.min(100, Math.round((lift.current / lift.target) * 100)) : 0;
-                const fillPct = maxVal > 0 ? Math.min(100, (lift.current / maxVal) * 100) : 0;
-                const reached = pct >= 100;
-
-                return (
-                  <motion.div
-                    key={lift.key}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.07, duration: 0.3 }}
-                    className="rounded-2xl bg-surface-container overflow-hidden"
-                  >
-                    {/* Dynamic progress top-bar */}
-                    <div
-                      className="h-[2px] transition-all duration-500"
-                      style={{
-                        background: `linear-gradient(to right, #d4fb00 ${fillPct}%, rgba(255,255,255,0.04) ${fillPct}%)`,
-                      }}
-                    />
-
-                    <div className="px-5 pt-4 pb-5">
-                      {/* Header */}
-                      <div className="flex items-start justify-between mb-4">
-                        <div>
-                          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-on-surface-variant/40 mb-0.5">
-                            {lift.unit}{lift.prefix ? ` · ${lift.prefix}` : ''}
-                          </p>
-                          <h4 className="font-headline font-bold text-[15px] uppercase tracking-tight text-on-surface leading-tight">
-                            {lift.name}
-                          </h4>
-                        </div>
-                        <div className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
-                          reached
-                            ? 'bg-primary-container text-on-primary-fixed'
-                            : 'bg-surface-container-highest text-on-surface-variant'
-                        }`}>
-                          {reached ? '✓ Done' : `${pct}%`}
-                        </div>
-                      </div>
-
-                      {/* Numbers row */}
-                      <div className="flex items-end justify-between mb-5">
-                        <div>
-                          <p className="text-[8px] font-black uppercase tracking-widest text-on-surface-variant/40 mb-1">
-                            Current
-                          </p>
-                          <div className="flex items-baseline gap-1.5">
-                            <span className="font-headline font-black text-[40px] leading-none tracking-tighter text-on-surface">
-                              {lift.prefix || ''}{lift.current}
-                            </span>
-                            <span className="text-on-surface-variant/60 text-sm font-bold leading-none mb-1">
-                              {lift.unit}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="text-right pb-1">
-                          <p className="text-[8px] font-black uppercase tracking-widest text-on-surface-variant/40 mb-1">
-                            Target
-                          </p>
-                          <div className="flex items-baseline gap-1 justify-end">
-                            <span className="font-headline font-bold text-2xl leading-none tracking-tighter text-on-surface-variant/50">
-                              {lift.prefix || ''}{lift.target}
-                            </span>
-                            <span className="text-on-surface-variant/30 text-xs font-bold leading-none mb-0.5">
-                              {lift.unit}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Slider */}
-                      <input
-                        type="range"
-                        className="kinetic-slider w-full"
-                        min={0}
-                        max={maxVal}
-                        step={lift.unit === 'kg' ? 2.5 : 0.5}
-                        value={lift.current}
-                        onChange={e => updateLiftCurrent(lift.key, parseFloat(e.target.value))}
-                        style={{
-                          background: `linear-gradient(to right, #d4fb00 ${fillPct}%, rgba(38,38,38,1) ${fillPct}%)`,
-                        }}
-                      />
-
-                      {/* Min / Max labels */}
-                      <div className="flex justify-between mt-2">
-                        <span className="text-[9px] font-bold text-on-surface-variant/25">0</span>
-                        <span className="text-[9px] font-bold text-on-surface-variant/25">{maxVal} {lift.unit}</span>
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </section>
-        )}
-
-        {/* Fallback: legacy goal string */}
-        {lifts.length === 0 && gymGoals && (
-          <div className="bg-surface-container rounded-xl p-5 mb-8 flex items-center justify-between">
-            <p className="text-on-surface-variant text-sm flex-1">{gymGoals}</p>
-            <button
-              onClick={() => setShowProgressionEdit(true)}
-              className="ml-4 text-[10px] text-on-surface-variant/60 hover:text-primary-fixed uppercase font-black tracking-widest transition-colors shrink-0"
+        <AnimatePresence>
+          {show_performance && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
             >
-              Edit
-            </button>
-          </div>
-        )}
+              {lifts.length > 0 && (
+                <section className="mb-8">
+                  <div className="flex items-end justify-between mb-4">
+                    <div>
+                      <p className="text-[9px] font-black uppercase tracking-[0.2em] text-on-surface-variant/40 mb-0.5">
+                        Performance
+                      </p>
+                      <h3 className="font-headline font-extrabold text-2xl uppercase tracking-tighter leading-none">
+                        Targets
+                      </h3>
+                    </div>
+                    <button
+                      onClick={() => setShowProgressionEdit(true)}
+                      className="flex items-center gap-1.5 text-[10px] text-on-surface-variant/60 hover:text-primary-fixed uppercase font-black tracking-widest transition-colors pb-0.5"
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>edit</span>
+                      Edit
+                    </button>
+                  </div>
+
+                  <div className="space-y-3">
+                    {lifts.map((lift, i) => {
+                      const maxVal  = Math.ceil((lift.target * 1.25) / 5) * 5;
+                      const pct     = lift.target > 0 ? Math.min(100, Math.round((lift.current / lift.target) * 100)) : 0;
+                      const fillPct = maxVal > 0 ? Math.min(100, (lift.current / maxVal) * 100) : 0;
+                      const reached = pct >= 100;
+
+                      return (
+                        <motion.div
+                          key={lift.key}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: i * 0.07, duration: 0.3 }}
+                          className="rounded-2xl bg-surface-container overflow-hidden"
+                        >
+                          {/* Dynamic progress top-bar */}
+                          <div
+                            className="h-[2px] transition-all duration-500"
+                            style={{
+                              background: `linear-gradient(to right, #d4fb00 ${fillPct}%, rgba(255,255,255,0.04) ${fillPct}%)`,
+                            }}
+                          />
+
+                          <div className="px-5 pt-4 pb-5">
+                            {/* Header */}
+                            <div className="flex items-start justify-between mb-4">
+                              <div>
+                                <p className="text-[9px] font-black uppercase tracking-[0.18em] text-on-surface-variant/40 mb-0.5">
+                                  {lift.unit}{lift.prefix ? ` · ${lift.prefix}` : ''}
+                                </p>
+                                <h4 className="font-headline font-bold text-[15px] uppercase tracking-tight text-on-surface leading-tight">
+                                  {lift.name}
+                                </h4>
+                              </div>
+                              <div className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                                reached
+                                  ? 'bg-primary-container text-on-primary-fixed'
+                                  : 'bg-surface-container-highest text-on-surface-variant'
+                              }`}>
+                                {reached ? '✓ Done' : `${pct}%`}
+                              </div>
+                            </div>
+
+                            {/* Numbers row */}
+                            <div className="flex items-end justify-between mb-5">
+                              <div>
+                                <p className="text-[8px] font-black uppercase tracking-widest text-on-surface-variant/40 mb-1">
+                                  Current
+                                </p>
+                                <div className="flex items-baseline gap-1.5">
+                                  <span className="font-headline font-black text-[40px] leading-none tracking-tighter text-on-surface">
+                                    {lift.prefix || ''}{lift.current}
+                                  </span>
+                                  <span className="text-on-surface-variant/60 text-sm font-bold leading-none mb-1">
+                                    {lift.unit}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="text-right pb-1">
+                                <p className="text-[8px] font-black uppercase tracking-widest text-on-surface-variant/40 mb-1">
+                                  Target
+                                </p>
+                                <div className="flex items-baseline gap-1 justify-end">
+                                  <span className="font-headline font-bold text-2xl leading-none tracking-tighter text-on-surface-variant/50">
+                                    {lift.prefix || ''}{lift.target}
+                                  </span>
+                                  <span className="text-on-surface-variant/30 text-xs font-bold leading-none mb-0.5">
+                                    {lift.unit}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Slider */}
+                            <input
+                              type="range"
+                              className="kinetic-slider w-full"
+                              min={0}
+                              max={maxVal}
+                              step={lift.unit === 'kg' ? 2.5 : 0.5}
+                              value={lift.current}
+                              onChange={e => updateLiftCurrent(lift.key, parseFloat(e.target.value))}
+                              style={{
+                                background: `linear-gradient(to right, #d4fb00 ${fillPct}%, rgba(38,38,38,1) ${fillPct}%)`,
+                              }}
+                            />
+
+                            {/* Min / Max labels */}
+                            <div className="flex justify-between mt-2">
+                              <span className="text-[9px] font-bold text-on-surface-variant/25">0</span>
+                              <span className="text-[9px] font-bold text-on-surface-variant/25">{maxVal} {lift.unit}</span>
+                            </div>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                </section>
+              )}
+
+              {/* Fallback: legacy goal string */}
+              {lifts.length === 0 && gymGoals && (
+                <div className="bg-surface-container rounded-xl p-5 mb-8 flex items-center justify-between">
+                  <p className="text-on-surface-variant text-sm flex-1">{gymGoals}</p>
+                  <button
+                    onClick={() => setShowProgressionEdit(true)}
+                    className="ml-4 text-[10px] text-on-surface-variant/60 hover:text-primary-fixed uppercase font-black tracking-widest transition-colors shrink-0"
+                  >
+                    Edit
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Day cards */}
         <div className="space-y-3">
@@ -687,83 +710,94 @@ export default function GymPage() {
         </button>
 
         {/* ── Progression Rules ────────────────────────── */}
-        {Array.isArray(gymRules) && gymRules.length > 0 && (
-          <section className="mt-8 mb-4">
-            <div className="flex items-end justify-between mb-4">
-              <div>
-                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-on-surface-variant/40 mb-0.5">
-                  Methodology
-                </p>
-                <h3 className="font-headline font-extrabold text-2xl uppercase tracking-tighter leading-none">
-                  Progression
-                </h3>
-              </div>
-              <button
-                onClick={() => setShowRulesEdit(true)}
-                className="flex items-center gap-1.5 text-[10px] text-on-surface-variant/60 hover:text-primary-fixed uppercase font-black tracking-widest transition-colors pb-0.5"
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>edit</span>
-                Edit
-              </button>
-            </div>
-
-            <div className="space-y-2">
-              {gymRules.map((rule, i) => {
-                const roman = ['I','II','III','IV','V','VI','VII','VIII','IX','X'][i] ?? String(i + 1);
-                return (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, x: -6 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.06, duration: 0.28 }}
-                    className="relative flex items-start gap-0 rounded-xl overflow-hidden bg-surface-container border border-outline-variant/[0.07] group"
-                  >
-                    {/* Left numeral column */}
-                    <div className="flex items-center justify-center w-14 py-5 shrink-0 border-r border-outline-variant/[0.07] bg-surface-container-high/50">
-                      <span
-                        className="font-headline font-black text-xl tracking-tight select-none"
-                        style={{ color: 'rgba(212,251,0,0.25)' }}
-                      >
-                        {roman}
-                      </span>
+        <AnimatePresence>
+          {show_performance && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
+            >
+              {Array.isArray(gymRules) && gymRules.length > 0 && (
+                <section className="mt-8 mb-4">
+                  <div className="flex items-end justify-between mb-4">
+                    <div>
+                      <p className="text-[9px] font-black uppercase tracking-[0.2em] text-on-surface-variant/40 mb-0.5">
+                        Methodology
+                      </p>
+                      <h3 className="font-headline font-extrabold text-2xl uppercase tracking-tighter leading-none">
+                        Progression
+                      </h3>
                     </div>
+                    <button
+                      onClick={() => setShowRulesEdit(true)}
+                      className="flex items-center gap-1.5 text-[10px] text-on-surface-variant/60 hover:text-primary-fixed uppercase font-black tracking-widest transition-colors pb-0.5"
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>edit</span>
+                      Edit
+                    </button>
+                  </div>
 
-                    {/* Rule text */}
-                    <div className="flex-1 px-4 py-4">
-                      <p className="text-sm text-on-surface leading-relaxed">{rule}</p>
-                    </div>
+                  <div className="space-y-2">
+                    {gymRules.map((rule, i) => {
+                      const roman = ['I','II','III','IV','V','VI','VII','VIII','IX','X'][i] ?? String(i + 1);
+                      return (
+                        <motion.div
+                          key={i}
+                          initial={{ opacity: 0, x: -6 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: i * 0.06, duration: 0.28 }}
+                          className="relative flex items-start gap-0 rounded-xl overflow-hidden bg-surface-container border border-outline-variant/[0.07] group"
+                        >
+                          {/* Left numeral column */}
+                          <div className="flex items-center justify-center w-14 py-5 shrink-0 border-r border-outline-variant/[0.07] bg-surface-container-high/50">
+                            <span
+                              className="font-headline font-black text-xl tracking-tight select-none"
+                              style={{ color: 'rgba(212,251,0,0.25)' }}
+                            >
+                              {roman}
+                            </span>
+                          </div>
 
-                    {/* Subtle right accent on hover */}
-                    <div
-                      className="absolute left-0 top-0 w-[2px] h-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                      style={{ background: 'linear-gradient(to bottom, #d4fb00, rgba(212,251,0,0.2))' }}
-                    />
-                  </motion.div>
-                );
-              })}
-            </div>
-          </section>
-        )}
+                          {/* Rule text */}
+                          <div className="flex-1 px-4 py-4">
+                            <p className="text-sm text-on-surface leading-relaxed">{rule}</p>
+                          </div>
 
-        {/* Setup CTAs if nothing configured */}
-        {lifts.length === 0 && !gymGoals && (
-          <button
-            onClick={() => setShowProgressionEdit(true)}
-            className="mt-4 w-full py-3 rounded-xl border border-outline-variant/20 flex items-center justify-center gap-2 text-on-surface-variant text-sm font-bold uppercase tracking-widest hover:bg-surface-container transition-all"
-          >
-            <span className="material-symbols-outlined text-base">add_chart</span>
-            Add Performance Targets
-          </button>
-        )}
-        {gymRules.length === 0 && (
-          <button
-            onClick={() => setShowRulesEdit(true)}
-            className="mt-3 w-full py-3 rounded-xl border border-outline-variant/20 flex items-center justify-center gap-2 text-on-surface-variant text-sm font-bold uppercase tracking-widest hover:bg-surface-container transition-all"
-          >
-            <span className="material-symbols-outlined text-base">rule</span>
-            Add Progression Rules
-          </button>
-        )}
+                          {/* Subtle right accent on hover */}
+                          <div
+                            className="absolute left-0 top-0 w-[2px] h-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                            style={{ background: 'linear-gradient(to bottom, #d4fb00, rgba(212,251,0,0.2))' }}
+                          />
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                </section>
+              )}
+
+              {/* Setup CTAs if nothing configured */}
+              {lifts.length === 0 && !gymGoals && (
+                <button
+                  onClick={() => setShowProgressionEdit(true)}
+                  className="mt-4 w-full py-3 rounded-xl border border-outline-variant/20 flex items-center justify-center gap-2 text-on-surface-variant text-sm font-bold uppercase tracking-widest hover:bg-surface-container transition-all"
+                >
+                  <span className="material-symbols-outlined text-base">add_chart</span>
+                  Add Performance Targets
+                </button>
+              )}
+              {gymRules.length === 0 && (
+                <button
+                  onClick={() => setShowRulesEdit(true)}
+                  className="mt-3 w-full py-3 rounded-xl border border-outline-variant/20 flex items-center justify-center gap-2 text-on-surface-variant text-sm font-bold uppercase tracking-widest hover:bg-surface-container transition-all"
+                >
+                  <span className="material-symbols-outlined text-base">rule</span>
+                  Add Progression Rules
+                </button>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Toast */}
