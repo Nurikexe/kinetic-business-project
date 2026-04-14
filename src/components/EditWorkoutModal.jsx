@@ -18,9 +18,10 @@ export default function EditWorkoutModal({ day, onSave, onClose, onDelete }) {
   const didAutoScrollRef = useRef(false);
 
   useEffect(() => {
+    const isDesktop = window.matchMedia('(min-width: 640px)').matches;
     const scrollRaf = requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        if (containerRef.current && !didAutoScrollRef.current) {
+        if (isDesktop && containerRef.current && !didAutoScrollRef.current) {
           didAutoScrollRef.current = true;
           containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
@@ -73,7 +74,7 @@ export default function EditWorkoutModal({ day, onSave, onClose, onDelete }) {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
-        className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-background/92 p-2 sm:bg-background/80 sm:p-4 sm:backdrop-blur-md"
+        className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-background/92 p-2 pt-4 sm:items-center sm:bg-background/80 sm:p-4 sm:backdrop-blur-md"
         onClick={onClose}
       >
         <motion.div
@@ -83,7 +84,7 @@ export default function EditWorkoutModal({ day, onSave, onClose, onDelete }) {
           exit={{ y: '100%', opacity: 0 }}
           transition={SPRING}
           onClick={e => e.stopPropagation()}
-          className="my-auto flex max-h-[90vh] w-full max-w-xl touch-pan-y flex-col overflow-hidden rounded-[28px] bg-background shadow-2xl sm:rounded-3xl sm:bg-surface-container-high"
+          className="flex max-h-[90vh] min-h-0 w-full max-w-xl touch-pan-y flex-col overflow-hidden rounded-[28px] bg-background shadow-2xl sm:my-auto sm:rounded-3xl sm:bg-surface-container-high"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-5 border-b border-outline-variant/10 shrink-0">
