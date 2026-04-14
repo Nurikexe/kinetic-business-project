@@ -80,15 +80,15 @@ function ActivityDetailModal({ session, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center"
+      className="fixed inset-0 z-50 flex items-center justify-center px-4"
       onClick={onClose}
     >
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
-      {/* Sheet */}
+      {/* Modal */}
       <div
-        className="relative w-full max-w-2xl bg-surface-container-low rounded-t-3xl overflow-hidden max-h-[85dvh] flex flex-col"
+        className="relative w-full max-w-lg bg-surface-container-low rounded-3xl overflow-hidden max-h-[85dvh] flex flex-col shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
         {/* Hero image */}
