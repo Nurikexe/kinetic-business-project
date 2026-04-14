@@ -12,23 +12,26 @@ export default function EditProgressionModal({ lifts, onSave, onClose }) {
   const firstInputRef = useRef(null);
 
   useEffect(() => {
-    // 1. Smoothly scroll the page so the modal is vertically centered
-    if (containerRef.current) {
-      containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
+    // 1. One smooth centered scroll after mounting
+    const scrollRaf = requestAnimationFrame(() => {
+      if (containerRef.current) {
+        containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
 
-    // 2. Focus first input
-    const timer = setTimeout(() => {
+    // 2. Focus first input with delay
+    const focusTimer = setTimeout(() => {
       firstInputRef.current?.focus();
-    }, 500);
+    }, 450);
 
-    // 3. Prevent background scroll
-    const originalStyle = window.getComputedStyle(document.body).overflow;
+    // 3. Prevent background scroll while the modal is open
+    const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
     return () => {
-      clearTimeout(timer);
-      document.body.style.overflow = originalStyle;
+      cancelAnimationFrame(scrollRaf);
+      clearTimeout(focusTimer);
+      document.body.style.overflow = originalOverflow;
     };
   }, []);
 
@@ -63,7 +66,7 @@ export default function EditProgressionModal({ lifts, onSave, onClose }) {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: '100%', opacity: 0 }}
           transition={SHEET}
-          className="w-full h-full sm:h-auto sm:max-w-xl bg-background sm:bg-surface-container-high sm:rounded-3xl max-h-[90vh] sm:max-h-[90dvh] flex flex-col overflow-hidden sm:shadow-2xl"
+          className="w-full h-full sm:h-auto sm:max-w-xl bg-background sm:bg-surface-container-high sm:rounded-3xl max-h-[100dvh] sm:max-h-[90dvh] flex flex-col overflow-hidden sm:shadow-2xl"
           onClick={e => e.stopPropagation()}
         >
           {/* Header */}

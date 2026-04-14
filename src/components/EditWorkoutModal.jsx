@@ -17,23 +17,27 @@ export default function EditWorkoutModal({ day, onSave, onClose, onDelete }) {
   const firstInputRef = useRef(null);
 
   useEffect(() => {
-    // 1. Smoothly scroll the page so the modal is vertically centered in the visible screen area
-    if (containerRef.current) {
-      containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
+    // 1. Trigger scrolling only once after the modal is fully mounted and visible.
+    // Use requestAnimationFrame to ensure layout is stable before scrolling.
+    const scrollRaf = requestAnimationFrame(() => {
+      if (containerRef.current) {
+        containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
 
     // 2. After scrolling, set keyboard focus to the first input field
-    const timer = setTimeout(() => {
+    const focusTimer = setTimeout(() => {
       firstInputRef.current?.focus();
-    }, 500); // Wait for scroll animation
+    }, 450); // Wait for scroll animation to start/settle
 
-    // 3. Prevent background scroll while the modal is open
-    const originalStyle = window.getComputedStyle(document.body).overflow;
+    // 3. Prevent background scroll only on the page behind the modal
+    const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
     return () => {
-      clearTimeout(timer);
-      document.body.style.overflow = originalStyle;
+      cancelAnimationFrame(scrollRaf);
+      clearTimeout(focusTimer);
+      document.body.style.overflow = originalOverflow;
     };
   }, []);
 
@@ -79,7 +83,7 @@ export default function EditWorkoutModal({ day, onSave, onClose, onDelete }) {
           exit={{ y: '100%', opacity: 0 }}
           transition={SPRING}
           onClick={e => e.stopPropagation()}
-          className="w-full h-full sm:h-auto sm:max-w-xl bg-background sm:bg-surface-container-high sm:rounded-3xl max-h-[90vh] sm:max-h-[90dvh] flex flex-col overflow-hidden sm:shadow-2xl"
+          className="w-full h-full sm:h-auto sm:max-w-xl bg-background sm:bg-surface-container-high sm:rounded-3xl max-h-[100dvh] sm:max-h-[90dvh] flex flex-col overflow-hidden sm:shadow-2xl"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-5 border-b border-outline-variant/10 shrink-0">
