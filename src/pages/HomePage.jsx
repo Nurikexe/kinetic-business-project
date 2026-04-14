@@ -246,7 +246,7 @@ function downloadPlanAsPDF(plan) {
 }
 
 /* ── Community plan modal ── */
-function CommunityPlanModal({ plan, onClose, onUsePlan }) {
+function CommunityPlanModal({ plan, onClose, onUsePlan, isLiked, onLike }) {
   const [confirming, setConfirming] = useState(false);
   const [applied, setApplied] = useState(false);
   if (!plan) return null;
@@ -303,10 +303,16 @@ function CommunityPlanModal({ plan, onClose, onUsePlan }) {
                 <p className="text-on-surface-variant text-[10px] uppercase tracking-widest">Author</p>
               </div>
             </div>
-            <div className="flex items-center gap-1.5 text-on-surface-variant">
-              <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>favorite</span>
-              <span className="text-sm font-bold">{plan.likes ?? 0}</span>
-            </div>
+            <button
+              onClick={() => onLike(plan.id)}
+              className="flex items-center gap-1.5 active:scale-90 transition-transform"
+            >
+              <span
+                className={`material-symbols-outlined text-xl transition-colors ${isLiked ? 'text-error' : 'text-on-surface-variant'}`}
+                style={{ fontVariationSettings: isLiked ? "'FILL' 1" : "'FILL' 0" }}
+              >favorite</span>
+              <span className={`text-sm font-bold ${isLiked ? 'text-error' : 'text-on-surface-variant'}`}>{plan.likes ?? 0}</span>
+            </button>
           </div>
 
           {/* Description */}
@@ -471,16 +477,15 @@ function CommunityPlanModal({ plan, onClose, onUsePlan }) {
 }
 
 /* ── Community plan card ── */
-function CommunityPlanCard({ plan, onClick }) {
+function CommunityPlanCard({ plan, onClick, isLiked, onLike }) {
   const isRun = plan.plan_type === 'running';
   const isHybrid = plan.plan_type === 'hybrid';
   const avatarSrc = isRun ? '/run_activity.jpg' : '/community_avatar1.jpg';
   const accentHover = isRun ? 'group-hover:text-primary-fixed' : isHybrid ? 'group-hover:text-tertiary' : 'group-hover:text-secondary';
 
   return (
-    <button onClick={() => onClick(plan)}
-      className="w-full text-left bg-surface-container-low border border-outline-variant/10 p-4 rounded-2xl flex justify-between items-center group hover:bg-surface-container transition-colors active:scale-[0.99]">
-      <div className="flex items-center gap-3 min-w-0">
+    <div className="bg-surface-container-low border border-outline-variant/10 p-4 rounded-2xl flex justify-between items-center group hover:bg-surface-container transition-colors">
+      <button onClick={() => onClick(plan)} className="flex items-center gap-3 min-w-0 flex-1 text-left active:scale-[0.99] transition-transform">
         <div className={`w-11 h-11 rounded-full overflow-hidden shrink-0 border ${isRun ? 'border-primary-fixed/20' : 'border-secondary/20'}`}>
           <img src={avatarSrc} alt={plan.title} className="w-full h-full object-cover" />
         </div>
@@ -498,22 +503,28 @@ function CommunityPlanCard({ plan, onClick }) {
             )}
           </div>
         </div>
-      </div>
+      </button>
       <div className="flex items-center gap-3 shrink-0 ml-3">
-        <div className="flex items-center gap-1 text-on-surface-variant">
-          <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>favorite</span>
-          <span className="text-xs font-bold">{plan.likes ?? 0}</span>
-        </div>
+        <button
+          onClick={e => { e.stopPropagation(); onLike(plan.id); }}
+          className="flex items-center gap-1 active:scale-90 transition-transform"
+        >
+          <span
+            className={`material-symbols-outlined text-base transition-colors ${isLiked ? 'text-error' : 'text-on-surface-variant'}`}
+            style={{ fontVariationSettings: isLiked ? "'FILL' 1" : "'FILL' 0" }}
+          >favorite</span>
+          <span className={`text-xs font-bold ${isLiked ? 'text-error' : 'text-on-surface-variant'}`}>{plan.likes ?? 0}</span>
+        </button>
         <span className="material-symbols-outlined text-outline text-lg">chevron_right</span>
       </div>
-    </button>
+    </div>
   );
 }
 
 /* ── Main Page ── */
 export default function HomePage({ setPage }) {
   const { user, displayName } = useAuth();
-  const { updateConfig } = useUserConfig();
+  const { config, updateConfig } = useUserConfig();
   const [period, setPeriod] = useState('week');
   const [gymStats, setGymStats] = useState({ count: 0, totalWeight: 0 });
   const [runStats, setRunStats] = useState({ count: 0, totalDistance: 0 });
@@ -522,6 +533,9 @@ export default function HomePage({ setPage }) {
   const [loading, setLoading] = useState(true);
   const [selectedSession, setSelectedSession] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState(null);
+
+  // Liked plan IDs — persisted in user_config so they survive across sessions
+  const likedPlans = config.liked_plans ?? [];
 
   useEffect(() => {
     if (!user) return;
@@ -567,6 +581,33 @@ export default function HomePage({ setPage }) {
       setLoading(false);
     });
   }, [user, period]);
+
+  /* Toggle like on a community plan */
+  const handleLike = async (planId) => {
+    const alreadyLiked = likedPlans.includes(planId);
+    const delta = alreadyLiked ? -1 : 1;
+    const newLikedPlans = alreadyLiked
+      ? likedPlans.filter(id => id !== planId)
+      : [...likedPlans, planId];
+
+    // Optimistic update — UI responds instantly
+    setCommunityPlans(prev =>
+      prev.map(p => p.id === planId ? { ...p, likes: Math.max(0, (p.likes ?? 0) + delta) } : p)
+    );
+    setSelectedPlan(prev =>
+      prev?.id === planId ? { ...prev, likes: Math.max(0, (prev.likes ?? 0) + delta) } : prev
+    );
+
+    // Persist liked list in user_config
+    updateConfig({ liked_plans: newLikedPlans }, { immediate: true });
+
+    // Update counter in DB
+    const current = communityPlans.find(p => p.id === planId)?.likes ?? 0;
+    await supabase
+      .from('community_plans')
+      .update({ likes: Math.max(0, current + delta) })
+      .eq('id', planId);
+  };
 
   /* Apply a community plan to the user's config */
   const handleUsePlan = (plan) => {
@@ -724,7 +765,13 @@ export default function HomePage({ setPage }) {
           {communityPlans.length > 0 ? (
             <div className="space-y-3">
               {communityPlans.map(plan => (
-                <CommunityPlanCard key={plan.id} plan={plan} onClick={setSelectedPlan} />
+                <CommunityPlanCard
+                  key={plan.id}
+                  plan={plan}
+                  onClick={setSelectedPlan}
+                  isLiked={likedPlans.includes(plan.id)}
+                  onLike={handleLike}
+                />
               ))}
             </div>
           ) : (
@@ -745,6 +792,8 @@ export default function HomePage({ setPage }) {
           plan={selectedPlan}
           onClose={() => setSelectedPlan(null)}
           onUsePlan={handleUsePlan}
+          isLiked={likedPlans.includes(selectedPlan.id)}
+          onLike={handleLike}
         />
       )}
     </div>
