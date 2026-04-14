@@ -10,21 +10,22 @@ export default function EditRulesModal({ rules, onSave, onClose }) {
   const [localRules, setLocalRules] = useState([...rules]);
   const containerRef = useRef(null);
   const firstInputRef = useRef(null);
+  const didAutoScrollRef = useRef(false);
 
   useEffect(() => {
-    // 1. One smooth centered scroll after mounting
     const scrollRaf = requestAnimationFrame(() => {
-      if (containerRef.current) {
-        containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
+      requestAnimationFrame(() => {
+        if (containerRef.current && !didAutoScrollRef.current) {
+          didAutoScrollRef.current = true;
+          containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      });
     });
 
-    // 2. Focus first input with delay
     const focusTimer = setTimeout(() => {
-      firstInputRef.current?.focus();
+      firstInputRef.current?.focus({ preventScroll: true });
     }, 450);
 
-    // 3. Prevent background scroll while the modal is open
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
@@ -68,7 +69,7 @@ export default function EditRulesModal({ rules, onSave, onClose }) {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
-        className="fixed inset-0 z-[100] flex items-center justify-center sm:p-4 bg-background sm:bg-background/80 sm:backdrop-blur-md"
+        className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-background/92 p-2 sm:bg-background/80 sm:p-4 sm:backdrop-blur-md"
         onClick={onClose}
       >
         <motion.div
@@ -78,7 +79,7 @@ export default function EditRulesModal({ rules, onSave, onClose }) {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: '100%', opacity: 0 }}
           transition={SHEET}
-          className="w-full h-full sm:h-auto sm:max-w-xl bg-background sm:bg-surface-container-high sm:rounded-3xl max-h-[100dvh] sm:max-h-[90dvh] flex flex-col overflow-hidden sm:shadow-2xl"
+          className="my-auto flex max-h-[90vh] w-full max-w-xl touch-pan-y flex-col overflow-hidden rounded-[28px] bg-background shadow-2xl sm:rounded-3xl sm:bg-surface-container-high"
           onClick={e => e.stopPropagation()}
         >
           {/* Header */}
@@ -104,7 +105,7 @@ export default function EditRulesModal({ rules, onSave, onClose }) {
           </div>
 
           {/* Scrollable body */}
-          <div className="flex-1 overflow-y-auto px-6 py-5 space-y-2">
+          <div className="flex-1 overflow-y-auto overscroll-contain px-6 py-5 space-y-2">
             <AnimatePresence>
               {localRules.map((rule, idx) => {
                 const roman = ROMAN[idx] ?? String(idx + 1);
@@ -175,7 +176,7 @@ export default function EditRulesModal({ rules, onSave, onClose }) {
           </div>
 
           {/* Footer */}
-          <div className="flex gap-3 px-6 pt-3 pb-10 border-t border-outline-variant/10 shrink-0">
+          <div className="sticky bottom-0 flex shrink-0 gap-3 border-t border-outline-variant/10 bg-background px-6 pt-3 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:bg-surface-container-high sm:pb-6">
             <motion.button
               whileTap={{ scale: 0.97 }}
               onClick={onClose}
