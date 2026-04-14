@@ -49,9 +49,9 @@ function ActivityDetailModal({ session, onClose }) {
   const exercises = Array.isArray(session.exercises) ? session.exercises : session.exercises?.items ?? [];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-0 sm:px-4" onClick={onClose}>
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-      <div className="relative w-full max-w-lg bg-surface-container-low rounded-3xl overflow-hidden max-h-[85dvh] flex flex-col shadow-2xl"
+      <div className="relative w-full max-w-xl bg-surface-container-low rounded-t-3xl sm:rounded-3xl overflow-hidden max-h-[90dvh] flex flex-col shadow-2xl"
         onClick={e => e.stopPropagation()}>
         <div className="relative h-48 shrink-0 overflow-hidden">
           <img src={isRun ? '/run_activity.jpg' : '/gym_activity.jpg'} alt={title} className="w-full h-full object-cover" />
@@ -268,9 +268,9 @@ function CommunityPlanModal({ plan, onClose, onUsePlan, isLiked, onLike, isOwn }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-0 sm:px-4" onClick={onClose}>
       <div className="absolute inset-0 bg-black/70 backdrop-blur-md" />
-      <div className="relative w-full max-w-lg bg-surface-container-low rounded-3xl overflow-hidden max-h-[90dvh] flex flex-col shadow-2xl"
+      <div className="relative w-full max-w-xl bg-surface-container-low rounded-t-3xl sm:rounded-3xl overflow-hidden max-h-[90dvh] flex flex-col shadow-2xl"
         onClick={e => e.stopPropagation()}>
 
         {/* ── Hero ── */}

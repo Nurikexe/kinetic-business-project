@@ -42,23 +42,21 @@ export default function EditRulesModal({ rules, onSave, onClose }) {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
-        className="fixed inset-0 z-[100]"
+        className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4"
         style={{ background: 'rgba(14,14,14,0.75)', backdropFilter: 'blur(10px)' }}
         onClick={onClose}
-      />
-
-      <motion.div
-        key="rules-sheet"
-        initial={{ y: '100%' }}
-        animate={{ y: 0 }}
-        exit={{ y: '100%' }}
-        transition={SHEET}
-        className="fixed bottom-0 left-0 right-0 z-[101] flex flex-col items-center pointer-events-none"
-        onClick={e => e.stopPropagation()}
       >
-        <div className="w-full max-w-xl bg-surface-container-high rounded-t-3xl max-h-[88dvh] flex flex-col overflow-hidden pointer-events-auto shadow-[0_-8px_32px_rgba(0,0,0,0.4)]">
-          {/* Drag handle */}
-          <div className="flex justify-center pt-3 pb-1 shrink-0">
+        <motion.div
+          key="rules-sheet"
+          initial={{ y: '100%', opacity: 0.5 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: '100%', opacity: 0.5 }}
+          transition={SHEET}
+          className="w-full max-w-xl bg-surface-container-high rounded-t-3xl sm:rounded-3xl max-h-[88dvh] flex flex-col overflow-hidden shadow-[0_-8px_32px_rgba(0,0,0,0.4)] sm:shadow-2xl"
+          onClick={e => e.stopPropagation()}
+        >
+          {/* Drag handle - only visible on mobile */}
+          <div className="flex justify-center pt-3 pb-1 shrink-0 sm:hidden">
             <div className="w-10 h-1 rounded-full bg-outline-variant/30" />
           </div>
 
@@ -168,6 +166,7 @@ export default function EditRulesModal({ rules, onSave, onClose }) {
           </div>
         </div>
       </motion.div>
+    </AnimatePresence>
     </AnimatePresence>
   );
 }
