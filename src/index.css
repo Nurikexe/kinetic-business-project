@@ -103,6 +103,46 @@ input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 input[type="number"] { -moz-appearance: textfield; }
 
+/* Kinetic range slider */
+input[type="range"].kinetic-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 5px;
+  border-radius: 9999px;
+  cursor: pointer;
+  outline: none;
+  border: none;
+}
+input[type="range"].kinetic-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #d4fb00;
+  cursor: grab;
+  box-shadow: 0 0 0 3px #191919, 0 0 0 5px rgba(212, 251, 0, 0.25);
+  transition: box-shadow 0.15s ease, transform 0.1s ease;
+}
+input[type="range"].kinetic-slider::-webkit-slider-thumb:active {
+  cursor: grabbing;
+  transform: scale(1.15);
+  box-shadow: 0 0 0 3px #191919, 0 0 0 7px rgba(212, 251, 0, 0.4);
+}
+input[type="range"].kinetic-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #d4fb00;
+  border: 3px solid #191919;
+  cursor: grab;
+  box-shadow: 0 0 0 2px rgba(212, 251, 0, 0.25);
+}
+input[type="range"].kinetic-slider::-moz-range-track {
+  border-radius: 9999px;
+  height: 5px;
+}
+
 ::selection {
   background: rgba(212, 251, 0, 0.24);
   color: #0e0e0e;
