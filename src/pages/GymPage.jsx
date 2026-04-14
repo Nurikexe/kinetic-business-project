@@ -77,114 +77,199 @@ function ActiveGymSession({ onFinish, onCancel }) {
     onFinish();
   };
 
+  const totalSets = sets.reduce((acc, ex) => acc + ex.entries.length, 0);
+
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="min-h-screen bg-background pb-44">
-      {/* Active header */}
-      <div className="sticky top-0 z-50 bg-primary-container flex items-center justify-between px-6 py-4 shadow-md">
-        <div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-on-primary-fixed/60">Active Session</p>
-          <h2 className="font-headline font-black text-xl uppercase tracking-tight text-on-primary-fixed line-clamp-1">{day.name}</h2>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="flex flex-col items-end">
-            <span className="font-mono text-2xl font-bold text-on-primary-fixed leading-none">{formatTime(elapsed)}</span>
-            <span className="text-[9px] uppercase font-black text-on-primary-fixed/40 tracking-tighter">Elapsed</span>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.25 }}
+      className="min-h-screen bg-background pb-40"
+    >
+
+      {/* ── Header ─────────────────────────────────────────── */}
+      <div className="sticky top-0 z-50">
+        {/* Electric top bar */}
+        <div className="h-[3px] kinetic-gradient w-full" />
+        <div className="bg-background/96 backdrop-blur-xl border-b border-outline-variant/10 px-5 py-3 flex items-center justify-between gap-4">
+          {/* Left: day info */}
+          <div className="min-w-0 flex-1">
+            <p className="text-[9px] font-black uppercase tracking-[0.18em] text-on-surface-variant/50 mb-0.5">
+              Active Session
+            </p>
+            <h2 className="font-headline font-black text-xl uppercase tracking-tight text-on-surface leading-none truncate">
+              {day.name}
+            </h2>
+            {day.sub && (
+              <p className="text-[10px] text-on-surface-variant/60 mt-0.5 truncate">{day.sub}</p>
+            )}
           </div>
-          <button onClick={onCancel} className="w-10 h-10 rounded-full bg-on-primary-fixed/10 flex items-center justify-center text-on-primary-fixed hover:bg-on-primary-fixed/20 transition-colors">
-            <span className="material-symbols-outlined">close</span>
-          </button>
+
+          {/* Right: timer + close */}
+          <div className="flex items-center gap-2.5 shrink-0">
+            <div className="bg-primary-container rounded-2xl px-3.5 py-2 flex flex-col items-center min-w-[72px]">
+              <span className="font-mono text-[22px] font-black text-on-primary-fixed leading-none tracking-tight tabular-nums">
+                {formatTime(elapsed)}
+              </span>
+              <span className="text-[7px] font-black uppercase tracking-[0.2em] text-on-primary-fixed/50 mt-0.5">
+                elapsed
+              </span>
+            </div>
+            <button
+              onClick={onCancel}
+              className="w-9 h-9 rounded-xl bg-surface-container-high border border-outline-variant/10 flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-all"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Exercises progress strip */}
+        <div className="bg-background/96 backdrop-blur-xl px-5 py-2 border-b border-outline-variant/10 flex items-center gap-2">
+          <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/40">
+            {sets.length} exercises · {totalSets} sets
+          </span>
+          <div className="flex-1 flex gap-1">
+            {sets.map((_, i) => (
+              <div key={i} className="flex-1 h-1 rounded-full bg-primary-container/20" />
+            ))}
+          </div>
         </div>
       </div>
 
-      <div className="px-6 pt-6 max-w-xl mx-auto space-y-6">
+      {/* ── Exercise cards ─────────────────────────────────── */}
+      <div className="px-4 pt-4 max-w-xl mx-auto space-y-3">
         {sets.map((ex, exIdx) => (
-          <div key={ex.exId} className="bg-surface-container rounded-2xl overflow-hidden border border-outline-variant/10 shadow-sm">
-            <div className="px-5 py-4 bg-surface-container-high flex items-center justify-between border-b border-outline-variant/10">
-              <h3 className="font-headline font-bold uppercase tracking-tight text-on-surface">{ex.exName}</h3>
-              <div className="px-2.5 py-1 rounded-full bg-primary-container/20 text-[10px] text-primary-fixed font-black uppercase tracking-widest">
-                {ex.entries.length} set{ex.entries.length !== 1 ? 's' : ''}
-              </div>
-            </div>
-            <div className="p-4 space-y-3">
-              <div className="grid grid-cols-[2.5rem_1fr_1fr_2.5rem] gap-2 px-1">
-                <span className="text-[10px] text-on-surface-variant font-black uppercase text-center tracking-tighter">Set</span>
-                <span className="text-[10px] text-on-surface-variant font-black uppercase text-center tracking-tighter">Weight (kg)</span>
-                <span className="text-[10px] text-on-surface-variant font-black uppercase text-center tracking-tighter">Reps</span>
-                <span />
-              </div>
-              {ex.entries.map((entry, entryIdx) => (
-                <div key={entryIdx} className="grid grid-cols-[2.5rem_1fr_1fr_2.5rem] gap-2 items-center">
-                  <span className="text-center text-sm font-black text-on-surface-variant bg-surface-container-highest w-8 h-8 flex items-center justify-center rounded-full mx-auto">{entryIdx + 1}</span>
-                  <input
-                    type="number"
-                    inputMode="decimal"
-                    value={entry.weight}
-                    onChange={e => updateEntry(exIdx, entryIdx, 'weight', e.target.value)}
-                    placeholder="—"
-                    className="bg-surface-container-highest border border-outline-variant/20 rounded-xl px-3 py-3 text-center font-headline font-bold focus:outline-none focus:ring-2 focus:ring-primary-container/40 transition-all"
-                  />
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={entry.reps}
-                    onChange={e => updateEntry(exIdx, entryIdx, 'reps', e.target.value)}
-                    placeholder="—"
-                    className="bg-surface-container-highest border border-outline-variant/20 rounded-xl px-3 py-3 text-center font-headline font-bold focus:outline-none focus:ring-2 focus:ring-primary-container/40 transition-all"
-                  />
-                  <button onClick={() => removeSet(exIdx, entryIdx)} className="text-outline/40 hover:text-error transition-colors flex items-center justify-center">
-                    <span className="material-symbols-outlined text-xl">remove_circle</span>
-                  </button>
+          <motion.div
+            key={ex.exId}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: exIdx * 0.05, duration: 0.22 }}
+            className="rounded-2xl bg-surface-container overflow-hidden"
+            style={{ boxShadow: 'inset 3px 0 0 0 rgba(212,251,0,0.35)' }}
+          >
+            {/* Card header */}
+            <div className="px-4 py-3.5 flex items-center justify-between border-b border-outline-variant/10">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-6 h-6 rounded-lg bg-primary-container/15 flex items-center justify-center shrink-0">
+                  <span className="text-[10px] font-black text-primary-fixed">{exIdx + 1}</span>
                 </div>
-              ))}
-              <button onClick={() => addSet(exIdx)} className="w-full mt-2 py-3 rounded-xl border-2 border-dashed border-outline-variant/30 flex items-center justify-center gap-2 text-on-surface-variant text-xs font-black uppercase tracking-widest hover:border-primary-container/50 hover:text-primary-fixed transition-all">
-                <span className="material-symbols-outlined text-sm">add</span>
+                <h3 className="font-headline font-bold text-[15px] uppercase tracking-tight text-on-surface truncate">
+                  {ex.exName}
+                </h3>
+              </div>
+              <span className="text-[9px] font-black uppercase tracking-widest text-primary-fixed bg-primary-container/12 border border-primary-container/20 px-2 py-1 rounded-lg shrink-0 ml-2">
+                {ex.entries.length} {ex.entries.length === 1 ? 'set' : 'sets'}
+              </span>
+            </div>
+
+            {/* Sets */}
+            <div className="px-4 pt-3 pb-3">
+              {/* Column labels */}
+              <div className="flex items-center gap-3 mb-2 pl-[36px] pr-[36px]">
+                <span className="flex-1 text-center text-[9px] font-black uppercase tracking-widest text-on-surface-variant/50">
+                  Weight · kg
+                </span>
+                <span className="flex-1 text-center text-[9px] font-black uppercase tracking-widest text-on-surface-variant/50">
+                  Reps
+                </span>
+              </div>
+
+              <div className="space-y-2">
+                {ex.entries.map((entry, entryIdx) => (
+                  <div key={entryIdx} className="flex items-center gap-3">
+                    {/* Set badge */}
+                    <div className="w-7 h-7 rounded-full bg-surface-container-highest border border-outline-variant/15 flex items-center justify-center shrink-0">
+                      <span className="text-[11px] font-black text-on-surface-variant">{entryIdx + 1}</span>
+                    </div>
+
+                    {/* Weight */}
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      value={entry.weight}
+                      onChange={e => updateEntry(exIdx, entryIdx, 'weight', e.target.value)}
+                      placeholder="—"
+                      className="flex-1 min-w-0 bg-surface-container-highest border border-outline-variant/15 rounded-xl py-3 text-center text-[17px] font-headline font-black text-on-surface focus:outline-none focus:border-primary-container/70 focus:bg-surface-container-high transition-all placeholder:text-on-surface-variant/25"
+                    />
+
+                    {/* Reps */}
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={entry.reps}
+                      onChange={e => updateEntry(exIdx, entryIdx, 'reps', e.target.value)}
+                      placeholder="—"
+                      className="flex-1 min-w-0 bg-surface-container-highest border border-outline-variant/15 rounded-xl py-3 text-center text-[17px] font-headline font-black text-on-surface focus:outline-none focus:border-primary-container/70 focus:bg-surface-container-high transition-all placeholder:text-on-surface-variant/25"
+                    />
+
+                    {/* Remove */}
+                    <button
+                      onClick={() => removeSet(exIdx, entryIdx)}
+                      className="w-7 h-7 flex items-center justify-center text-on-surface-variant/25 hover:text-error active:scale-90 transition-all shrink-0"
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>remove</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Add set */}
+              <button
+                onClick={() => addSet(exIdx)}
+                className="mt-3 w-full py-2.5 rounded-xl border border-dashed border-outline-variant/20 flex items-center justify-center gap-1.5 text-on-surface-variant/40 text-[10px] font-black uppercase tracking-widest hover:border-primary-container/40 hover:text-primary-fixed transition-all"
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>add</span>
                 Add Set
               </button>
             </div>
-          </div>
+          </motion.div>
         ))}
 
-        <div className="bg-surface-container rounded-2xl p-6 border border-outline-variant/10 shadow-sm">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="material-symbols-outlined text-primary-fixed text-sm">edit_note</span>
-            <label className="text-xs font-black uppercase tracking-widest text-on-surface-variant">Session Feedback</label>
+        {/* ── Session Notes ─────────────────────────────────── */}
+        <div className="rounded-2xl bg-surface-container overflow-hidden border border-outline-variant/10">
+          <div className="px-4 pt-3.5 pb-3 flex items-center gap-2 border-b border-outline-variant/10">
+            <span className="material-symbols-outlined text-primary-fixed" style={{ fontSize: '15px' }}>edit_note</span>
+            <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/60">
+              Session Notes
+            </span>
           </div>
           <textarea
             value={notes}
             onChange={e => setNotes(e.target.value)}
-            placeholder="How did you feel? Any pain? PRs? (e.g. 'felt knee pain', 'crushed it!')"
+            placeholder="PRs, how you felt, pain points — anything worth remembering"
             rows={3}
-            className="w-full bg-surface-container-highest rounded-xl px-4 py-4 text-sm placeholder:text-outline/50 resize-none focus:outline-none border border-outline-variant/20 focus:ring-2 focus:ring-primary-container/40 transition-all"
+            className="w-full bg-transparent px-4 py-3 text-sm text-on-surface placeholder:text-on-surface-variant/30 resize-none focus:outline-none"
           />
         </div>
 
         {error && (
-          <div className="bg-error-container/20 border border-error/20 rounded-xl p-4 flex items-center gap-3">
-            <span className="material-symbols-outlined text-error">error</span>
+          <div className="flex items-center gap-3 bg-error-container/15 border border-error/20 rounded-xl px-4 py-3">
+            <span className="material-symbols-outlined text-error" style={{ fontSize: '18px' }}>error</span>
             <p className="text-error text-xs font-bold">{error}</p>
           </div>
         )}
 
-        <div className="h-10" />
+        <div className="h-4" />
       </div>
 
-      {/* Fixed Bottom Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-background via-background to-transparent pointer-events-none">
+      {/* ── Fixed Submit CTA ──────────────────────────────── */}
+      <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-background from-55% to-transparent pt-10 px-4 pb-6 pointer-events-none">
         <div className="max-w-xl mx-auto pointer-events-auto">
           <button
             onClick={handleSubmit}
             disabled={submitting}
-            className="w-full py-5 rounded-2xl kinetic-gradient text-on-primary-fixed font-headline font-black uppercase tracking-tighter text-xl shadow-[0_12px_40px_rgba(212,251,0,0.3)] active:scale-[0.98] transition-all disabled:opacity-60 flex items-center justify-center gap-3 group"
+            className="w-full py-4 rounded-2xl kinetic-gradient text-on-primary-fixed font-headline font-black uppercase tracking-tight text-lg shadow-[0_8px_32px_rgba(212,251,0,0.28)] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2.5"
           >
             {submitting ? (
               <>
-                <div className="w-5 h-5 border-2 border-on-primary-fixed/30 border-t-on-primary-fixed rounded-full animate-spin" />
-                <span>Saving Workout…</span>
+                <div className="w-4 h-4 border-2 border-on-primary-fixed/30 border-t-on-primary-fixed rounded-full animate-spin" />
+                <span>Saving…</span>
               </>
             ) : (
               <>
                 <span>Finish & Submit</span>
-                <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform" style={{ fontVariationSettings: "'FILL' 1" }}>arrow_forward</span>
+                <span className="material-symbols-outlined" style={{ fontSize: '20px', fontVariationSettings: "'FILL' 1" }}>check_circle</span>
               </>
             )}
           </button>
