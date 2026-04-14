@@ -21,7 +21,6 @@ function BentoStat({ label, value, unit, icon, variant = 'dark' }) {
 
   return (
     <div className={styles[variant]}>
-      {/* Background watermark icon */}
       <span
         className={`material-symbols-outlined absolute -right-2 -top-2 text-[80px] ${iconColor[variant]}`}
         style={{ fontVariationSettings: "'FILL' 1" }}
@@ -60,13 +59,130 @@ function BentoStat({ label, value, unit, icon, variant = 'dark' }) {
   );
 }
 
-/* ── Activity list row ── */
-function ActivityRow({ session }) {
+/* ── Activity detail modal ── */
+function ActivityDetailModal({ session, onClose }) {
+  if (!session) return null;
   const isRun = session.session_type === 'run';
 
-  const iconBg = isRun ? 'bg-primary-container/10' : 'bg-secondary-container/10';
-  const iconColor = isRun ? 'text-primary-fixed' : 'text-secondary';
-  const typeLabel = isRun ? 'Running' : 'Gym';
+  const title = session.day_name || session.title || 'Workout';
+  const dateStr = new Date(session.submitted_at || session.date).toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  });
+  const timeStr = session.submitted_at
+    ? new Date(session.submitted_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    : null;
+
+  const exercises = Array.isArray(session.exercises)
+    ? session.exercises
+    : session.exercises?.items ?? [];
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center"
+      onClick={onClose}
+    >
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+
+      {/* Sheet */}
+      <div
+        className="relative w-full max-w-2xl bg-surface-container-low rounded-t-3xl overflow-hidden max-h-[85dvh] flex flex-col"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Hero image */}
+        <div className="relative h-48 shrink-0 overflow-hidden">
+          <img
+            src={isRun ? '/run_activity.jpg' : '/gym_activity.jpg'}
+            alt={title}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-surface-container-low via-surface-container-low/40 to-transparent" />
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/50 flex items-center justify-center text-white"
+          >
+            <span className="material-symbols-outlined text-xl">close</span>
+          </button>
+          <div className="absolute bottom-4 left-5">
+            <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-1 ${isRun ? 'text-primary-fixed' : 'text-secondary'}`}>
+              {isRun ? 'Running' : 'Strength'}
+            </p>
+            <h2 className="font-headline font-black text-2xl uppercase tracking-tight">{title}</h2>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="overflow-y-auto p-5 space-y-5">
+          {/* Date/time */}
+          <div className="flex items-center gap-2 text-on-surface-variant text-xs font-bold uppercase tracking-widest">
+            <span className="material-symbols-outlined text-sm">calendar_today</span>
+            {dateStr}{timeStr ? `, ${timeStr}` : ''}
+          </div>
+
+          {isRun ? (
+            /* Run stats grid */
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { label: 'Distance', value: session.total_distance != null ? `${Number(session.total_distance).toFixed(2)} km` : '—' },
+                { label: 'Avg Pace', value: session.avg_pace ? `${session.avg_pace}/km` : '—' },
+                { label: 'Duration', value: session.duration || '—' },
+              ].map(stat => (
+                <div key={stat.label} className="bg-surface-container rounded-xl p-4">
+                  <p className="text-on-surface-variant text-[9px] font-black uppercase tracking-widest mb-2">{stat.label}</p>
+                  <p className="font-headline font-bold text-base">{stat.value}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            /* Gym exercises */
+            <>
+              {session.day_focus && (
+                <div className="bg-secondary-container/10 rounded-xl px-4 py-2 inline-flex items-center gap-2">
+                  <span className="material-symbols-outlined text-secondary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>
+                    bolt
+                  </span>
+                  <span className="text-secondary text-[10px] font-black uppercase tracking-widest">{session.day_focus}</span>
+                </div>
+              )}
+
+              {exercises.length > 0 ? (
+                <div className="space-y-2">
+                  <p className="text-on-surface-variant text-[10px] font-black uppercase tracking-widest">
+                    Exercises ({exercises.length})
+                  </p>
+                  {exercises.map((ex, i) => (
+                    <div key={i} className="flex items-center justify-between bg-surface-container rounded-xl px-4 py-3">
+                      <p className="font-headline font-bold text-sm">{ex.name}</p>
+                      <p className="text-on-surface-variant text-xs font-bold">
+                        {ex.sets && ex.reps ? `${ex.sets}×${ex.reps}` : ''}
+                        {ex.weight ? ` @ ${ex.weight}kg` : ''}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-on-surface-variant text-sm text-center py-4">No exercise details recorded.</p>
+              )}
+            </>
+          )}
+
+          {session.notes && (
+            <div className="bg-surface-container rounded-xl p-4">
+              <p className="text-on-surface-variant text-[10px] font-black uppercase tracking-widest mb-2">Notes</p>
+              <p className="text-sm text-on-surface leading-relaxed">{session.notes}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Activity card (with photo) ── */
+function ActivityRow({ session, onClick }) {
+  const isRun = session.session_type === 'run';
   const typeLabelColor = isRun ? 'text-primary-fixed' : 'text-secondary';
   const title = session.day_name || session.title || 'Workout';
   const dateStr = new Date(session.submitted_at || session.date).toLocaleDateString('en-US', {
@@ -75,25 +191,27 @@ function ActivityRow({ session }) {
   });
 
   return (
-    <div className="flex items-center gap-4 p-4 rounded-xl bg-surface-container hover:bg-surface-container-high transition-colors group">
-      {/* Icon pill */}
-      <div className={`w-12 h-12 rounded-xl ${iconBg} flex items-center justify-center shrink-0`}>
-        <span
-          className={`material-symbols-outlined ${iconColor}`}
-          style={{ fontVariationSettings: "'FILL' 1" }}
-        >
-          {isRun ? 'directions_run' : 'fitness_center'}
-        </span>
+    <button
+      onClick={() => onClick(session)}
+      className="group w-full bg-surface-container rounded-2xl overflow-hidden flex items-stretch min-h-[120px] hover:bg-surface-container-high transition-colors text-left"
+    >
+      {/* Photo */}
+      <div className="w-28 relative overflow-hidden shrink-0">
+        <img
+          src={isRun ? '/run_activity.jpg' : '/gym_activity.jpg'}
+          alt={title}
+          className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent to-surface-container" />
       </div>
 
       {/* Content */}
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 p-4 flex flex-col justify-center min-w-0">
         <p className={`text-[9px] font-black uppercase tracking-[0.2em] mb-0.5 ${typeLabelColor}`}>
-          {typeLabel}
+          {isRun ? 'Running' : 'Gym'}
         </p>
         <p className="font-headline font-bold text-sm uppercase tracking-tight truncate">{title}</p>
 
-        {/* Inline stats */}
         <div className="flex gap-4 mt-1">
           {isRun ? (
             <>
@@ -126,38 +244,31 @@ function ActivityRow({ session }) {
       </div>
 
       {/* Date + arrow */}
-      <div className="flex flex-col items-end shrink-0 gap-1">
+      <div className="flex flex-col items-end justify-center shrink-0 gap-1 pr-4">
         <span className="text-on-surface-variant text-[10px] font-bold uppercase tracking-widest">
           {dateStr}
         </span>
         <span className="material-symbols-outlined text-outline text-sm">chevron_right</span>
       </div>
-    </div>
+    </button>
   );
 }
 
-/* ── Community plan row ── */
-function CommunityPlanRow({ plan }) {
+/* ── Community plan card ── */
+function CommunityPlanCard({ plan }) {
   const isRun = plan.plan_type === 'running';
+  const avatarSrc = isRun ? '/run_activity.jpg' : '/community_avatar1.jpg';
+
   return (
-    <div className="flex items-center justify-between p-4 rounded-xl bg-surface-container-low hover:bg-surface-container transition-colors group">
-      <div className="flex items-center gap-4">
-        <div
-          className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-            isRun ? 'bg-primary-container/10' : 'bg-secondary-container/10'
-          }`}
-        >
-          <span
-            className={`material-symbols-outlined text-lg ${isRun ? 'text-primary-fixed' : 'text-secondary'}`}
-            style={{ fontVariationSettings: "'FILL' 1" }}
-          >
-            {isRun ? 'directions_run' : 'fitness_center'}
-          </span>
+    <div className="bg-surface-container-low border border-outline-variant/10 p-4 rounded-2xl flex justify-between items-center group hover:bg-surface-container transition-colors">
+      <div className="flex items-center gap-3">
+        <div className={`w-11 h-11 rounded-full overflow-hidden shrink-0 border ${isRun ? 'border-primary-fixed/20' : 'border-secondary/20'}`}>
+          <img src={avatarSrc} alt={plan.title} className="w-full h-full object-cover" />
         </div>
         <div>
-          <p className="font-headline font-bold text-sm uppercase tracking-tight group-hover:text-primary-fixed transition-colors">
+          <h4 className={`font-headline font-extrabold text-sm leading-tight group-hover:${isRun ? 'text-primary-fixed' : 'text-secondary'} transition-colors`}>
             {plan.title}
-          </p>
+          </h4>
           <div className="flex items-center gap-2 mt-0.5">
             <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant">
               {plan.plan_type}
@@ -173,11 +284,13 @@ function CommunityPlanRow({ plan }) {
           </div>
         </div>
       </div>
-      <div className="flex items-center gap-1.5 text-on-surface-variant">
-        <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>
-          favorite
-        </span>
-        <span className="text-xs font-bold">{plan.likes ?? 0}</span>
+      <div className="flex gap-2">
+        <button className="w-9 h-9 rounded-full flex items-center justify-center bg-surface-container-highest text-on-surface hover:bg-primary-fixed hover:text-on-primary-fixed transition-colors active:scale-90">
+          <span className="material-symbols-outlined text-lg">download</span>
+        </button>
+        <button className="w-9 h-9 rounded-full flex items-center justify-center bg-surface-container-highest text-on-surface hover:bg-secondary hover:text-on-secondary transition-colors active:scale-90">
+          <span className="material-symbols-outlined text-lg">share</span>
+        </button>
       </div>
     </div>
   );
@@ -193,6 +306,7 @@ export default function HomePage({ setPage }) {
   const [recent, setRecent] = useState([]);
   const [communityPlans, setCommunityPlans] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedSession, setSelectedSession] = useState(null);
 
   useEffect(() => {
     if (!user) return;
@@ -343,22 +457,14 @@ export default function HomePage({ setPage }) {
           </div>
         </section>
 
-        {/* ── Create Plan CTA ── */}
-        <button
-          onClick={() => setPage('create')}
-          className="w-full py-4 rounded-full kinetic-gradient text-on-primary-fixed font-headline font-black uppercase tracking-tighter text-base shadow-[0_8px_30px_rgba(212,251,0,0.15)] hover:shadow-[0_8px_40px_rgba(212,251,0,0.3)] transition-all active:scale-95 flex items-center justify-center gap-2"
-        >
-          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>
-            add_circle
-          </span>
-          Create &amp; Share Workout Plan
-        </button>
-
         {/* ── Recent Activity ── */}
         <section>
           <div className="flex justify-between items-center mb-4">
             <h3 className="font-headline font-bold text-lg tracking-tight uppercase">Recent Activity</h3>
-            <button className="text-primary-fixed text-[10px] font-black tracking-widest uppercase hover:underline">
+            <button
+              onClick={() => setPage('analytics')}
+              className="text-primary-fixed text-[10px] font-black tracking-widest uppercase hover:underline"
+            >
               View All
             </button>
           </div>
@@ -379,32 +485,63 @@ export default function HomePage({ setPage }) {
               <p className="text-on-surface-variant/50 text-xs mt-1">Start a workout to see it here!</p>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {recent.map(s => (
-                <ActivityRow key={s.id} session={s} />
+                <ActivityRow key={s.id} session={s} onClick={setSelectedSession} />
               ))}
             </div>
           )}
         </section>
 
-        {/* ── Community Plans ── */}
-        {communityPlans.length > 0 && (
-          <section>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-headline font-bold text-lg tracking-tight uppercase">Community Plans</h3>
-              <button className="text-secondary text-[10px] font-black tracking-widest uppercase hover:underline">
-                Browse All
-              </button>
-            </div>
-            <div className="space-y-2">
+        {/* ── Community Workouts ── */}
+        <section>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-headline font-bold text-lg tracking-tight uppercase">Community Workouts</h3>
+            <button className="text-secondary text-[10px] font-black tracking-widest uppercase hover:underline">
+              See Trends
+            </button>
+          </div>
+
+          {/* Create & Share CTA — inside community section */}
+          <button
+            onClick={() => setPage('create')}
+            className="w-full py-4 mb-4 rounded-2xl kinetic-gradient text-on-primary-fixed font-headline font-black uppercase tracking-tighter text-base shadow-[0_8px_30px_rgba(212,251,0,0.15)] hover:shadow-[0_8px_40px_rgba(212,251,0,0.3)] transition-all active:scale-95 flex items-center justify-center gap-2"
+          >
+            <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>
+              add_circle
+            </span>
+            Create &amp; Share Workout Plan
+          </button>
+
+          {communityPlans.length > 0 ? (
+            <div className="space-y-3">
               {communityPlans.map(plan => (
-                <CommunityPlanRow key={plan.id} plan={plan} />
+                <CommunityPlanCard key={plan.id} plan={plan} />
               ))}
             </div>
-          </section>
-        )}
+          ) : (
+            <div className="bg-surface-container rounded-2xl p-8 text-center">
+              <span
+                className="material-symbols-outlined text-4xl text-outline mb-3 block"
+                style={{ fontVariationSettings: "'FILL' 1" }}
+              >
+                groups
+              </span>
+              <p className="text-on-surface-variant font-medium text-sm">No community plans yet.</p>
+              <p className="text-on-surface-variant/50 text-xs mt-1">Be the first to share a workout plan!</p>
+            </div>
+          )}
+        </section>
 
       </div>
+
+      {/* ── Activity detail modal ── */}
+      {selectedSession && (
+        <ActivityDetailModal
+          session={selectedSession}
+          onClose={() => setSelectedSession(null)}
+        />
+      )}
     </div>
   );
 }
