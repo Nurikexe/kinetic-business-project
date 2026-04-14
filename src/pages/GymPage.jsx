@@ -5,6 +5,7 @@ import { useUserConfig } from '../context/UserConfigContext';
 import { useActiveSession } from '../context/ActiveSessionContext';
 import { supabase } from '../lib/supabase';
 import EditProgressionModal from '../components/EditProgressionModal';
+import EditRulesModal from '../components/EditRulesModal';
 import EditWorkoutModal from '../components/EditWorkoutModal';
 
 // ── Active Gym Session ────────────────────────────────────────
@@ -295,6 +296,7 @@ export default function GymPage() {
   const [toast, setToast]               = useState(null);
   const [expandedIdx, setExpandedIdx]   = useState(null); // null = follows currentDayIdx
   const [showProgressionEdit, setShowProgressionEdit] = useState(false);
+  const [showRulesEdit, setShowRulesEdit]             = useState(false);
   const [editingDay, setEditingDay]     = useState(null);
   const [showAddDay, setShowAddDay]     = useState(false);
 
@@ -380,11 +382,18 @@ export default function GymPage() {
     showToast('Day removed!');
   }, [gymDays, updateConfig, showToast]);
 
-  // ── Progression editing ──
-  const saveProgression = useCallback(({ lifts: newLifts, gym_goals, gym_rules }) => {
-    updateConfig({ lifts: newLifts, gym_goals, gym_rules });
+  // ── Targets (lifts) editing ──
+  const saveLifts = useCallback(({ lifts: newLifts }) => {
+    updateConfig({ lifts: newLifts });
     setShowProgressionEdit(false);
-    showToast('Progression updated!');
+    showToast('Targets updated!');
+  }, [updateConfig, showToast]);
+
+  // ── Rules editing ──
+  const saveRules = useCallback(({ gym_rules }) => {
+    updateConfig({ gym_rules });
+    setShowRulesEdit(false);
+    showToast('Rules updated!');
   }, [updateConfig, showToast]);
 
   // ── Lift current value (slider) ──
@@ -684,7 +693,7 @@ export default function GymPage() {
                 </h3>
               </div>
               <button
-                onClick={() => setShowProgressionEdit(true)}
+                onClick={() => setShowRulesEdit(true)}
                 className="flex items-center gap-1.5 text-[10px] text-on-surface-variant/60 hover:text-primary-fixed uppercase font-black tracking-widest transition-colors pb-0.5"
               >
                 <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>edit</span>
@@ -730,14 +739,23 @@ export default function GymPage() {
           </section>
         )}
 
-        {/* Setup CTA if nothing configured */}
-        {lifts.length === 0 && !gymGoals && gymRules.length === 0 && (
+        {/* Setup CTAs if nothing configured */}
+        {lifts.length === 0 && !gymGoals && (
           <button
             onClick={() => setShowProgressionEdit(true)}
-            className="mt-8 w-full py-3 rounded-xl border border-outline-variant/20 flex items-center justify-center gap-2 text-on-surface-variant text-sm font-bold uppercase tracking-widest hover:bg-surface-container transition-all"
+            className="mt-4 w-full py-3 rounded-xl border border-outline-variant/20 flex items-center justify-center gap-2 text-on-surface-variant text-sm font-bold uppercase tracking-widest hover:bg-surface-container transition-all"
           >
-            <span className="material-symbols-outlined text-base">flag</span>
-            Set Goals & Progression Rules
+            <span className="material-symbols-outlined text-base">add_chart</span>
+            Add Performance Targets
+          </button>
+        )}
+        {gymRules.length === 0 && (
+          <button
+            onClick={() => setShowRulesEdit(true)}
+            className="mt-3 w-full py-3 rounded-xl border border-outline-variant/20 flex items-center justify-center gap-2 text-on-surface-variant text-sm font-bold uppercase tracking-widest hover:bg-surface-container transition-all"
+          >
+            <span className="material-symbols-outlined text-base">rule</span>
+            Add Progression Rules
           </button>
         )}
       </div>
@@ -756,14 +774,21 @@ export default function GymPage() {
         )}
       </AnimatePresence>
 
-      {/* Edit Progression Modal */}
+      {/* Edit Targets (lifts) sheet */}
       {showProgressionEdit && (
         <EditProgressionModal
           lifts={lifts}
-          goals={gymGoals || ''}
-          rules={Array.isArray(gymRules) ? gymRules : []}
-          onSave={saveProgression}
+          onSave={saveLifts}
           onClose={() => setShowProgressionEdit(false)}
+        />
+      )}
+
+      {/* Edit Rules sheet */}
+      {showRulesEdit && (
+        <EditRulesModal
+          rules={Array.isArray(gymRules) ? gymRules : []}
+          onSave={saveRules}
+          onClose={() => setShowRulesEdit(false)}
         />
       )}
 
