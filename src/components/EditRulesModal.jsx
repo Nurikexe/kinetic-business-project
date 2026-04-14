@@ -70,7 +70,7 @@ export default function EditRulesModal({ rules, onSave, onClose }) {
             <motion.button
               whileTap={{ scale: 0.88 }}
               onClick={onClose}
-              className="hidden sm:flex w-8 h-8 rounded-xl bg-surface-container items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors"
+              className="hidden sm:flex w-8 h-8 rounded-xl bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors"
             >
               <X size={16} />
             </motion.button>

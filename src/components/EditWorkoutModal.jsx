@@ -57,7 +57,7 @@ export default function EditWorkoutModal({ day, onSave, onClose, onDelete }) {
           className="w-full h-full sm:h-auto sm:max-w-xl bg-background sm:bg-surface-container-high sm:rounded-3xl sm:max-h-[90dvh] flex flex-col overflow-hidden sm:shadow-2xl"
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-5 border-b border-outline-variant/10">
+          <div className="flex items-center justify-between px-6 py-5 border-b border-outline-variant/10 shrink-0">
             <div className="flex items-center gap-4">
               <button onClick={onClose} className="sm:hidden text-on-surface-variant">
                 <span className="material-symbols-outlined">arrow_back</span>
@@ -214,7 +214,7 @@ export default function EditWorkoutModal({ day, onSave, onClose, onDelete }) {
           </div>
 
           {/* Footer */}
-          <div className="flex gap-3 px-6 pt-4 pb-10 border-t border-outline-variant/10">
+          <div className="flex gap-3 px-6 pt-4 pb-10 border-t border-outline-variant/10 shrink-0">
             <motion.button whileTap={{ scale: 0.97 }} onClick={onClose}
               className="flex-1 py-4 rounded-2xl border border-outline-variant/20 text-on-surface-variant text-sm font-medium hover:bg-surface-container transition-colors">
               Cancel
