@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus, Trash2 } from 'lucide-react';
 
@@ -8,6 +8,29 @@ const INPUT = 'px-3 py-2.5 bg-surface-container-highest border border-outline-va
 
 export default function EditProgressionModal({ lifts, onSave, onClose }) {
   const [localLifts, setLocalLifts] = useState(() => lifts.map(l => ({ ...l })));
+  const containerRef = useRef(null);
+  const firstInputRef = useRef(null);
+
+  useEffect(() => {
+    // 1. Smoothly scroll the page so the modal is vertically centered
+    if (containerRef.current) {
+      containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // 2. Focus first input
+    const timer = setTimeout(() => {
+      firstInputRef.current?.focus();
+    }, 500);
+
+    // 3. Prevent background scroll
+    const originalStyle = window.getComputedStyle(document.body).overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      clearTimeout(timer);
+      document.body.style.overflow = originalStyle;
+    };
+  }, []);
 
   const updateLift = (idx, field, val) =>
     setLocalLifts(prev => prev.map((l, i) => i === idx ? { ...l, [field]: val } : l));
@@ -35,11 +58,12 @@ export default function EditProgressionModal({ lifts, onSave, onClose }) {
       >
         <motion.div
           key="lifts-sheet"
+          ref={containerRef}
           initial={{ y: '100%', opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: '100%', opacity: 0 }}
           transition={SHEET}
-          className="w-full h-full sm:h-auto sm:max-w-xl bg-background sm:bg-surface-container-high sm:rounded-3xl sm:max-h-[90dvh] flex flex-col overflow-hidden sm:shadow-2xl"
+          className="w-full h-full sm:h-auto sm:max-w-xl bg-background sm:bg-surface-container-high sm:rounded-3xl max-h-[90vh] sm:max-h-[90dvh] flex flex-col overflow-hidden sm:shadow-2xl"
           onClick={e => e.stopPropagation()}
         >
           {/* Header */}
@@ -80,6 +104,7 @@ export default function EditProgressionModal({ lifts, onSave, onClose }) {
                   {/* Name row */}
                   <div className="flex items-center gap-2 mb-3">
                     <input
+                      ref={idx === 0 ? firstInputRef : null}
                       value={lift.name}
                       onChange={e => updateLift(idx, 'name', e.target.value)}
                       placeholder="Lift name (e.g. Bench Press)"

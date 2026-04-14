@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus, Trash2 } from 'lucide-react';
 
@@ -8,6 +8,29 @@ const INPUT = 'flex-1 px-3 py-2.5 bg-surface-container-highest border border-out
 
 export default function EditRulesModal({ rules, onSave, onClose }) {
   const [localRules, setLocalRules] = useState([...rules]);
+  const containerRef = useRef(null);
+  const firstInputRef = useRef(null);
+
+  useEffect(() => {
+    // 1. Smoothly scroll the page so the modal is vertically centered
+    if (containerRef.current) {
+      containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // 2. Focus first input
+    const timer = setTimeout(() => {
+      firstInputRef.current?.focus();
+    }, 500);
+
+    // 3. Prevent background scroll
+    const originalStyle = window.getComputedStyle(document.body).overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      clearTimeout(timer);
+      document.body.style.overflow = originalStyle;
+    };
+  }, []);
 
   const updateRule = (idx, val) =>
     setLocalRules(prev => prev.map((r, i) => i === idx ? val : r));
@@ -47,11 +70,12 @@ export default function EditRulesModal({ rules, onSave, onClose }) {
       >
         <motion.div
           key="rules-sheet"
+          ref={containerRef}
           initial={{ y: '100%', opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: '100%', opacity: 0 }}
           transition={SHEET}
-          className="w-full h-full sm:h-auto sm:max-w-xl bg-background sm:bg-surface-container-high sm:rounded-3xl sm:max-h-[90dvh] flex flex-col overflow-hidden sm:shadow-2xl"
+          className="w-full h-full sm:h-auto sm:max-w-xl bg-background sm:bg-surface-container-high sm:rounded-3xl max-h-[90vh] sm:max-h-[90dvh] flex flex-col overflow-hidden sm:shadow-2xl"
           onClick={e => e.stopPropagation()}
         >
           {/* Header */}
@@ -115,6 +139,7 @@ export default function EditRulesModal({ rules, onSave, onClose }) {
 
                     {/* Rule input */}
                     <input
+                      ref={idx === 0 ? firstInputRef : null}
                       value={rule}
                       onChange={e => updateRule(idx, e.target.value)}
                       placeholder="Describe your rule or tip…"

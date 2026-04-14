@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Trash2, ChevronDown } from 'lucide-react';
 import ExercisePicker from './ExercisePicker';
@@ -12,6 +12,30 @@ export default function EditWorkoutModal({ day, onSave, onClose, onDelete }) {
   const [daySub, setDaySub]       = useState(day.sub || '');
   const [showPicker, setShowPicker] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const containerRef = useRef(null);
+  const firstInputRef = useRef(null);
+
+  useEffect(() => {
+    // 1. Smoothly scroll the page so the modal is vertically centered in the visible screen area
+    if (containerRef.current) {
+      containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // 2. After scrolling, set keyboard focus to the first input field
+    const timer = setTimeout(() => {
+      firstInputRef.current?.focus();
+    }, 500); // Wait for scroll animation
+
+    // 3. Prevent background scroll while the modal is open
+    const originalStyle = window.getComputedStyle(document.body).overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      clearTimeout(timer);
+      document.body.style.overflow = originalStyle;
+    };
+  }, []);
 
   const updateExercise = (idx, field, value) => {
     setExercises(prev => prev.map((e, i) =>
@@ -49,12 +73,13 @@ export default function EditWorkoutModal({ day, onSave, onClose, onDelete }) {
         onClick={onClose}
       >
         <motion.div
+          ref={containerRef}
           initial={{ y: '100%', opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: '100%', opacity: 0 }}
           transition={SPRING}
           onClick={e => e.stopPropagation()}
-          className="w-full h-full sm:h-auto sm:max-w-xl bg-background sm:bg-surface-container-high sm:rounded-3xl sm:max-h-[90dvh] flex flex-col overflow-hidden sm:shadow-2xl"
+          className="w-full h-full sm:h-auto sm:max-w-xl bg-background sm:bg-surface-container-high sm:rounded-3xl max-h-[90vh] sm:max-h-[90dvh] flex flex-col overflow-hidden sm:shadow-2xl"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-5 border-b border-outline-variant/10 shrink-0">
@@ -67,7 +92,7 @@ export default function EditWorkoutModal({ day, onSave, onClose, onDelete }) {
               </h3>
             </div>
             <motion.button
-              whileTap={{ scale: 0.9 }}
+              whileTap={{ scale: 0.97 }}
               onClick={onClose}
               className="hidden sm:flex p-1.5 rounded-lg hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors"
             >
@@ -80,12 +105,13 @@ export default function EditWorkoutModal({ day, onSave, onClose, onDelete }) {
             {/* Name / Focus */}
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: 'Name',  value: dayName, set: setDayName },
+                { label: 'Name',  value: dayName, set: setDayName, ref: firstInputRef },
                 { label: 'Focus', value: daySub,  set: setDaySub  },
-              ].map(({ label, value, set }) => (
+              ].map(({ label, value, set, ref }) => (
                 <div key={label}>
                   <label className="text-[10px] font-mono text-on-surface-variant tracking-widest uppercase mb-1.5 block">{label}</label>
                   <input
+                    ref={ref}
                     value={value}
                     onChange={e => set(e.target.value)}
                     className="w-full px-3 py-2.5 bg-surface-container-highest border border-outline-variant/20 rounded-xl text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary-container/40 transition-colors"
