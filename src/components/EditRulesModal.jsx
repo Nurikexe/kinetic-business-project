@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Plus, Trash2, GripVertical } from 'lucide-react';
+import { X, Plus, Trash2 } from 'lucide-react';
 
 const SHEET = { type: 'spring', stiffness: 420, damping: 38, mass: 0.9 };
 
@@ -42,26 +42,21 @@ export default function EditRulesModal({ rules, onSave, onClose }) {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
-        className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4"
+        className="fixed inset-0 z-[100] flex items-center justify-center p-4"
         style={{ background: 'rgba(14,14,14,0.75)', backdropFilter: 'blur(10px)' }}
         onClick={onClose}
       >
         <motion.div
           key="rules-sheet"
-          initial={{ y: '100%', opacity: 0.5 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: '100%', opacity: 0.5 }}
+          initial={{ y: 60, opacity: 0, scale: 0.97 }}
+          animate={{ y: 0, opacity: 1, scale: 1 }}
+          exit={{ y: 40, opacity: 0, scale: 0.97 }}
           transition={SHEET}
-          className="w-full max-w-xl bg-surface-container-high rounded-t-3xl sm:rounded-3xl max-h-[88dvh] flex flex-col overflow-hidden shadow-[0_-8px_32px_rgba(0,0,0,0.4)] sm:shadow-2xl"
+          className="w-full max-w-xl bg-surface-container-high rounded-3xl max-h-[90dvh] flex flex-col overflow-hidden shadow-2xl"
           onClick={e => e.stopPropagation()}
         >
-          {/* Drag handle - only visible on mobile */}
-          <div className="flex justify-center pt-3 pb-1 shrink-0 sm:hidden">
-            <div className="w-10 h-1 rounded-full bg-outline-variant/30" />
-          </div>
-
           {/* Header */}
-          <div className="flex items-center justify-between px-5 py-3 border-b border-outline-variant/10 shrink-0">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-outline-variant/10 shrink-0">
             <div>
               <p className="text-[9px] font-black uppercase tracking-[0.2em] text-on-surface-variant/40">Methodology</p>
               <h3 className="font-headline font-bold text-lg uppercase tracking-tight text-on-surface leading-tight">
@@ -164,9 +159,8 @@ export default function EditRulesModal({ rules, onSave, onClose }) {
               Save Changes
             </motion.button>
           </div>
-        </div>
+        </motion.div>
       </motion.div>
-    </AnimatePresence>
     </AnimatePresence>
   );
 }
