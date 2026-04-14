@@ -4,11 +4,13 @@ import { useAuth } from '../context/AuthContext';
 import { useUserConfig } from '../context/UserConfigContext';
 import { useActiveSession } from '../context/ActiveSessionContext';
 import { supabase } from '../lib/supabase';
+import EditProgressionModal from '../components/EditProgressionModal';
+import EditWorkoutModal from '../components/EditWorkoutModal';
 
 // ── Active Gym Session ────────────────────────────────────────
 function ActiveGymSession({ onFinish, onCancel }) {
-  const { user }                    = useAuth();
-  const { gymSession, setGymSession } = useActiveSession();
+  const { user }                       = useAuth();
+  const { gymSession, setGymSession }  = useActiveSession();
 
   const { day, sets: savedSets, notes: savedNotes, elapsed: savedElapsed } = gymSession;
 
@@ -193,10 +195,23 @@ function ActiveGymSession({ onFinish, onCancel }) {
 }
 
 // ── Workout Plan View ─────────────────────────────────────────
+const NEW_DAY_TEMPLATE = {
+  id: null,
+  num: 'New Day',
+  name: 'New Day',
+  sub: '',
+  schedule: '',
+  exercises: [],
+};
+
 export default function GymPage() {
   const { config, updateConfig, loaded } = useUserConfig();
   const { gymSession, setGymSession }    = useActiveSession();
   const [toast, setToast]               = useState(null);
+  const [expandedIdx, setExpandedIdx]   = useState(null); // null = follows currentDayIdx
+  const [showProgressionEdit, setShowProgressionEdit] = useState(false);
+  const [editingDay, setEditingDay]     = useState(null);
+  const [showAddDay, setShowAddDay]     = useState(false);
 
   const {
     gym_days:      gymDays     = [],
@@ -204,26 +219,38 @@ export default function GymPage() {
     completed      = [],
     gym_goals:     gymGoals    = '',
     gym_rules:     gymRules    = [],
+    lifts          = [],
   } = config;
 
   const effectiveDays      = gymDays.slice(0, gymDayCount);
   const effectiveCompleted = Array.from({ length: gymDayCount }, (_, i) => completed[i] ?? false);
-  const currentDayIdx      = effectiveCompleted.indexOf(false);
+  const currentDayIdx      = effectiveCompleted.indexOf(false); // first incomplete day
+
+  // Which day is visually expanded: user override OR auto (first incomplete)
+  const activeExpandedIdx = expandedIdx !== null ? expandedIdx : currentDayIdx;
 
   const showToast = useCallback((msg) => {
     setToast(msg);
     setTimeout(() => setToast(null), 2800);
   }, []);
 
-  const markComplete = useCallback((idx) => {
+  // Mark day complete; auto-reset if all done
+  const handleFinish = useCallback((dayIdx) => {
     const newCompleted = [...effectiveCompleted];
-    newCompleted[idx] = true;
-    updateConfig({ completed: newCompleted });
-    showToast('Day marked complete!');
-  }, [effectiveCompleted, updateConfig, showToast]);
+    if (dayIdx >= 0) newCompleted[dayIdx] = true;
+    const allDone = newCompleted.every(Boolean);
+    if (allDone) {
+      updateConfig({ completed: Array(gymDayCount).fill(false) });
+      showToast('Week complete! Starting fresh.');
+    } else {
+      updateConfig({ completed: newCompleted });
+      showToast('Workout submitted!');
+    }
+  }, [effectiveCompleted, gymDayCount, updateConfig, showToast]);
 
   const resetWeek = () => {
     updateConfig({ completed: Array(gymDayCount).fill(false) });
+    setExpandedIdx(null);
     showToast('Week reset!');
   };
 
@@ -240,6 +267,41 @@ export default function GymPage() {
     });
   };
 
+  const toggleExpand = (idx) => {
+    setExpandedIdx(prev => prev === idx ? null : idx);
+  };
+
+  // ── Day editing ──
+  const saveDay = useCallback((updatedDay) => {
+    const newDays = gymDays.map(d => d.id === updatedDay.id ? updatedDay : d);
+    updateConfig({ gym_days: newDays });
+    setEditingDay(null);
+    showToast('Day updated!');
+  }, [gymDays, updateConfig, showToast]);
+
+  const addDay = useCallback((newDay) => {
+    const nextNum = gymDays.length + 1;
+    const dayWithId = { ...newDay, id: Date.now(), num: `Day ${nextNum}` };
+    const newDays = [...gymDays, dayWithId];
+    updateConfig({ gym_days: newDays, gym_day_count: newDays.length, completed: Array(newDays.length).fill(false) });
+    setShowAddDay(false);
+    showToast('Day added!');
+  }, [gymDays, updateConfig, showToast]);
+
+  const deleteDay = useCallback((dayId) => {
+    const newDays = gymDays.filter(d => d.id !== dayId).map((d, i) => ({ ...d, num: `Day ${i + 1}` }));
+    updateConfig({ gym_days: newDays, gym_day_count: newDays.length, completed: Array(newDays.length).fill(false) });
+    setEditingDay(null);
+    showToast('Day removed!');
+  }, [gymDays, updateConfig, showToast]);
+
+  // ── Progression editing ──
+  const saveProgression = useCallback(({ lifts: newLifts, gym_goals, gym_rules }) => {
+    updateConfig({ lifts: newLifts, gym_goals, gym_rules });
+    setShowProgressionEdit(false);
+    showToast('Progression updated!');
+  }, [updateConfig, showToast]);
+
   if (!loaded) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -253,10 +315,7 @@ export default function GymPage() {
     const dayIdx = effectiveDays.findIndex(d => d.id === gymSession.day.id);
     return (
       <ActiveGymSession
-        onFinish={() => {
-          if (dayIdx >= 0) markComplete(dayIdx);
-          showToast('Workout submitted!');
-        }}
+        onFinish={() => handleFinish(dayIdx)}
         onCancel={() => setGymSession(null)}
       />
     );
@@ -272,6 +331,7 @@ export default function GymPage() {
       </header>
 
       <div className="px-6 pt-6 max-w-xl mx-auto">
+        {/* Week progress */}
         <section className="mb-8">
           <h2 className="font-headline font-extrabold text-3xl tracking-tighter uppercase mb-1">Gym Plan</h2>
           <div className="flex items-center justify-between mb-3">
@@ -287,78 +347,108 @@ export default function GymPage() {
           </div>
         </section>
 
+        {/* Goals */}
         {gymGoals && (
           <div className="bg-surface-container rounded-lg p-5 mb-6">
-            <p className="text-[10px] font-black uppercase tracking-widest text-primary-fixed mb-2">Current Goals</p>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[10px] font-black uppercase tracking-widest text-primary-fixed">Current Goals</p>
+              <button
+                onClick={() => setShowProgressionEdit(true)}
+                className="flex items-center gap-1 text-[10px] text-on-surface-variant hover:text-on-surface uppercase font-bold tracking-widest transition-colors"
+              >
+                <span className="material-symbols-outlined text-sm">edit</span>
+                Edit
+              </button>
+            </div>
             <p className="text-on-surface-variant text-sm">
               {typeof gymGoals === 'string' ? gymGoals : Array.isArray(gymGoals) ? gymGoals.join(' · ') : ''}
             </p>
           </div>
         )}
 
-        <div className="space-y-4">
+        {/* Day cards */}
+        <div className="space-y-3">
           {effectiveDays.map((day, idx) => {
-            const done      = effectiveCompleted[idx];
-            const isCurrent = idx === currentDayIdx;
+            const done       = effectiveCompleted[idx];
+            const isCurrent  = idx === currentDayIdx; // visual hint only
+            const isExpanded = idx === activeExpandedIdx && !done;
 
             return (
               <div
                 key={day.id}
-                className={`rounded-lg overflow-hidden transition-all ${isCurrent ? 'bg-surface-container-high border border-primary-container/20' : 'bg-surface-container'} ${done ? 'opacity-60' : ''}`}
+                className={`rounded-xl overflow-hidden transition-all ${
+                  isCurrent && !done
+                    ? 'bg-surface-container-high border border-primary-container/20'
+                    : 'bg-surface-container border border-transparent'
+                } ${done ? 'opacity-60' : ''}`}
               >
-                <div className={`px-6 py-4 flex justify-between items-center ${isCurrent ? 'border-b border-outline-variant/10' : ''}`}>
+                {/* Card header — tap to expand */}
+                <button
+                  className="w-full px-5 py-4 flex justify-between items-center text-left"
+                  onClick={() => !done && toggleExpand(idx)}
+                  disabled={done}
+                >
                   <div>
-                    <p className={`text-[10px] font-black uppercase tracking-widest mb-0.5 ${isCurrent ? 'text-primary-fixed' : 'text-on-surface-variant'}`}>
-                      {day.schedule}{isCurrent ? ' · Today' : ''}
+                    <p className={`text-[10px] font-black uppercase tracking-widest mb-0.5 ${isCurrent && !done ? 'text-primary-fixed' : 'text-on-surface-variant'}`}>
+                      {day.schedule || day.num}{isCurrent && !done ? ' · Next Up' : ''}
                     </p>
                     <h3 className="font-headline font-bold text-xl uppercase tracking-tight">{day.name}</h3>
                     {day.sub && <p className="text-on-surface-variant text-xs">{day.sub}</p>}
                   </div>
-                  {done
-                    ? <span className="material-symbols-outlined text-primary-fixed text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                    : <span className="material-symbols-outlined text-on-surface-variant">fitness_center</span>
-                  }
-                </div>
-
-                {isCurrent && !done && (
-                  <div className="px-6 pb-5">
-                    <div className="space-y-2 mb-4">
-                      {(day.exercises || []).slice(0, 4).map(ex => (
-                        <div key={ex.id} className="flex justify-between items-center text-sm">
-                          <span className="text-on-surface-variant">{ex.name}</span>
-                          <span className="font-bold text-primary-fixed">{ex.sets}×{ex.reps}</span>
-                        </div>
-                      ))}
-                      {(day.exercises || []).length > 4 && (
-                        <p className="text-on-surface-variant text-xs">+{day.exercises.length - 4} more exercises</p>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => startDay(day)}
-                      className="w-full py-3.5 rounded-full kinetic-gradient text-on-primary-fixed font-headline font-black uppercase tracking-tighter shadow-[0_8px_24px_rgba(212,251,0,0.2)] active:scale-95 transition-transform"
-                    >
-                      Start Workout
-                    </button>
+                  <div className="flex items-center gap-2">
+                    {/* Edit button */}
+                    {!done && (
+                      <button
+                        onClick={e => { e.stopPropagation(); setEditingDay(day); }}
+                        className="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-base">edit</span>
+                      </button>
+                    )}
+                    {done
+                      ? <span className="material-symbols-outlined text-primary-fixed text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                      : <span className={`material-symbols-outlined text-on-surface-variant transition-transform ${isExpanded ? 'rotate-180' : ''}`} style={{ fontSize: '20px' }}>expand_more</span>
+                    }
                   </div>
-                )}
+                </button>
 
-                {!isCurrent && !done && (
-                  <div className="px-6 pb-4 flex justify-between items-center">
+                {/* Expanded exercise list + Start button */}
+                <AnimatePresence>
+                  {isExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+                      className="overflow-hidden"
+                    >
+                      <div className="px-5 pb-5 border-t border-outline-variant/10">
+                        <div className="space-y-2 mt-3 mb-4">
+                          {(day.exercises || []).map(ex => (
+                            <div key={ex.id} className="flex justify-between items-center text-sm">
+                              <span className="text-on-surface-variant">{ex.name}</span>
+                              <span className="font-bold text-primary-fixed">{ex.sets}×{ex.reps}</span>
+                            </div>
+                          ))}
+                          {(day.exercises || []).length === 0 && (
+                            <p className="text-on-surface-variant text-xs italic">No exercises yet — tap Edit to add some.</p>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => startDay(day)}
+                          className="w-full py-3.5 rounded-full kinetic-gradient text-on-primary-fixed font-headline font-black uppercase tracking-tighter shadow-[0_8px_24px_rgba(212,251,0,0.2)] active:scale-95 transition-transform"
+                        >
+                          Start Workout
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Collapsed state for incomplete non-expanded days: show exercise count */}
+                {!isExpanded && !done && (
+                  <div className="px-5 pb-3">
                     <span className="text-on-surface-variant text-xs">{(day.exercises || []).length} exercises</span>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => startDay(day)}
-                        className="px-4 py-2 rounded-full bg-surface-container-highest text-on-surface font-bold text-xs uppercase tracking-wide hover:bg-surface-bright transition-colors active:scale-95"
-                      >
-                        Start
-                      </button>
-                      <button
-                        onClick={() => markComplete(idx)}
-                        className="px-4 py-2 rounded-full border border-outline-variant/30 text-on-surface-variant font-bold text-xs uppercase tracking-wide hover:text-on-surface transition-colors active:scale-95"
-                      >
-                        Done
-                      </button>
-                    </div>
                   </div>
                 )}
               </div>
@@ -366,9 +456,28 @@ export default function GymPage() {
           })}
         </div>
 
+        {/* Add Day button */}
+        <button
+          onClick={() => setShowAddDay(true)}
+          className="mt-4 w-full py-3 rounded-xl border-2 border-dashed border-outline-variant/30 flex items-center justify-center gap-2 text-on-surface-variant text-sm font-bold uppercase tracking-widest hover:border-primary-container/40 hover:text-primary-fixed transition-all"
+        >
+          <span className="material-symbols-outlined text-base">add</span>
+          Add Day
+        </button>
+
+        {/* Progression rules */}
         {Array.isArray(gymRules) && gymRules.length > 0 && (
           <div className="mt-8 bg-surface-container-low rounded-lg p-5">
-            <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-3">Progression Rules</p>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Progression Rules</p>
+              <button
+                onClick={() => setShowProgressionEdit(true)}
+                className="flex items-center gap-1 text-[10px] text-on-surface-variant hover:text-on-surface uppercase font-bold tracking-widest transition-colors"
+              >
+                <span className="material-symbols-outlined text-sm">edit</span>
+                Edit
+              </button>
+            </div>
             <ul className="space-y-2">
               {gymRules.map((rule, i) => (
                 <li key={i} className="flex gap-3 text-sm text-on-surface-variant">
@@ -379,8 +488,20 @@ export default function GymPage() {
             </ul>
           </div>
         )}
+
+        {/* Edit button if no goals/rules yet */}
+        {!gymGoals && gymRules.length === 0 && (
+          <button
+            onClick={() => setShowProgressionEdit(true)}
+            className="mt-8 w-full py-3 rounded-xl border border-outline-variant/20 flex items-center justify-center gap-2 text-on-surface-variant text-sm font-bold uppercase tracking-widest hover:bg-surface-container transition-all"
+          >
+            <span className="material-symbols-outlined text-base">flag</span>
+            Set Goals & Progression Rules
+          </button>
+        )}
       </div>
 
+      {/* Toast */}
       <AnimatePresence>
         {toast && (
           <motion.div
@@ -393,6 +514,36 @@ export default function GymPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Edit Progression Modal */}
+      {showProgressionEdit && (
+        <EditProgressionModal
+          lifts={lifts}
+          goals={gymGoals || ''}
+          rules={Array.isArray(gymRules) ? gymRules : []}
+          onSave={saveProgression}
+          onClose={() => setShowProgressionEdit(false)}
+        />
+      )}
+
+      {/* Edit Day Modal */}
+      {editingDay && (
+        <EditWorkoutModal
+          day={editingDay}
+          onSave={saveDay}
+          onClose={() => setEditingDay(null)}
+          onDelete={() => deleteDay(editingDay.id)}
+        />
+      )}
+
+      {/* Add Day Modal */}
+      {showAddDay && (
+        <EditWorkoutModal
+          day={NEW_DAY_TEMPLATE}
+          onSave={addDay}
+          onClose={() => setShowAddDay(false)}
+        />
+      )}
     </div>
   );
 }

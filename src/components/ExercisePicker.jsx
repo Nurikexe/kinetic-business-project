@@ -7,22 +7,22 @@ import { REP_SCHEMES, SCHEME_CATEGORIES } from '../data/reps';
 const SPRING = { type: 'spring', stiffness: 380, damping: 30 };
 
 const SELECT_CLS = `
-  w-full px-3 py-2.5 bg-bg-800 border border-white/[0.06] rounded-xl
-  text-sm text-text-primary font-body outline-none
-  focus:border-mint/30 transition-colors appearance-none cursor-pointer
-  [&>option]:bg-bg-800
+  w-full px-3 py-2.5 bg-surface-container-highest border border-outline-variant/20 rounded-xl
+  text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary-container/40
+  transition-colors appearance-none cursor-pointer
+  [&>option]:bg-surface-container-highest
 `.trim();
 
 export default function ExercisePicker({ onAdd }) {
-  const [mode, setMode]       = useState('library'); // 'library' | 'manual'
-  const [group, setGroup]     = useState('');
+  const [mode, setMode]         = useState('library');
+  const [group, setGroup]       = useState('');
   const [exercise, setExercise] = useState('');
-  const [scheme, setScheme]   = useState('');
+  const [scheme, setScheme]     = useState('');
   const [manualName, setManualName] = useState('');
   const [manualSets, setManualSets] = useState('3');
   const [manualReps, setManualReps] = useState('10');
 
-  const exerciseList = group ? EXERCISES[group] || [] : [];
+  const exerciseList   = group ? EXERCISES[group] || [] : [];
   const schemeByCategory = SCHEME_CATEGORIES.map(cat => ({
     cat,
     schemes: REP_SCHEMES.filter(s => s.category === cat),
@@ -49,10 +49,10 @@ export default function ExercisePicker({ onAdd }) {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={SPRING}
-      className="bg-bg-800 border border-mint/[0.12] rounded-2xl p-4 space-y-3"
+      className="bg-surface-container-highest border border-primary-container/20 rounded-2xl p-4 space-y-3"
     >
       {/* Mode toggle */}
-      <div className="flex gap-0.5 bg-bg-700 rounded-lg p-0.5 border border-white/[0.05]">
+      <div className="flex gap-0.5 bg-surface-container-high rounded-lg p-0.5 border border-outline-variant/10">
         {[
           { id: 'library', label: 'From Library', icon: <Plus size={11} /> },
           { id: 'manual',  label: 'Manual Entry', icon: <PenLine size={11} /> },
@@ -60,15 +60,15 @@ export default function ExercisePicker({ onAdd }) {
           <button
             key={tab.id}
             onClick={() => setMode(tab.id)}
-            className={`relative flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-[11px] font-body font-semibold transition-colors duration-200 ${
-              mode === tab.id ? 'text-mint' : 'text-text-muted hover:text-text-secondary'
+            className={`relative flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-[11px] font-semibold transition-colors duration-200 ${
+              mode === tab.id ? 'text-primary-fixed' : 'text-on-surface-variant hover:text-on-surface'
             }`}
           >
             {mode === tab.id && (
               <motion.div
                 layoutId="picker-tab"
                 transition={SPRING}
-                className="absolute inset-0 rounded-md bg-mint/[0.08] border border-mint/20"
+                className="absolute inset-0 rounded-md bg-primary-container/10 border border-primary-container/30"
               />
             )}
             <span className="relative z-10">{tab.icon}</span>
@@ -87,9 +87,8 @@ export default function ExercisePicker({ onAdd }) {
             transition={{ duration: 0.15 }}
             className="space-y-2.5"
           >
-            {/* Step 1: Muscle group */}
             <div>
-              <label className="text-[9px] font-mono text-text-muted/70 tracking-[2px] uppercase block mb-1">
+              <label className="text-[9px] font-mono text-on-surface-variant tracking-widest uppercase block mb-1">
                 1 · Muscle Group
               </label>
               <select
@@ -104,9 +103,8 @@ export default function ExercisePicker({ onAdd }) {
               </select>
             </div>
 
-            {/* Step 2: Exercise */}
             <div>
-              <label className="text-[9px] font-mono text-text-muted/70 tracking-[2px] uppercase block mb-1">
+              <label className="text-[9px] font-mono text-on-surface-variant tracking-widest uppercase block mb-1">
                 2 · Exercise
               </label>
               <select
@@ -122,9 +120,8 @@ export default function ExercisePicker({ onAdd }) {
               </select>
             </div>
 
-            {/* Step 3: Rep scheme */}
             <div>
-              <label className="text-[9px] font-mono text-text-muted/70 tracking-[2px] uppercase block mb-1">
+              <label className="text-[9px] font-mono text-on-surface-variant tracking-widest uppercase block mb-1">
                 3 · Sets × Reps
               </label>
               <select
@@ -154,34 +151,34 @@ export default function ExercisePicker({ onAdd }) {
             className="space-y-2.5"
           >
             <div>
-              <label className="text-[9px] font-mono text-text-muted/70 tracking-[2px] uppercase block mb-1">
+              <label className="text-[9px] font-mono text-on-surface-variant tracking-widest uppercase block mb-1">
                 Exercise Name
               </label>
               <input
                 value={manualName}
                 onChange={e => setManualName(e.target.value)}
                 placeholder="e.g. Cable Flye"
-                className="w-full px-3 py-2.5 bg-bg-800 border border-white/[0.06] rounded-xl text-sm text-text-primary font-body outline-none focus:border-mint/30 transition-colors placeholder:text-text-muted/30"
+                className="w-full px-3 py-2.5 bg-surface-container-highest border border-outline-variant/20 rounded-xl text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary-container/40 transition-colors placeholder:text-on-surface-variant/30"
               />
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-[9px] font-mono text-text-muted/70 tracking-[2px] uppercase block mb-1">Sets</label>
+                <label className="text-[9px] font-mono text-on-surface-variant tracking-widest uppercase block mb-1">Sets</label>
                 <input
                   type="number"
                   min="1"
                   value={manualSets}
                   onChange={e => setManualSets(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-bg-800 border border-white/[0.06] rounded-xl text-sm text-center text-text-primary font-mono outline-none focus:border-mint/30 transition-colors"
+                  className="w-full px-3 py-2.5 bg-surface-container-highest border border-outline-variant/20 rounded-xl text-sm text-center text-on-surface font-mono outline-none focus:ring-2 focus:ring-primary-container/40 transition-colors"
                 />
               </div>
               <div>
-                <label className="text-[9px] font-mono text-text-muted/70 tracking-[2px] uppercase block mb-1">Reps</label>
+                <label className="text-[9px] font-mono text-on-surface-variant tracking-widest uppercase block mb-1">Reps</label>
                 <input
                   value={manualReps}
                   onChange={e => setManualReps(e.target.value)}
                   placeholder="8-12"
-                  className="w-full px-3 py-2.5 bg-bg-800 border border-white/[0.06] rounded-xl text-sm text-center text-text-primary font-mono outline-none focus:border-mint/30 transition-colors placeholder:text-text-muted/30"
+                  className="w-full px-3 py-2.5 bg-surface-container-highest border border-outline-variant/20 rounded-xl text-sm text-center text-on-surface font-mono outline-none focus:ring-2 focus:ring-primary-container/40 transition-colors placeholder:text-on-surface-variant/30"
                 />
               </div>
             </div>
@@ -189,13 +186,12 @@ export default function ExercisePicker({ onAdd }) {
         )}
       </AnimatePresence>
 
-      {/* Add button */}
       <motion.button
         whileHover={{ scale: 1.01 }}
         whileTap={{ scale: 0.97 }}
         onClick={handleAdd}
         disabled={mode === 'library' ? !canAddLibrary : !canAddManual}
-        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-mint/[0.10] border border-mint/25 text-mint text-sm font-body font-semibold hover:bg-mint/[0.16] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary-container/10 border border-primary-container/30 text-primary-fixed text-sm font-semibold hover:bg-primary-container/20 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
       >
         <Plus size={14} />
         Add Exercise
