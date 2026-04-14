@@ -45,34 +45,38 @@ export default function EditWorkoutModal({ day, onSave, onClose, onDelete }) {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
-        className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4"
-        style={{ background: 'rgba(14,14,14,0.85)', backdropFilter: 'blur(12px)' }}
+        className="fixed inset-0 z-[100] flex items-center justify-center sm:p-4 bg-background sm:bg-background/80 sm:backdrop-blur-md"
         onClick={onClose}
       >
         <motion.div
-          initial={{ y: 60, opacity: 0, scale: 0.97 }}
-          animate={{ y: 0, opacity: 1, scale: 1 }}
-          exit={{ y: 40, opacity: 0, scale: 0.97 }}
+          initial={{ y: '100%', opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: '100%', opacity: 0 }}
           transition={SPRING}
           onClick={e => e.stopPropagation()}
-          className="bg-surface-container-high border border-outline-variant/10 rounded-2xl w-full max-w-xl max-h-[90dvh] flex flex-col overflow-hidden shadow-2xl"
+          className="w-full h-full sm:h-auto sm:max-w-xl bg-background sm:bg-surface-container-high sm:rounded-3xl sm:max-h-[90dvh] flex flex-col overflow-hidden sm:shadow-2xl"
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-outline-variant/10">
-            <h3 className="font-headline font-bold text-lg uppercase tracking-tight text-on-surface">
-              {day.id ? `Edit ${day.num}` : 'New Day'}
-            </h3>
+          <div className="flex items-center justify-between px-6 py-5 border-b border-outline-variant/10">
+            <div className="flex items-center gap-4">
+              <button onClick={onClose} className="sm:hidden text-on-surface-variant">
+                <span className="material-symbols-outlined">arrow_back</span>
+              </button>
+              <h3 className="font-headline font-bold text-lg uppercase tracking-tight text-on-surface">
+                {day.id ? `Edit ${day.num}` : 'New Day'}
+              </h3>
+            </div>
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={onClose}
-              className="p-1.5 rounded-lg hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors"
+              className="hidden sm:flex p-1.5 rounded-lg hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors"
             >
               <X size={17} />
             </motion.button>
           </div>
 
           {/* Body */}
-          <div className="flex-1 overflow-y-auto p-5 space-y-5">
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {/* Name / Focus */}
             <div className="grid grid-cols-2 gap-3">
               {[
@@ -210,14 +214,14 @@ export default function EditWorkoutModal({ day, onSave, onClose, onDelete }) {
           </div>
 
           {/* Footer */}
-          <div className="flex gap-3 px-5 py-4 border-t border-outline-variant/10">
+          <div className="flex gap-3 px-6 pt-4 pb-10 border-t border-outline-variant/10">
             <motion.button whileTap={{ scale: 0.97 }} onClick={onClose}
-              className="flex-1 py-3 rounded-xl border border-outline-variant/20 text-on-surface-variant text-sm font-medium hover:bg-surface-container transition-colors">
+              className="flex-1 py-4 rounded-2xl border border-outline-variant/20 text-on-surface-variant text-sm font-medium hover:bg-surface-container transition-colors">
               Cancel
             </motion.button>
             <motion.button whileTap={{ scale: 0.97 }}
               onClick={() => onSave({ ...day, name: dayName, sub: daySub, exercises: exercises.filter(e => e.name.trim()) })}
-              className="flex-1 py-3 rounded-xl bg-primary-container/10 border border-primary-container/30 text-primary-fixed text-sm font-semibold hover:bg-primary-container/20 transition-colors">
+              className="flex-1 py-4 rounded-2xl bg-primary-container/10 border border-primary-container/30 text-primary-fixed text-sm font-semibold hover:bg-primary-container/20 transition-colors">
               Save Changes
             </motion.button>
           </div>

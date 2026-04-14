@@ -42,38 +42,42 @@ export default function EditRulesModal({ rules, onSave, onClose }) {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
-        className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-        style={{ background: 'rgba(14,14,14,0.75)', backdropFilter: 'blur(10px)' }}
+        className="fixed inset-0 z-[100] flex items-center justify-center sm:p-4 bg-background sm:bg-background/80 sm:backdrop-blur-md"
         onClick={onClose}
       >
         <motion.div
           key="rules-sheet"
-          initial={{ y: 60, opacity: 0, scale: 0.97 }}
-          animate={{ y: 0, opacity: 1, scale: 1 }}
-          exit={{ y: 40, opacity: 0, scale: 0.97 }}
+          initial={{ y: '100%', opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: '100%', opacity: 0 }}
           transition={SHEET}
-          className="w-full max-w-xl bg-surface-container-high rounded-3xl max-h-[90dvh] flex flex-col overflow-hidden shadow-2xl"
+          className="w-full h-full sm:h-auto sm:max-w-xl bg-background sm:bg-surface-container-high sm:rounded-3xl sm:max-h-[90dvh] flex flex-col overflow-hidden sm:shadow-2xl"
           onClick={e => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-outline-variant/10 shrink-0">
-            <div>
-              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-on-surface-variant/40">Methodology</p>
-              <h3 className="font-headline font-bold text-lg uppercase tracking-tight text-on-surface leading-tight">
-                Edit Rules
-              </h3>
+          <div className="flex items-center justify-between px-6 py-5 border-b border-outline-variant/10 shrink-0">
+            <div className="flex items-center gap-4">
+              <button onClick={onClose} className="sm:hidden text-on-surface-variant">
+                <span className="material-symbols-outlined">arrow_back</span>
+              </button>
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-on-surface-variant/40">Methodology</p>
+                <h3 className="font-headline font-bold text-lg uppercase tracking-tight text-on-surface leading-tight">
+                  Edit Rules
+                </h3>
+              </div>
             </div>
             <motion.button
               whileTap={{ scale: 0.88 }}
               onClick={onClose}
-              className="w-8 h-8 rounded-xl bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors"
+              className="hidden sm:flex w-8 h-8 rounded-xl bg-surface-container items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors"
             >
               <X size={16} />
             </motion.button>
           </div>
 
           {/* Scrollable body */}
-          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-2">
+          <div className="flex-1 overflow-y-auto px-6 py-5 space-y-2">
             <AnimatePresence>
               {localRules.map((rule, idx) => {
                 const roman = ROMAN[idx] ?? String(idx + 1);
@@ -143,18 +147,18 @@ export default function EditRulesModal({ rules, onSave, onClose }) {
           </div>
 
           {/* Footer */}
-          <div className="flex gap-3 px-5 pt-3 pb-6 border-t border-outline-variant/10 shrink-0">
+          <div className="flex gap-3 px-6 pt-3 pb-10 border-t border-outline-variant/10 shrink-0">
             <motion.button
               whileTap={{ scale: 0.97 }}
               onClick={onClose}
-              className="flex-1 py-3.5 rounded-2xl border border-outline-variant/20 text-on-surface-variant text-sm font-semibold hover:bg-surface-container transition-colors"
+              className="flex-1 py-4 rounded-2xl border border-outline-variant/20 text-on-surface-variant text-sm font-semibold hover:bg-surface-container transition-colors"
             >
               Cancel
             </motion.button>
             <motion.button
               whileTap={{ scale: 0.97 }}
               onClick={handleSave}
-              className="flex-1 py-3.5 rounded-2xl bg-primary-container/10 border border-primary-container/30 text-primary-fixed text-sm font-bold hover:bg-primary-container/20 transition-colors"
+              className="flex-1 py-4 rounded-2xl bg-primary-container/10 border border-primary-container/30 text-primary-fixed text-sm font-bold hover:bg-primary-container/20 transition-colors"
             >
               Save Changes
             </motion.button>
