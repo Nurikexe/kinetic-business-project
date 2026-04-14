@@ -90,21 +90,23 @@ function ActiveRunSession({ onFinish, onCancel }) {
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="min-h-screen bg-background pb-44">
       {/* Active header */}
-      <div className="sticky top-0 z-50 bg-secondary flex items-center justify-between px-6 py-4 shadow-md">
-        <div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-on-secondary/60">Active Run</p>
-          <h2 className="font-headline font-black text-xl uppercase tracking-tight text-on-secondary line-clamp-1">
-            {runType?.name || 'Run Session'}
-          </h2>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="flex flex-col items-end">
-            <span className="font-mono text-2xl font-bold text-on-secondary leading-none">{formatTime(elapsed)}</span>
-            <span className="text-[9px] uppercase font-black text-on-secondary/40 tracking-tighter">Elapsed</span>
+      <div className="sticky top-0 z-50 bg-secondary shadow-md">
+        <div className="max-w-xl mx-auto flex items-center justify-between px-6 py-4">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-on-secondary/60">Active Run</p>
+            <h2 className="font-headline font-black text-xl uppercase tracking-tight text-on-secondary line-clamp-1">
+              {runType?.name || 'Run Session'}
+            </h2>
           </div>
-          <button onClick={onCancel} className="w-10 h-10 rounded-full bg-on-secondary/10 flex items-center justify-center text-on-secondary hover:bg-on-secondary/20 transition-colors">
-            <span className="material-symbols-outlined">close</span>
-          </button>
+          <div className="flex items-center gap-4">
+            <div className="flex flex-col items-end">
+              <span className="font-mono text-2xl font-bold text-on-secondary leading-none">{formatTime(elapsed)}</span>
+              <span className="text-[9px] uppercase font-black text-on-secondary/40 tracking-tighter">Elapsed</span>
+            </div>
+            <button onClick={onCancel} className="w-10 h-10 rounded-full bg-on-secondary/10 flex items-center justify-center text-on-secondary hover:bg-on-secondary/20 transition-colors">
+              <span className="material-symbols-outlined">close</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -286,9 +288,11 @@ export default function RunningPage() {
 
   return (
     <div className="pb-32">
-      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-xl flex justify-between items-center px-6 py-4 border-b border-outline-variant/10">
-        <span className="text-2xl font-black italic tracking-tighter text-primary-fixed font-headline uppercase">KINETIC</span>
-        <span className="material-symbols-outlined text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>directions_run</span>
+      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-xl border-b border-outline-variant/10">
+        <div className="max-w-xl mx-auto flex justify-between items-center px-6 py-4">
+          <span className="text-2xl font-black italic tracking-tighter text-primary-fixed font-headline uppercase">KINETIC</span>
+          <span className="material-symbols-outlined text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>directions_run</span>
+        </div>
       </header>
 
       <div className="px-6 pt-6 max-w-xl mx-auto">

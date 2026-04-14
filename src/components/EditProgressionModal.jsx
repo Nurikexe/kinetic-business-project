@@ -41,118 +41,120 @@ export default function EditProgressionModal({ lifts, onSave, onClose }) {
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={SHEET}
-        className="fixed bottom-0 left-0 right-0 z-[101] flex flex-col bg-surface-container-high rounded-t-3xl max-h-[88dvh] overflow-hidden"
+        className="fixed bottom-0 left-0 right-0 z-[101] flex flex-col items-center pointer-events-none"
         onClick={e => e.stopPropagation()}
       >
-        {/* Drag handle */}
-        <div className="flex justify-center pt-3 pb-1 shrink-0">
-          <div className="w-10 h-1 rounded-full bg-outline-variant/30" />
-        </div>
-
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-outline-variant/10 shrink-0">
-          <div>
-            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-on-surface-variant/40">Performance</p>
-            <h3 className="font-headline font-bold text-lg uppercase tracking-tight text-on-surface leading-tight">
-              Edit Targets
-            </h3>
+        <div className="w-full max-w-xl bg-surface-container-high rounded-t-3xl max-h-[88dvh] flex flex-col overflow-hidden pointer-events-auto shadow-[0_-8px_32px_rgba(0,0,0,0.4)]">
+          {/* Drag handle */}
+          <div className="flex justify-center pt-3 pb-1 shrink-0">
+            <div className="w-10 h-1 rounded-full bg-outline-variant/30" />
           </div>
-          <motion.button
-            whileTap={{ scale: 0.88 }}
-            onClick={onClose}
-            className="w-8 h-8 rounded-xl bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors"
-          >
-            <X size={16} />
-          </motion.button>
-        </div>
 
-        {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
-          <AnimatePresence>
-            {localLifts.map((lift, idx) => (
-              <motion.div
-                key={lift.key}
-                layout
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 32 }}
-                className="bg-surface-container rounded-2xl p-4 border border-outline-variant/10 group"
-              >
-                {/* Name row */}
-                <div className="flex items-center gap-2 mb-3">
-                  <input
-                    value={lift.name}
-                    onChange={e => updateLift(idx, 'name', e.target.value)}
-                    placeholder="Lift name (e.g. Bench Press)"
-                    className={`${INPUT} flex-1`}
-                  />
-                  <motion.button
-                    whileTap={{ scale: 0.88 }}
-                    onClick={() => removeLift(idx)}
-                    className="w-8 h-8 rounded-xl flex items-center justify-center text-on-surface-variant/40 hover:text-error hover:bg-error-container/15 transition-colors shrink-0"
-                  >
-                    <Trash2 size={14} />
-                  </motion.button>
-                </div>
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 py-3 border-b border-outline-variant/10 shrink-0">
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-on-surface-variant/40">Performance</p>
+              <h3 className="font-headline font-bold text-lg uppercase tracking-tight text-on-surface leading-tight">
+                Edit Targets
+              </h3>
+            </div>
+            <motion.button
+              whileTap={{ scale: 0.88 }}
+              onClick={onClose}
+              className="w-8 h-8 rounded-xl bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors"
+            >
+              <X size={16} />
+            </motion.button>
+          </div>
 
-                {/* Fields grid */}
-                <div className="grid grid-cols-4 gap-2">
-                  {[
-                    { label: 'Current', field: 'current', type: 'number' },
-                    { label: 'Target',  field: 'target',  type: 'number' },
-                    { label: 'Unit',    field: 'unit',    type: 'text'   },
-                    { label: 'Prefix',  field: 'prefix',  type: 'text', placeholder: '+' },
-                  ].map(({ label, field, type, placeholder }) => (
-                    <div key={field}>
-                      <p className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/50 mb-1.5 text-center">
-                        {label}
-                      </p>
-                      <input
-                        type={type}
-                        value={lift[field] ?? ''}
-                        onChange={e =>
-                          updateLift(idx, field, type === 'number' ? (parseFloat(e.target.value) || 0) : e.target.value)
-                        }
-                        placeholder={placeholder}
-                        className="w-full px-2 py-2.5 bg-surface-container-highest border border-outline-variant/20 rounded-xl text-xs text-center text-on-surface font-mono outline-none focus:ring-2 focus:ring-primary-container/40 transition-colors"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
+          {/* Scrollable body */}
+          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+            <AnimatePresence>
+              {localLifts.map((lift, idx) => (
+                <motion.div
+                  key={lift.key}
+                  layout
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+                  className="bg-surface-container rounded-2xl p-4 border border-outline-variant/10 group"
+                >
+                  {/* Name row */}
+                  <div className="flex items-center gap-2 mb-3">
+                    <input
+                      value={lift.name}
+                      onChange={e => updateLift(idx, 'name', e.target.value)}
+                      placeholder="Lift name (e.g. Bench Press)"
+                      className={`${INPUT} flex-1`}
+                    />
+                    <motion.button
+                      whileTap={{ scale: 0.88 }}
+                      onClick={() => removeLift(idx)}
+                      className="w-8 h-8 rounded-xl flex items-center justify-center text-on-surface-variant/40 hover:text-error hover:bg-error-container/15 transition-colors shrink-0"
+                    >
+                      <Trash2 size={14} />
+                    </motion.button>
+                  </div>
 
-          <motion.button
-            whileTap={{ scale: 0.98 }}
-            onClick={addLift}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-dashed border-outline-variant/25 text-on-surface-variant/50 hover:text-primary-fixed hover:border-primary-container/35 transition-colors text-sm font-bold"
-          >
-            <Plus size={14} />
-            Add Lift
-          </motion.button>
+                  {/* Fields grid */}
+                  <div className="grid grid-cols-4 gap-2">
+                    {[
+                      { label: 'Current', field: 'current', type: 'number' },
+                      { label: 'Target',  field: 'target',  type: 'number' },
+                      { label: 'Unit',    field: 'unit',    type: 'text'   },
+                      { label: 'Prefix',  field: 'prefix',  type: 'text', placeholder: '+' },
+                    ].map(({ label, field, type, placeholder }) => (
+                      <div key={field}>
+                        <p className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/50 mb-1.5 text-center">
+                          {label}
+                        </p>
+                        <input
+                          type={type}
+                          value={lift[field] ?? ''}
+                          onChange={e =>
+                            updateLift(idx, field, type === 'number' ? (parseFloat(e.target.value) || 0) : e.target.value)
+                          }
+                          placeholder={placeholder}
+                          className="w-full px-2 py-2.5 bg-surface-container-highest border border-outline-variant/20 rounded-xl text-xs text-center text-on-surface font-mono outline-none focus:ring-2 focus:ring-primary-container/40 transition-colors"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
 
-          {/* Safe area spacer */}
-          <div className="h-2" />
-        </div>
+            <motion.button
+              whileTap={{ scale: 0.98 }}
+              onClick={addLift}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-dashed border-outline-variant/25 text-on-surface-variant/50 hover:text-primary-fixed hover:border-primary-container/35 transition-colors text-sm font-bold"
+            >
+              <Plus size={14} />
+              Add Lift
+            </motion.button>
 
-        {/* Footer */}
-        <div className="flex gap-3 px-5 pt-3 pb-6 border-t border-outline-variant/10 shrink-0">
-          <motion.button
-            whileTap={{ scale: 0.97 }}
-            onClick={onClose}
-            className="flex-1 py-3.5 rounded-2xl border border-outline-variant/20 text-on-surface-variant text-sm font-semibold hover:bg-surface-container transition-colors"
-          >
-            Cancel
-          </motion.button>
-          <motion.button
-            whileTap={{ scale: 0.97 }}
-            onClick={handleSave}
-            className="flex-1 py-3.5 rounded-2xl bg-primary-container/10 border border-primary-container/30 text-primary-fixed text-sm font-bold hover:bg-primary-container/20 transition-colors"
-          >
-            Save Changes
-          </motion.button>
+            {/* Safe area spacer */}
+            <div className="h-2" />
+          </div>
+
+          {/* Footer */}
+          <div className="flex gap-3 px-5 pt-3 pb-6 border-t border-outline-variant/10 shrink-0">
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={onClose}
+              className="flex-1 py-3.5 rounded-2xl border border-outline-variant/20 text-on-surface-variant text-sm font-semibold hover:bg-surface-container transition-colors"
+            >
+              Cancel
+            </motion.button>
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={handleSave}
+              className="flex-1 py-3.5 rounded-2xl bg-primary-container/10 border border-primary-container/30 text-primary-fixed text-sm font-bold hover:bg-primary-container/20 transition-colors"
+            >
+              Save Changes
+            </motion.button>
+          </div>
         </div>
       </motion.div>
     </AnimatePresence>

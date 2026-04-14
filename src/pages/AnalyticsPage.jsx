@@ -194,12 +194,14 @@ Give concise, actionable advice. Answer in 3-5 sentences. Be specific and encour
 
   return (
     <div className="pb-32">
-      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-xl flex justify-between items-center px-6 py-4 border-b border-outline-variant/10">
-        <span className="text-2xl font-black italic tracking-tighter text-primary-fixed font-headline uppercase">KINETIC</span>
-        <span className="material-symbols-outlined text-on-surface-variant">monitoring</span>
+      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-xl border-b border-outline-variant/10">
+        <div className="max-w-xl mx-auto flex justify-between items-center px-6 py-4">
+          <span className="text-2xl font-black italic tracking-tighter text-primary-fixed font-headline uppercase">KINETIC</span>
+          <span className="material-symbols-outlined text-on-surface-variant">monitoring</span>
+        </div>
       </header>
 
-      <div className="px-6 pt-6 max-w-2xl mx-auto space-y-8">
+      <div className="px-6 pt-6 max-w-xl mx-auto space-y-8">
         {/* Title */}
         <section>
           <h2 className="font-headline text-3xl font-extrabold tracking-tight uppercase">

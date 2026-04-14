@@ -162,21 +162,23 @@ export default function CabinetPage({ setPage }) {
     <div className="pb-32 min-h-dvh bg-background">
 
       {/* ── Header ── */}
-      <header className="sticky top-0 z-50 bg-background/90 backdrop-blur-xl flex justify-between items-center px-6 py-4">
-        <span className="text-2xl font-black italic tracking-tighter text-primary-fixed font-headline uppercase">
-          KINETIC
-        </span>
-        <button
-          onClick={handleLogout}
-          disabled={loggingOut}
-          className="flex items-center gap-1.5 text-on-surface-variant hover:text-error transition-colors text-xs font-black uppercase tracking-widest disabled:opacity-40"
-        >
-          <span className="material-symbols-outlined text-base">logout</span>
-          {loggingOut ? 'Signing out…' : 'Sign Out'}
-        </button>
+      <header className="sticky top-0 z-50 bg-background/90 backdrop-blur-xl border-b border-outline-variant/10">
+        <div className="max-w-xl mx-auto flex justify-between items-center px-6 py-4">
+          <span className="text-2xl font-black italic tracking-tighter text-primary-fixed font-headline uppercase">
+            KINETIC
+          </span>
+          <button
+            onClick={handleLogout}
+            disabled={loggingOut}
+            className="flex items-center gap-1.5 text-on-surface-variant hover:text-error transition-colors text-xs font-black uppercase tracking-widest disabled:opacity-40"
+          >
+            <span className="material-symbols-outlined text-base">logout</span>
+            {loggingOut ? 'Signing out…' : 'Sign Out'}
+          </button>
+        </div>
       </header>
 
-      <div className="px-5 pt-6 max-w-2xl mx-auto space-y-8">
+      <div className="px-5 pt-6 max-w-xl mx-auto space-y-8">
 
         {/* ── Profile Hero ── */}
         <section className="flex flex-col items-start gap-5">

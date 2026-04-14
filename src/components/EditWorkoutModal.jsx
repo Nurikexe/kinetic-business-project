@@ -55,7 +55,7 @@ export default function EditWorkoutModal({ day, onSave, onClose, onDelete }) {
           exit={{ y: 40, opacity: 0, scale: 0.97 }}
           transition={SPRING}
           onClick={e => e.stopPropagation()}
-          className="bg-surface-container-high border border-outline-variant/10 rounded-2xl w-full max-w-lg max-h-[90dvh] flex flex-col overflow-hidden"
+          className="bg-surface-container-high border border-outline-variant/10 rounded-2xl w-full max-w-xl max-h-[90dvh] flex flex-col overflow-hidden shadow-2xl"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-outline-variant/10">

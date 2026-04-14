@@ -8,7 +8,7 @@ export const NAV_TABS = [
 
 export default function BottomNav({ page, setPage }) {
   return (
-    <nav className="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pt-3 pb-8 bg-surface-container-low/90 backdrop-blur-xl z-50 rounded-t-[2.5rem] shadow-[0_-8px_30px_rgb(0,0,0,0.5)]">
+    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-xl flex justify-around items-center px-4 pt-3 pb-8 bg-surface-container-low/90 backdrop-blur-xl z-50 rounded-t-[2.5rem] shadow-[0_-8px_30px_rgb(0,0,0,0.5)]">
       {NAV_TABS.map(tab => {
         const active = page === tab.id;
         return (

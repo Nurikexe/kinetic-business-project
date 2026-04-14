@@ -92,48 +92,52 @@ function ActiveGymSession({ onFinish, onCancel }) {
       <div className="sticky top-0 z-50">
         {/* Electric top bar */}
         <div className="h-[3px] kinetic-gradient w-full" />
-        <div className="bg-background/96 backdrop-blur-xl border-b border-outline-variant/10 px-5 py-3 flex items-center justify-between gap-4">
-          {/* Left: day info */}
-          <div className="min-w-0 flex-1">
-            <p className="text-[9px] font-black uppercase tracking-[0.18em] text-on-surface-variant/50 mb-0.5">
-              Active Session
-            </p>
-            <h2 className="font-headline font-black text-xl uppercase tracking-tight text-on-surface leading-none truncate">
-              {day.name}
-            </h2>
-            {day.sub && (
-              <p className="text-[10px] text-on-surface-variant/60 mt-0.5 truncate">{day.sub}</p>
-            )}
-          </div>
-
-          {/* Right: timer + close */}
-          <div className="flex items-center gap-2.5 shrink-0">
-            <div className="bg-primary-container rounded-2xl px-3.5 py-2 flex flex-col items-center min-w-[72px]">
-              <span className="font-mono text-[22px] font-black text-on-primary-fixed leading-none tracking-tight tabular-nums">
-                {formatTime(elapsed)}
-              </span>
-              <span className="text-[7px] font-black uppercase tracking-[0.2em] text-on-primary-fixed/50 mt-0.5">
-                elapsed
-              </span>
+        <div className="bg-background/96 backdrop-blur-xl border-b border-outline-variant/10">
+          <div className="max-w-xl mx-auto px-5 py-3 flex items-center justify-between gap-4">
+            {/* Left: day info */}
+            <div className="min-w-0 flex-1">
+              <p className="text-[9px] font-black uppercase tracking-[0.18em] text-on-surface-variant/50 mb-0.5">
+                Active Session
+              </p>
+              <h2 className="font-headline font-black text-xl uppercase tracking-tight text-on-surface leading-none truncate">
+                {day.name}
+              </h2>
+              {day.sub && (
+                <p className="text-[10px] text-on-surface-variant/60 mt-0.5 truncate">{day.sub}</p>
+              )}
             </div>
-            <button
-              onClick={onCancel}
-              className="w-9 h-9 rounded-xl bg-surface-container-high border border-outline-variant/10 flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-all"
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
-            </button>
+
+            {/* Right: timer + close */}
+            <div className="flex items-center gap-2.5 shrink-0">
+              <div className="bg-primary-container rounded-2xl px-3.5 py-2 flex flex-col items-center min-w-[72px]">
+                <span className="font-mono text-[22px] font-black text-on-primary-fixed leading-none tracking-tight tabular-nums">
+                  {formatTime(elapsed)}
+                </span>
+                <span className="text-[7px] font-black uppercase tracking-[0.2em] text-on-primary-fixed/50 mt-0.5">
+                  elapsed
+                </span>
+              </div>
+              <button
+                onClick={onCancel}
+                className="w-9 h-9 rounded-xl bg-surface-container-high border border-outline-variant/10 flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-all"
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Exercises progress strip */}
-        <div className="bg-background/96 backdrop-blur-xl px-5 py-2 border-b border-outline-variant/10 flex items-center gap-2">
-          <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/40">
-            {sets.length} exercises · {totalSets} sets
-          </span>
-          <div className="flex-1 flex gap-1">
-            {sets.map((_, i) => (
-              <div key={i} className="flex-1 h-1 rounded-full bg-primary-container/20" />
-            ))}
+        <div className="bg-background/96 backdrop-blur-xl border-b border-outline-variant/10">
+          <div className="max-w-xl mx-auto px-5 py-2 flex items-center gap-2">
+            <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/40">
+              {sets.length} exercises · {totalSets} sets
+            </span>
+            <div className="flex-1 flex gap-1">
+              {sets.map((_, i) => (
+                <div key={i} className="flex-1 h-1 rounded-full bg-primary-container/20" />
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -425,9 +429,11 @@ export default function GymPage() {
 
   return (
     <div className="pb-32">
-      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-xl flex justify-between items-center px-6 py-4 border-b border-outline-variant/10">
-        <span className="text-2xl font-black italic tracking-tighter text-primary-fixed font-headline uppercase">KINETIC</span>
-        <span className="material-symbols-outlined text-on-surface-variant" style={{ fontVariationSettings: "'FILL' 1" }}>fitness_center</span>
+      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-xl border-b border-outline-variant/10">
+        <div className="max-w-xl mx-auto flex justify-between items-center px-6 py-4">
+          <span className="text-2xl font-black italic tracking-tighter text-primary-fixed font-headline uppercase">KINETIC</span>
+          <span className="material-symbols-outlined text-on-surface-variant" style={{ fontVariationSettings: "'FILL' 1" }}>fitness_center</span>
+        </div>
       </header>
 
       <div className="px-6 pt-6 max-w-xl mx-auto">

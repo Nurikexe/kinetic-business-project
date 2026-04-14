@@ -685,14 +685,16 @@ export default function HomePage({ setPage }) {
     <div className="pb-32 min-h-dvh bg-background">
 
       {/* ── Header ── */}
-      <header className="sticky top-0 z-50 bg-background/90 backdrop-blur-xl flex justify-between items-center px-6 py-4">
-        <span className="text-2xl font-black italic tracking-tighter text-primary-fixed font-headline uppercase">KINETIC</span>
-        <button className="w-9 h-9 flex items-center justify-center rounded-full bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors">
-          <span className="material-symbols-outlined text-xl">notifications</span>
-        </button>
+      <header className="sticky top-0 z-50 bg-background/90 backdrop-blur-xl border-b border-outline-variant/10">
+        <div className="max-w-xl mx-auto flex justify-between items-center px-6 py-4">
+          <span className="text-2xl font-black italic tracking-tighter text-primary-fixed font-headline uppercase">KINETIC</span>
+          <button className="w-9 h-9 flex items-center justify-center rounded-full bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors">
+            <span className="material-symbols-outlined text-xl">notifications</span>
+          </button>
+        </div>
       </header>
 
-      <div className="px-5 pt-6 max-w-2xl mx-auto space-y-10">
+      <div className="px-5 pt-6 max-w-xl mx-auto space-y-10">
 
         {/* ── Greeting ── */}
         <section>
