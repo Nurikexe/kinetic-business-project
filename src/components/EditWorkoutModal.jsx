@@ -133,7 +133,7 @@ export default function EditWorkoutModal({ day, onSave, onClose, onDelete }) {
           {/* ── Scrollable body ─────────────────────────────────────
               flex-1 + overflow-y-auto → takes all remaining height,
               scrolls internally. Footer always stays visible below.  */}
-          <div className="flex-1 overflow-y-auto overscroll-contain p-6 space-y-6">
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-6 space-y-6">
             {/* Name / Focus */}
             <div className="grid grid-cols-2 gap-3">
               {[
