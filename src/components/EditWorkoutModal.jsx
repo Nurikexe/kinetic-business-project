@@ -3,7 +3,22 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Trash2, ChevronDown } from 'lucide-react';
 import ExercisePicker from './ExercisePicker';
 
-const SPRING = { type: 'spring', stiffness: 380, damping: 32, mass: 0.8 };
+// Mobile: bottom-sheet slide-up (smooth, not snappy)
+const SHEET_SPRING  = { type: 'spring', stiffness: 300, damping: 30, mass: 0.9 };
+// Desktop: centered popup with scale+fade
+const POPUP_SPRING  = { type: 'spring', stiffness: 380, damping: 36, mass: 0.75 };
+
+const MOBILE_VARIANTS = {
+  initial: { y: '100%', opacity: 0 },
+  animate: { y: 0,      opacity: 1 },
+  exit:    { y: '100%', opacity: 0 },
+};
+
+const DESKTOP_VARIANTS = {
+  initial: { scale: 0.96, opacity: 0, y: 14 },
+  animate: { scale: 1,    opacity: 1, y: 0  },
+  exit:    { scale: 0.95, opacity: 0, y: 8  },
+};
 
 // onDelete is optional — if provided, a Delete Day button is shown
 export default function EditWorkoutModal({ day, onSave, onClose, onDelete }) {
@@ -13,32 +28,26 @@ export default function EditWorkoutModal({ day, onSave, onClose, onDelete }) {
   const [showPicker, setShowPicker] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const containerRef = useRef(null);
+  // Initialise synchronously so the first render already picks the right variant
+  const [isSm] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia('(min-width: 640px)').matches
+  );
+
   const firstInputRef = useRef(null);
-  const didAutoScrollRef = useRef(false);
 
   useEffect(() => {
-    const isDesktop = window.matchMedia('(min-width: 640px)').matches;
-    const scrollRaf = requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        if (isDesktop && containerRef.current && !didAutoScrollRef.current) {
-          didAutoScrollRef.current = true;
-          containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      });
-    });
-
-    const focusTimer = setTimeout(() => {
-      firstInputRef.current?.focus({ preventScroll: true });
-    }, 450);
-
-    const originalOverflow = document.body.style.overflow;
+    // Lock background scroll while modal is open
+    const original = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
+    // Focus first input after the opening animation settles
+    const t = setTimeout(() => {
+      firstInputRef.current?.focus({ preventScroll: true });
+    }, 400);
+
     return () => {
-      cancelAnimationFrame(scrollRaf);
-      clearTimeout(focusTimer);
-      document.body.style.overflow = originalOverflow;
+      clearTimeout(t);
+      document.body.style.overflow = original;
     };
   }, []);
 
@@ -51,9 +60,7 @@ export default function EditWorkoutModal({ day, onSave, onClose, onDelete }) {
   const removeExercise = (idx) => setExercises(prev => prev.filter((_, i) => i !== idx));
 
   const addFromPicker = ({ name, sets, reps }) => {
-    setExercises(prev => [...prev, {
-      id: 'e_' + Date.now(), name, sets, reps, weight: '',
-    }]);
+    setExercises(prev => [...prev, { id: 'e_' + Date.now(), name, sets, reps, weight: '' }]);
     setShowPicker(false);
   };
 
@@ -67,29 +74,47 @@ export default function EditWorkoutModal({ day, onSave, onClose, onDelete }) {
     });
   };
 
+  const variants = isSm ? DESKTOP_VARIANTS : MOBILE_VARIANTS;
+  const spring   = isSm ? POPUP_SPRING    : SHEET_SPRING;
+
   return (
     <AnimatePresence>
+      {/* ── Backdrop ──────────────────────────────────────────────
+          Mobile : items-end → modal anchors to bottom of screen
+          Desktop: items-center → modal is vertically centered
+          No overflow-y-auto here — internal body div handles all scroll  */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        transition={{ duration: 0.2 }}
-        className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-background/92 p-2 pt-4 sm:items-center sm:bg-background/80 sm:p-4 sm:backdrop-blur-md"
+        transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+        className="fixed inset-0 z-[100] flex items-end justify-center bg-background/90 sm:items-center sm:p-4 sm:backdrop-blur-md"
         onClick={onClose}
       >
+        {/* ── Modal shell ─────────────────────────────────────────
+            Mobile : h-[92dvh] so the Save button never disappears
+                     behind a virtual keyboard (dvh = dynamic viewport)
+            Desktop: height is auto, capped at 88dvh             */}
         <motion.div
-          ref={containerRef}
-          initial={{ y: '100%', opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: '100%', opacity: 0 }}
-          transition={SPRING}
+          variants={variants}
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          transition={spring}
           onClick={e => e.stopPropagation()}
-          className="flex max-h-[90vh] min-h-0 w-full max-w-xl touch-pan-y flex-col overflow-hidden rounded-[28px] bg-background shadow-2xl sm:my-auto sm:rounded-3xl sm:bg-surface-container-high"
+          className="flex h-[92dvh] w-full max-w-xl flex-col overflow-hidden
+                     rounded-t-[28px] bg-background shadow-2xl
+                     sm:h-auto sm:max-h-[88dvh] sm:rounded-[28px] sm:bg-surface-container-high"
         >
-          {/* Header */}
-          <div className="flex items-center justify-between px-6 py-5 border-b border-outline-variant/10 shrink-0">
+          {/* Drag handle (mobile only) */}
+          <div className="flex justify-center pt-3 pb-0.5 shrink-0 sm:hidden">
+            <div className="h-[3px] w-10 rounded-full bg-outline-variant/40" />
+          </div>
+
+          {/* ── Header ──────────────────────────────────────────── */}
+          <div className="flex shrink-0 items-center justify-between border-b border-outline-variant/10 px-6 py-5">
             <div className="flex items-center gap-4">
-              <button onClick={onClose} className="sm:hidden text-on-surface-variant">
+              <button onClick={onClose} className="text-on-surface-variant sm:hidden">
                 <span className="material-symbols-outlined">arrow_back</span>
               </button>
               <h3 className="font-headline font-bold text-lg uppercase tracking-tight text-on-surface">
@@ -97,7 +122,7 @@ export default function EditWorkoutModal({ day, onSave, onClose, onDelete }) {
               </h3>
             </div>
             <motion.button
-              whileTap={{ scale: 0.97 }}
+              whileTap={{ scale: 0.95 }}
               onClick={onClose}
               className="hidden sm:flex p-1.5 rounded-lg hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors"
             >
@@ -105,7 +130,9 @@ export default function EditWorkoutModal({ day, onSave, onClose, onDelete }) {
             </motion.button>
           </div>
 
-          {/* Body */}
+          {/* ── Scrollable body ─────────────────────────────────────
+              flex-1 + overflow-y-auto → takes all remaining height,
+              scrolls internally. Footer always stays visible below.  */}
           <div className="flex-1 overflow-y-auto overscroll-contain p-6 space-y-6">
             {/* Name / Focus */}
             <div className="grid grid-cols-2 gap-3">
@@ -114,12 +141,14 @@ export default function EditWorkoutModal({ day, onSave, onClose, onDelete }) {
                 { label: 'Focus', value: daySub,  set: setDaySub  },
               ].map(({ label, value, set, ref }) => (
                 <div key={label}>
-                  <label className="text-[10px] font-mono text-on-surface-variant tracking-widest uppercase mb-1.5 block">{label}</label>
+                  <label className="mb-1.5 block text-[10px] font-mono uppercase tracking-widest text-on-surface-variant">
+                    {label}
+                  </label>
                   <input
                     ref={ref}
                     value={value}
                     onChange={e => set(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-surface-container-highest border border-outline-variant/20 rounded-xl text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary-container/40 transition-colors"
+                    className="w-full rounded-xl border border-outline-variant/20 bg-surface-container-highest px-3 py-2.5 text-sm text-on-surface outline-none transition-colors focus:ring-2 focus:ring-primary-container/40"
                   />
                 </div>
               ))}
@@ -127,7 +156,9 @@ export default function EditWorkoutModal({ day, onSave, onClose, onDelete }) {
 
             {/* Exercises */}
             <div className="space-y-2">
-              <label className="text-[10px] font-mono text-on-surface-variant tracking-widest uppercase block">Exercises</label>
+              <label className="block text-[10px] font-mono uppercase tracking-widest text-on-surface-variant">
+                Exercises
+              </label>
               <AnimatePresence>
                 {exercises.map((ex, idx) => (
                   <motion.div
@@ -137,13 +168,16 @@ export default function EditWorkoutModal({ day, onSave, onClose, onDelete }) {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -8, height: 0 }}
                     transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                    className="flex items-center gap-2 bg-surface-container rounded-xl p-2.5 border border-outline-variant/10 group"
+                    className="group flex items-center gap-2 rounded-xl border border-outline-variant/10 bg-surface-container p-2.5"
                   >
                     <div className="flex flex-col gap-0.5">
                       {['▲', '▼'].map((arrow, d) => (
-                        <button key={d} onClick={() => moveExercise(idx, d === 0 ? -1 : 1)}
+                        <button
+                          key={d}
+                          onClick={() => moveExercise(idx, d === 0 ? -1 : 1)}
                           disabled={(d === 0 && idx === 0) || (d === 1 && idx === exercises.length - 1)}
-                          className="text-on-surface-variant hover:text-on-surface disabled:opacity-20 text-[10px] leading-none w-4 text-center">
+                          className="w-4 text-center text-[10px] leading-none text-on-surface-variant hover:text-on-surface disabled:opacity-20"
+                        >
                           {arrow}
                         </button>
                       ))}
@@ -152,25 +186,25 @@ export default function EditWorkoutModal({ day, onSave, onClose, onDelete }) {
                       value={ex.name}
                       onChange={e => updateExercise(idx, 'name', e.target.value)}
                       placeholder="Exercise name"
-                      className="flex-1 min-w-0 px-2 py-1.5 bg-transparent text-sm text-on-surface outline-none placeholder:text-on-surface-variant/40"
+                      className="min-w-0 flex-1 bg-transparent px-2 py-1.5 text-sm text-on-surface outline-none placeholder:text-on-surface-variant/40"
                     />
                     <input
                       type="number"
                       value={ex.sets}
                       onChange={e => updateExercise(idx, 'sets', e.target.value)}
-                      className="w-10 px-1 py-1.5 bg-surface-container-highest border border-outline-variant/20 rounded text-xs text-center text-on-surface font-mono outline-none focus:ring-2 focus:ring-primary-container/40"
+                      className="w-10 rounded border border-outline-variant/20 bg-surface-container-highest px-1 py-1.5 text-center font-mono text-xs text-on-surface outline-none focus:ring-2 focus:ring-primary-container/40"
                     />
-                    <span className="text-on-surface-variant text-xs">×</span>
+                    <span className="text-xs text-on-surface-variant">×</span>
                     <input
                       value={ex.reps}
                       onChange={e => updateExercise(idx, 'reps', e.target.value)}
-                      className="w-14 px-1 py-1.5 bg-surface-container-highest border border-outline-variant/20 rounded text-xs text-center text-on-surface font-mono outline-none focus:ring-2 focus:ring-primary-container/40"
                       placeholder="reps"
+                      className="w-14 rounded border border-outline-variant/20 bg-surface-container-highest px-1 py-1.5 text-center font-mono text-xs text-on-surface outline-none focus:ring-2 focus:ring-primary-container/40"
                     />
                     <motion.button
                       whileTap={{ scale: 0.88 }}
                       onClick={() => removeExercise(idx)}
-                      className="p-1 rounded text-on-surface-variant hover:text-error hover:bg-error-container/20 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                      className="rounded p-1 text-on-surface-variant opacity-0 transition-colors hover:bg-error-container/20 hover:text-error focus:opacity-100 group-hover:opacity-100"
                     >
                       <Trash2 size={14} />
                     </motion.button>
@@ -179,12 +213,13 @@ export default function EditWorkoutModal({ day, onSave, onClose, onDelete }) {
               </AnimatePresence>
 
               <motion.button
-                whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => setShowPicker(v => !v)}
                 className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border transition-colors text-sm ${
                   showPicker
-                    ? 'border-primary-container/30 text-primary-fixed bg-primary-container/10'
-                    : 'border-dashed border-outline-variant/30 text-on-surface-variant hover:text-primary-fixed hover:border-primary-container/40'
+                    ? 'border-primary-container/30 bg-primary-container/10 text-primary-fixed'
+                    : 'border-dashed border-outline-variant/30 text-on-surface-variant hover:border-primary-container/40 hover:text-primary-fixed'
                 }`}
               >
                 <motion.div animate={{ rotate: showPicker ? 180 : 0 }} transition={{ duration: 0.2 }}>
@@ -213,27 +248,29 @@ export default function EditWorkoutModal({ day, onSave, onClose, onDelete }) {
 
             {/* Delete Day */}
             {onDelete && (
-              <div className="pt-2 border-t border-outline-variant/10">
+              <div className="border-t border-outline-variant/10 pt-2">
                 {!confirmDelete ? (
                   <button
                     onClick={() => setConfirmDelete(true)}
-                    className="w-full py-2.5 rounded-xl border border-error/20 text-error/60 text-sm font-medium hover:bg-error-container/10 hover:text-error hover:border-error/40 transition-colors"
+                    className="w-full rounded-xl border border-error/20 py-2.5 text-sm font-medium text-error/60 transition-colors hover:border-error/40 hover:bg-error-container/10 hover:text-error"
                   >
                     Delete This Day
                   </button>
                 ) : (
                   <div className="space-y-2">
-                    <p className="text-xs text-on-surface-variant text-center">Are you sure? This cannot be undone.</p>
+                    <p className="text-center text-xs text-on-surface-variant">
+                      Are you sure? This cannot be undone.
+                    </p>
                     <div className="flex gap-2">
                       <button
                         onClick={() => setConfirmDelete(false)}
-                        className="flex-1 py-2.5 rounded-xl border border-outline-variant/20 text-on-surface-variant text-sm hover:bg-surface-container transition-colors"
+                        className="flex-1 rounded-xl border border-outline-variant/20 py-2.5 text-sm text-on-surface-variant transition-colors hover:bg-surface-container"
                       >
                         Cancel
                       </button>
                       <button
                         onClick={onDelete}
-                        className="flex-1 py-2.5 rounded-xl bg-error-container/20 border border-error/30 text-error text-sm font-semibold hover:bg-error-container/30 transition-colors"
+                        className="flex-1 rounded-xl border border-error/30 bg-error-container/20 py-2.5 text-sm font-semibold text-error transition-colors hover:bg-error-container/30"
                       >
                         Delete Day
                       </button>
@@ -244,15 +281,29 @@ export default function EditWorkoutModal({ day, onSave, onClose, onDelete }) {
             )}
           </div>
 
-          {/* Footer */}
-          <div className="sticky bottom-0 flex shrink-0 gap-3 border-t border-outline-variant/10 bg-background px-6 pt-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:bg-surface-container-high sm:pb-6">
-            <motion.button whileTap={{ scale: 0.97 }} onClick={onClose}
-              className="flex-1 py-4 rounded-2xl border border-outline-variant/20 text-on-surface-variant text-sm font-medium hover:bg-surface-container transition-colors">
+          {/* ── Footer ───────────────────────────────────────────────
+              shrink-0 keeps it pinned at the bottom of the flex-col.
+              No `sticky` needed — the parent is overflow:hidden so
+              it can't scroll; only the body div above scrolls.
+              pb uses max() so it respects the iOS home indicator.  */}
+          <div className="shrink-0 flex gap-3 border-t border-outline-variant/10 bg-background px-6 pt-4 pb-[max(env(safe-area-inset-bottom),1.25rem)] sm:bg-surface-container-high sm:pb-6">
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={onClose}
+              className="flex-1 rounded-2xl border border-outline-variant/20 py-4 text-sm font-medium text-on-surface-variant transition-colors hover:bg-surface-container"
+            >
               Cancel
             </motion.button>
-            <motion.button whileTap={{ scale: 0.97 }}
-              onClick={() => onSave({ ...day, name: dayName, sub: daySub, exercises: exercises.filter(e => e.name.trim()) })}
-              className="flex-1 py-4 rounded-2xl bg-primary-container/10 border border-primary-container/30 text-primary-fixed text-sm font-semibold hover:bg-primary-container/20 transition-colors">
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={() => onSave({
+                ...day,
+                name: dayName,
+                sub: daySub,
+                exercises: exercises.filter(e => e.name.trim()),
+              })}
+              className="flex-1 rounded-2xl border border-primary-container/30 bg-primary-container/10 py-4 text-sm font-semibold text-primary-fixed transition-colors hover:bg-primary-container/20"
+            >
               Save Changes
             </motion.button>
           </div>
