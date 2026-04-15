@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus, Trash2 } from 'lucide-react';
 
@@ -8,32 +9,40 @@ const INPUT = 'flex-1 px-3 py-2.5 bg-surface-container-highest border border-out
 
 export default function EditRulesModal({ rules, onSave, onClose }) {
   const [localRules, setLocalRules] = useState([...rules]);
-  const containerRef = useRef(null);
   const firstInputRef = useRef(null);
-  const didAutoScrollRef = useRef(false);
+  const scrollBodyRef = useRef(null);
 
   useEffect(() => {
-    const isDesktop = window.matchMedia('(min-width: 640px)').matches;
-    const scrollRaf = requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        if (isDesktop && containerRef.current && !didAutoScrollRef.current) {
-          didAutoScrollRef.current = true;
-          containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      });
-    });
+    const scrollY = window.scrollY;
+    const html = document.documentElement;
+    const body = document.body;
+    const prev = {
+      htmlOverflow: html.style.overflow,
+      bodyOverflow: body.style.overflow,
+      bodyPosition: body.style.position,
+      bodyTop:      body.style.top,
+      bodyWidth:    body.style.width,
+    };
+    html.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+    body.style.position = 'fixed';
+    body.style.top      = `-${scrollY}px`;
+    body.style.width    = '100%';
+
+    scrollBodyRef.current?.scrollTo({ top: 0 });
 
     const focusTimer = setTimeout(() => {
       firstInputRef.current?.focus({ preventScroll: true });
     }, 450);
 
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-
     return () => {
-      cancelAnimationFrame(scrollRaf);
       clearTimeout(focusTimer);
-      document.body.style.overflow = originalOverflow;
+      html.style.overflow = prev.htmlOverflow;
+      body.style.overflow = prev.bodyOverflow;
+      body.style.position = prev.bodyPosition;
+      body.style.top      = prev.bodyTop;
+      body.style.width    = prev.bodyWidth;
+      window.scrollTo(0, scrollY);
     };
   }, []);
 
@@ -62,7 +71,7 @@ export default function EditRulesModal({ rules, onSave, onClose }) {
 
   const ROMAN = ['I','II','III','IV','V','VI','VII','VIII','IX','X'];
 
-  return (
+  return createPortal(
     <AnimatePresence>
       <motion.div
         key="rules-backdrop"
@@ -70,17 +79,18 @@ export default function EditRulesModal({ rules, onSave, onClose }) {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
-        className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-background/92 p-2 pt-4 sm:items-center sm:bg-background/80 sm:p-4 sm:backdrop-blur-md"
+        className="fixed inset-0 z-[100] flex items-center justify-center bg-background/92 p-2 sm:bg-background/80 sm:p-4 sm:backdrop-blur-md"
+        style={{ height: '100dvh' }}
         onClick={onClose}
       >
         <motion.div
           key="rules-sheet"
-          ref={containerRef}
           initial={{ y: '100%', opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: '100%', opacity: 0 }}
           transition={SHEET}
-          className="flex max-h-[90vh] min-h-0 w-full max-w-xl touch-pan-y flex-col overflow-hidden rounded-[28px] bg-background shadow-2xl sm:my-auto sm:rounded-3xl sm:bg-surface-container-high"
+          className="flex min-h-0 w-full max-w-xl touch-pan-y flex-col overflow-hidden rounded-[28px] bg-background shadow-2xl sm:rounded-3xl sm:bg-surface-container-high"
+          style={{ maxHeight: 'min(90dvh, 90svh)' }}
           onClick={e => e.stopPropagation()}
         >
           {/* Header */}
@@ -106,7 +116,10 @@ export default function EditRulesModal({ rules, onSave, onClose }) {
           </div>
 
           {/* Scrollable body */}
-          <div className="flex-1 overflow-y-auto overscroll-contain px-6 py-5 space-y-2">
+          <div
+            ref={scrollBodyRef}
+            className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-6 py-5 space-y-2"
+          >
             <AnimatePresence>
               {localRules.map((rule, idx) => {
                 const roman = ROMAN[idx] ?? String(idx + 1);
@@ -195,6 +208,7 @@ export default function EditRulesModal({ rules, onSave, onClose }) {
           </div>
         </motion.div>
       </motion.div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

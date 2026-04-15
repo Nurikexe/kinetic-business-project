@@ -1,21 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Trash2, ChevronDown } from 'lucide-react';
 import ExercisePicker from './ExercisePicker';
 
-// Mobile: bottom-sheet slide-up (smooth, not snappy)
-const SHEET_SPRING  = { type: 'spring', stiffness: 300, damping: 30, mass: 0.9 };
-// Desktop: centered popup with scale+fade
-const POPUP_SPRING  = { type: 'spring', stiffness: 380, damping: 36, mass: 0.75 };
+const MODAL_SPRING = { type: 'spring', stiffness: 360, damping: 34, mass: 0.85 };
 
-const MOBILE_VARIANTS = {
-  initial: { y: '100%', opacity: 0 },
-  animate: { y: 0,      opacity: 1 },
-  exit:    { y: '100%', opacity: 0 },
-};
-
-const DESKTOP_VARIANTS = {
-  initial: { scale: 0.96, opacity: 0, y: 14 },
+const MODAL_VARIANTS = {
+  initial: { scale: 0.96, opacity: 0, y: 16 },
   animate: { scale: 1,    opacity: 1, y: 0  },
   exit:    { scale: 0.95, opacity: 0, y: 8  },
 };
@@ -28,17 +20,31 @@ export default function EditWorkoutModal({ day, onSave, onClose, onDelete }) {
   const [showPicker, setShowPicker] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  // Initialise synchronously so the first render already picks the right variant
-  const [isSm] = useState(() =>
-    typeof window !== 'undefined' && window.matchMedia('(min-width: 640px)').matches
-  );
-
   const firstInputRef = useRef(null);
+  const scrollBodyRef = useRef(null);
 
   useEffect(() => {
-    // Lock background scroll while modal is open
-    const original = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    // Lock background scroll without shifting layout: fix <html> in place
+    // and preserve the current scroll position so reopening/closing
+    // doesn't visually jump the page behind the modal.
+    const scrollY = window.scrollY;
+    const html = document.documentElement;
+    const body = document.body;
+    const prev = {
+      htmlOverflow: html.style.overflow,
+      bodyOverflow: body.style.overflow,
+      bodyPosition: body.style.position,
+      bodyTop:      body.style.top,
+      bodyWidth:    body.style.width,
+    };
+    html.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+    body.style.position = 'fixed';
+    body.style.top      = `-${scrollY}px`;
+    body.style.width    = '100%';
+
+    // Always start the modal body scrolled to the top
+    scrollBodyRef.current?.scrollTo({ top: 0 });
 
     // Focus first input after the opening animation settles
     const t = setTimeout(() => {
@@ -47,7 +53,12 @@ export default function EditWorkoutModal({ day, onSave, onClose, onDelete }) {
 
     return () => {
       clearTimeout(t);
-      document.body.style.overflow = original;
+      html.style.overflow = prev.htmlOverflow;
+      body.style.overflow = prev.bodyOverflow;
+      body.style.position = prev.bodyPosition;
+      body.style.top      = prev.bodyTop;
+      body.style.width    = prev.bodyWidth;
+      window.scrollTo(0, scrollY);
     };
   }, []);
 
@@ -74,66 +85,58 @@ export default function EditWorkoutModal({ day, onSave, onClose, onDelete }) {
     });
   };
 
-  const variants = isSm ? DESKTOP_VARIANTS : MOBILE_VARIANTS;
-  const spring   = isSm ? POPUP_SPRING    : SHEET_SPRING;
-
-  return (
+  return createPortal(
     <AnimatePresence>
-      {/* ── Backdrop ──────────────────────────────────────────────
-          Mobile : items-end → modal anchors to bottom of screen
-          Desktop: items-center → modal is vertically centered
-          No overflow-y-auto here — internal body div handles all scroll  */}
+      {/* ── Backdrop ───────────────────────────────────────────────
+          Rendered into document.body via a portal so it escapes any
+          ancestor with `transform` / `filter` (the page-transition
+          motion.div in App.jsx), which would otherwise turn this
+          `fixed` element into a page-relative one.                 */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
-        className="fixed inset-0 z-[100] flex items-end justify-center bg-background/90 sm:items-center sm:p-4 sm:backdrop-blur-md"
+        className="fixed inset-0 z-[100] flex items-center justify-center bg-background/85 backdrop-blur-sm p-4"
+        style={{ height: '100dvh' }}
         onClick={onClose}
       >
-        {/* ── Modal shell ─────────────────────────────────────────
-            Mobile : h-[92dvh] so the Save button never disappears
-                     behind a virtual keyboard (dvh = dynamic viewport)
-            Desktop: height is auto, capped at 88dvh             */}
+        {/* ── Modal shell ──────────────────────────────────────────
+            Always centered, max-h caps height so the header/footer
+            are always reachable, body div scrolls internally.      */}
         <motion.div
-          variants={variants}
+          variants={MODAL_VARIANTS}
           initial="initial"
           animate="animate"
           exit="exit"
-          transition={spring}
+          transition={MODAL_SPRING}
           onClick={e => e.stopPropagation()}
-          className="flex h-[92dvh] w-full max-w-xl flex-col overflow-hidden
-                     rounded-t-[28px] bg-background shadow-2xl
-                     sm:h-auto sm:max-h-[88dvh] sm:rounded-[28px] sm:bg-surface-container-high"
+          className="flex w-full max-w-xl flex-col overflow-hidden
+                     rounded-[28px] bg-surface-container-high shadow-2xl
+                     max-h-[min(90dvh,90svh)]"
         >
-          {/* Drag handle (mobile only) */}
-          <div className="flex justify-center pt-3 pb-0.5 shrink-0 sm:hidden">
-            <div className="h-[3px] w-10 rounded-full bg-outline-variant/40" />
-          </div>
 
           {/* ── Header ──────────────────────────────────────────── */}
           <div className="flex shrink-0 items-center justify-between border-b border-outline-variant/10 px-6 py-5">
-            <div className="flex items-center gap-4">
-              <button onClick={onClose} className="text-on-surface-variant sm:hidden">
-                <span className="material-symbols-outlined">arrow_back</span>
-              </button>
-              <h3 className="font-headline font-bold text-lg uppercase tracking-tight text-on-surface">
-                {day.id ? `Edit ${day.num}` : 'New Day'}
-              </h3>
-            </div>
+            <h3 className="font-headline font-bold text-lg uppercase tracking-tight text-on-surface">
+              {day.id ? `Edit ${day.num}` : 'New Day'}
+            </h3>
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={onClose}
-              className="hidden sm:flex p-1.5 rounded-lg hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors"
+              className="p-1.5 rounded-lg hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors"
             >
               <X size={17} />
             </motion.button>
           </div>
 
           {/* ── Scrollable body ─────────────────────────────────────
-              flex-1 + overflow-y-auto → takes all remaining height,
+              flex-1 + overflow-y-scroll → takes all remaining height,
               scrolls internally. Footer always stays visible below.  */}
-          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-6 space-y-6">
+          <div
+            ref={scrollBodyRef}
+            className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-6 space-y-6"
+          >
             {/* Name / Focus */}
             <div className="grid grid-cols-2 gap-3">
               {[
@@ -286,7 +289,7 @@ export default function EditWorkoutModal({ day, onSave, onClose, onDelete }) {
               No `sticky` needed — the parent is overflow:hidden so
               it can't scroll; only the body div above scrolls.
               pb uses max() so it respects the iOS home indicator.  */}
-          <div className="shrink-0 flex gap-3 border-t border-outline-variant/10 bg-background px-6 pt-4 pb-[max(env(safe-area-inset-bottom),1.25rem)] sm:bg-surface-container-high sm:pb-6">
+          <div className="shrink-0 flex gap-3 border-t border-outline-variant/10 bg-surface-container-high px-6 pt-4 pb-6">
             <motion.button
               whileTap={{ scale: 0.97 }}
               onClick={onClose}
@@ -309,6 +312,7 @@ export default function EditWorkoutModal({ day, onSave, onClose, onDelete }) {
           </div>
         </motion.div>
       </motion.div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

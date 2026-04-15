@@ -21,6 +21,40 @@ function minutesToPace(min) {
 let segCounter = 0;
 function newSeg() { return { id: `seg-${++segCounter}`, distance: '', pace: '' }; }
 
+const RT_COLORS = ['#ffb020', '#00ccff', '#ff3b5c', '#00e3fd', '#7c3aed', '#10b981'];
+
+const RUN_TYPE_PRESETS = [
+  { key: 'zone_2_easy',         name: 'Zone 2 Easy',         desc: 'Low intensity aerobic base',       icon: 'directions_run', defaultSession: '30 min easy jog' },
+  { key: 'long_run',            name: 'Long Run',             desc: 'Distance & endurance',             icon: 'route',          defaultSession: '8 km long run' },
+  { key: 'tempo',               name: 'Tempo',                desc: 'Comfortably hard pace',            icon: 'speed',          defaultSession: '20 min tempo' },
+  { key: 'threshold',           name: 'Threshold',            desc: 'Lactate threshold training',       icon: 'whatshot',       defaultSession: '3 × 5 min @ threshold' },
+  { key: 'intervals',           name: 'Intervals',            desc: 'High intensity repeats',           icon: 'timer',          defaultSession: '6 × 400m' },
+  { key: 'fartlek',             name: 'Fartlek',              desc: 'Unstructured speed play',          icon: 'shuffle',        defaultSession: '25 min fartlek' },
+  { key: 'hill_repeats',        name: 'Hill Repeats',         desc: 'Strength & power',                 icon: 'landscape',      defaultSession: '8 × hill repeats' },
+  { key: 'recovery_run',        name: 'Recovery Run',         desc: 'Easy active recovery',             icon: 'self_improvement', defaultSession: '20 min recovery jog' },
+  { key: 'progression_run',     name: 'Progression',          desc: 'Gradually increasing pace',        icon: 'trending_up',    defaultSession: '6 km progression run' },
+  { key: 'strides',             name: 'Strides',              desc: 'Short controlled accelerations',   icon: 'sprint',         defaultSession: '6 × 80m strides' },
+  { key: 'sprint_accelerations',name: 'Sprint Accelerations', desc: 'Max speed development',            icon: 'bolt',           defaultSession: '5 × 60m sprints' },
+];
+
+const DEFAULT_WARMUP_EXERCISES = [
+  { id: 'wu-def-1',  name: 'Easy Walk / Light Jog — 2 min' },
+  { id: 'wu-def-2',  name: 'Ankle Circles — 10 each direction per foot' },
+  { id: 'wu-def-3',  name: 'Toe Raises — 15 reps' },
+  { id: 'wu-def-4',  name: 'Heel Raises — 15 reps' },
+  { id: 'wu-def-5',  name: 'Leg Swings Front/Back — 10 each leg' },
+  { id: 'wu-def-6',  name: 'Leg Swings Side-to-Side — 10 each leg' },
+  { id: 'wu-def-7',  name: 'Walking Lunges — 8 each side' },
+  { id: 'wu-def-8',  name: 'Glute Bridges — 15 reps' },
+  { id: 'wu-def-9',  name: 'Bodyweight Squats — 15 reps' },
+  { id: 'wu-def-10', name: 'Lateral Band Walks — 10 steps each side' },
+  { id: 'wu-def-11', name: 'High Knees — 20 sec' },
+  { id: 'wu-def-12', name: 'Butt Kicks — 20 sec' },
+  { id: 'wu-def-13', name: 'High Skips / A-Skips — 20 sec' },
+  { id: 'wu-def-14', name: 'Straight-Leg Bounds — 20 sec' },
+  { id: 'wu-def-15', name: 'Strides — 3 × 40-60m relaxed accelerations' },
+];
+
 // ── Active Run Session ────────────────────────────────────────
 function ActiveRunSession({ onFinish, onCancel }) {
   const { user }                      = useAuth();
@@ -33,17 +67,17 @@ function ActiveRunSession({ onFinish, onCancel }) {
   const [elapsed, setElapsed]   = useState(savedElapsed);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError]       = useState('');
+  const [success, setSuccess]   = useState(false);
 
-  // Keep context in sync on every change
   useEffect(() => {
     setRunSession(s => ({ ...s, segments, notes, elapsed }));
   }, [segments, notes, elapsed]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Timer
   useEffect(() => {
+    if (success) return;
     const id = setInterval(() => setElapsed(e => e + 1), 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [success]);
 
   const formatTime = (s) =>
     `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
@@ -83,13 +117,38 @@ function ActiveRunSession({ onFinish, onCancel }) {
     });
     setSubmitting(false);
     if (dbErr) { setError(dbErr.message); return; }
-    setRunSession(null);
-    onFinish();
+
+    setSuccess(true);
+    setTimeout(() => {
+      const { weekIdx, rtId, id } = runType || {};
+      setRunSession(null);
+      onFinish(weekIdx, rtId || id);
+    }, 1500);
   };
+
+  if (success) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.94 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="min-h-screen bg-background flex flex-col items-center justify-center gap-6 px-6"
+      >
+        <div className="w-28 h-28 rounded-full bg-primary-container/20 flex items-center justify-center">
+          <span className="material-symbols-outlined text-6xl text-primary-fixed" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+        </div>
+        <div className="text-center space-y-2">
+          <h2 className="font-headline font-black text-4xl uppercase tracking-tighter text-on-surface">Run Saved!</h2>
+          <p className="text-on-surface-variant text-sm">
+            <span className="text-secondary font-bold">{totals.totalDistance} km</span> logged at{' '}
+            <span className="text-secondary font-bold">{totals.avgPace}/km</span>
+          </p>
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="min-h-screen bg-background pb-44">
-      {/* Active header */}
       <div className="sticky top-0 z-50 bg-secondary shadow-md">
         <div className="max-w-xl mx-auto flex items-center justify-between px-6 py-4">
           <div>
@@ -111,7 +170,6 @@ function ActiveRunSession({ onFinish, onCancel }) {
       </div>
 
       <div className="px-6 pt-6 max-w-xl mx-auto space-y-6">
-        {/* Totals */}
         <div className="bg-surface-container rounded-2xl p-6 grid grid-cols-2 gap-6 border border-outline-variant/10 shadow-sm">
           <div className="space-y-1">
             <p className="text-[10px] font-black uppercase tracking-widest text-secondary/70">Total Distance</p>
@@ -129,7 +187,6 @@ function ActiveRunSession({ onFinish, onCancel }) {
           </div>
         </div>
 
-        {/* Segments */}
         <div className="bg-surface-container rounded-2xl overflow-hidden border border-outline-variant/10 shadow-sm">
           <div className="px-5 py-4 bg-surface-container-high flex items-center justify-between border-b border-outline-variant/10">
             <h3 className="font-headline font-bold uppercase tracking-tight text-on-surface">Distance &amp; Pace</h3>
@@ -146,18 +203,13 @@ function ActiveRunSession({ onFinish, onCancel }) {
             {segments.map((seg) => (
               <div key={seg.id} className="grid grid-cols-[1fr_1fr_2.5rem] gap-3 items-center">
                 <input
-                  type="number"
-                  inputMode="decimal"
-                  step="0.1"
-                  value={seg.distance}
+                  type="number" inputMode="decimal" step="0.1" value={seg.distance}
                   onChange={e => updateSeg(seg.id, 'distance', e.target.value)}
                   placeholder="5.0"
                   className="w-full bg-surface-container-highest border border-outline-variant/20 rounded-xl px-3 py-3 text-center font-headline font-bold focus:outline-none focus:ring-2 focus:ring-secondary/40 transition-all"
                 />
                 <input
-                  type="text"
-                  inputMode="numeric"
-                  value={seg.pace}
+                  type="text" inputMode="numeric" value={seg.pace}
                   onChange={e => updateSeg(seg.id, 'pace', e.target.value)}
                   placeholder="6:00"
                   className="w-full bg-surface-container-highest border border-outline-variant/20 rounded-xl px-3 py-3 text-center font-headline font-bold focus:outline-none focus:ring-2 focus:ring-secondary/40 transition-all"
@@ -177,7 +229,6 @@ function ActiveRunSession({ onFinish, onCancel }) {
           </div>
         </div>
 
-        {/* Notes */}
         <div className="bg-surface-container rounded-2xl p-6 border border-outline-variant/10 shadow-sm">
           <div className="flex items-center gap-2 mb-4">
             <span className="material-symbols-outlined text-secondary text-sm">edit_note</span>
@@ -202,7 +253,6 @@ function ActiveRunSession({ onFinish, onCancel }) {
         <div className="h-10" />
       </div>
 
-      {/* Fixed Bottom Action Bar */}
       <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-background via-background to-transparent pointer-events-none">
         <div className="max-w-xl mx-auto pointer-events-auto">
           <button
@@ -217,7 +267,7 @@ function ActiveRunSession({ onFinish, onCancel }) {
               </>
             ) : (
               <>
-                <span>Finish & Submit</span>
+                <span>Finish &amp; Submit</span>
                 <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform" style={{ fontVariationSettings: "'FILL' 1" }}>arrow_forward</span>
               </>
             )}
@@ -229,19 +279,40 @@ function ActiveRunSession({ onFinish, onCancel }) {
 }
 
 // ── Running Plan View ─────────────────────────────────────────
-const SHORT_DAY = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
 export default function RunningPage() {
   const { config, updateConfig, loaded } = useUserConfig();
   const { runSession, setRunSession }    = useActiveSession();
   const [toast, setToast]               = useState(null);
 
+  // Week session editing
+  const [editingSession, setEditingSession]   = useState(null); // { weekIdx, rtId }
+  const [editSessionValue, setEditSessionValue] = useState('');
+
+  // Run types management
+  const [showAddRunType, setShowAddRunType] = useState(false);
+  const [addRunTypeMode, setAddRunTypeMode] = useState('preset'); // 'preset' | 'custom'
+  const [newRTName, setNewRTName]           = useState('');
+  const [newRTDesc, setNewRTDesc]           = useState('');
+
+  // Goals management
+  const [showAddGoal, setShowAddGoal] = useState(false);
+  const [newGoalText, setNewGoalText] = useState('');
+
+  // Warm-up exercises management
+  const [warmupChecked, setWarmupChecked]     = useState(new Set());
+  const [showAddWarmup, setShowAddWarmup]     = useState(false);
+  const [addWarmupMode, setAddWarmupMode]     = useState('picker'); // 'picker' | 'custom'
+  const [newWarmupName, setNewWarmupName]     = useState('');
+  const [editingWarmupId, setEditingWarmupId] = useState(null);
+  const [editWarmupValue, setEditWarmupValue] = useState('');
+
   const {
-    run_types:     runTypes     = [],
-    run_week:      runWeek      = 0,
-    run_weeks:     runWeeks     = [],
-    run_completed: runCompleted = {},
-    ten_k_target:  tenKTarget   = '',
+    run_types:             runTypes        = [],
+    run_week:              runWeek         = 0,
+    run_weeks:             runWeeks        = [],
+    run_completed:         runCompleted    = {},
+    run_goals:             runGoals        = [],
+    run_warmup_exercises:  warmupExercises = [],
   } = config;
 
   const showToast = useCallback((msg) => {
@@ -249,21 +320,156 @@ export default function RunningPage() {
     setTimeout(() => setToast(null), 2800);
   }, []);
 
+  const markRunDone = useCallback((weekIdx, rtId) => {
+    if (weekIdx == null || !rtId) return;
+    const weekKey = String(weekIdx);
+    const current = runCompleted[weekKey] || {};
+    updateConfig({ run_completed: { ...runCompleted, [weekKey]: { ...current, [rtId]: true } } });
+  }, [runCompleted, updateConfig]);
+
+  // ── Week management ──────────────────────────────────────────
+  const addWeek = () => {
+    const newWeekNum = runWeeks.length + 1;
+    const sessions = {};
+    runTypes.forEach(rt => {
+      const preset = RUN_TYPE_PRESETS.find(p => p.key === rt.presetKey);
+      sessions[rt.id] = preset?.defaultSession || '30 min run';
+    });
+    updateConfig({ run_weeks: [...runWeeks, { week: newWeekNum, sessions }] });
+    showToast('Week added!');
+  };
+
+  const removeWeek = (idx) => {
+    const updatedWeeks = runWeeks.filter((_, i) => i !== idx);
+    const newCurrent = runWeek >= updatedWeeks.length ? Math.max(0, updatedWeeks.length - 1) : runWeek;
+    updateConfig({ run_weeks: updatedWeeks, run_week: newCurrent });
+    showToast('Week removed!');
+  };
+
+  // ── Week session editing ─────────────────────────────────────
+  const startEditSession = (weekIdx, rtId, val) => {
+    setEditingSession({ weekIdx, rtId });
+    setEditSessionValue(val);
+  };
+
+  const saveSession = () => {
+    if (!editingSession) return;
+    const { weekIdx, rtId } = editingSession;
+    const updatedWeeks = runWeeks.map((w, i) =>
+      i === weekIdx ? { ...w, sessions: { ...(w.sessions || {}), [rtId]: editSessionValue } } : w
+    );
+    updateConfig({ run_weeks: updatedWeeks });
+    setEditingSession(null);
+    showToast('Session updated!');
+  };
+
+  const cancelEditSession = () => setEditingSession(null);
+
+  // ── Run types ─────────────────────────────────────────────────
   const startRun = (runType) => {
     setRunSession({ runType, segments: [newSeg()], notes: '', elapsed: 0 });
   };
 
-  const markRunDone = (weekIdx, dayIdx) => {
-    const weekKey = String(weekIdx);
-    const current = runCompleted[weekKey] || [];
-    const updated = [...current];
-    updated[dayIdx] = true;
-    updateConfig({ run_completed: { ...runCompleted, [weekKey]: updated } });
-    showToast('Run marked complete!');
+  const startWeekRun = (weekIdx, rtId, name) => {
+    setRunSession({
+      runType: { name, id: rtId, rtId, weekIdx },
+      segments: [newSeg()],
+      notes: '',
+      elapsed: 0,
+    });
   };
 
+  const addRunTypeFromPreset = (preset) => {
+    if (runTypes.some(rt => rt.presetKey === preset.key)) { showToast('Already added!'); return; }
+    const color = RT_COLORS[runTypes.length % RT_COLORS.length];
+    const newRT = { id: `rt-${Date.now()}`, name: preset.name, desc: preset.desc, color, icon: preset.icon, presetKey: preset.key };
+    const updatedWeeks = runWeeks.map(w => ({
+      ...w, sessions: { ...(w.sessions || {}), [newRT.id]: preset.defaultSession },
+    }));
+    updateConfig({ run_types: [...runTypes, newRT], run_weeks: updatedWeeks });
+    setShowAddRunType(false);
+    showToast(`${preset.name} added!`);
+  };
+
+  const addCustomRunType = () => {
+    if (!newRTName.trim()) return;
+    const color = RT_COLORS[runTypes.length % RT_COLORS.length];
+    const newRT = { id: `rt-${Date.now()}`, name: newRTName.trim(), desc: newRTDesc.trim(), color, icon: 'directions_run', presetKey: null };
+    const updatedWeeks = runWeeks.map(w => ({
+      ...w, sessions: { ...(w.sessions || {}), [newRT.id]: '30 min run' },
+    }));
+    updateConfig({ run_types: [...runTypes, newRT], run_weeks: updatedWeeks });
+    setNewRTName(''); setNewRTDesc(''); setShowAddRunType(false);
+    showToast('Run type added!');
+  };
+
+  const removeRunType = (key) => {
+    const rtToRemove = runTypes.find(rt => (rt.id || rt.key || rt.name) === key);
+    const updatedTypes = runTypes.filter(rt => (rt.id || rt.key || rt.name) !== key);
+    const updatedWeeks = rtToRemove
+      ? runWeeks.map(w => { const s = { ...(w.sessions || {}) }; delete s[rtToRemove.id]; return { ...w, sessions: s }; })
+      : runWeeks;
+    updateConfig({ run_types: updatedTypes, run_weeks: updatedWeeks });
+    showToast('Run type removed!');
+  };
+
+  // ── Goals ─────────────────────────────────────────────────────
+  const addGoal = () => {
+    if (!newGoalText.trim()) return;
+    updateConfig({ run_goals: [...runGoals, { id: `goal-${Date.now()}`, text: newGoalText.trim() }] });
+    setNewGoalText(''); setShowAddGoal(false);
+    showToast('Goal added!');
+  };
+
+  const removeGoal = (id) => {
+    updateConfig({ run_goals: runGoals.filter(g => g.id !== id) });
+    showToast('Goal removed!');
+  };
+
+  // ── Warm-up exercises ─────────────────────────────────────────
+  const toggleWarmup = (id) => {
+    setWarmupChecked(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const addWarmupFromPreset = (preset) => {
+    if (warmupExercises.some(e => e.id === preset.id)) return;
+    updateConfig({ run_warmup_exercises: [...warmupExercises, preset] });
+    showToast('Exercise added!');
+  };
+
+  const addWarmup = () => {
+    if (!newWarmupName.trim()) return;
+    updateConfig({ run_warmup_exercises: [...warmupExercises, { id: `wu-${Date.now()}`, name: newWarmupName.trim() }] });
+    setNewWarmupName(''); setShowAddWarmup(false); setAddWarmupMode('picker');
+    showToast('Exercise added!');
+  };
+
+  const startEditWarmup = (id, name) => { setEditingWarmupId(id); setEditWarmupValue(name); };
+
+  const saveWarmup = () => {
+    if (!editWarmupValue.trim()) return;
+    updateConfig({
+      run_warmup_exercises: warmupExercises.map(e =>
+        e.id === editingWarmupId ? { ...e, name: editWarmupValue.trim() } : e
+      ),
+    });
+    setEditingWarmupId(null);
+    showToast('Exercise updated!');
+  };
+
+  const removeWarmup = (id) => {
+    updateConfig({ run_warmup_exercises: warmupExercises.filter(e => e.id !== id) });
+    if (editingWarmupId === id) setEditingWarmupId(null);
+    showToast('Exercise removed!');
+  };
+
+  // ─────────────────────────────────────────────────────────────
   const currentWeekData = runWeeks[runWeek] || null;
-  const weekCompletions = runCompleted[String(runWeek)] || [];
+  const enriched        = runTypes.map(rt => ({ color: '#00e3fd', ...rt }));
 
   if (!loaded) {
     return (
@@ -276,15 +482,11 @@ export default function RunningPage() {
   if (runSession) {
     return (
       <ActiveRunSession
-        onFinish={() => showToast('Run submitted!')}
+        onFinish={(weekIdx, rtId) => { markRunDone(weekIdx, rtId); showToast('Run submitted!'); }}
         onCancel={() => setRunSession(null)}
       />
     );
   }
-
-  const today       = new Date().getDay();
-  const todayIdx    = today === 0 ? 6 : today - 1;
-  const enriched    = runTypes.map(rt => ({ color: '#00e3fd', ...rt }));
 
   return (
     <div className="pb-32">
@@ -296,113 +498,514 @@ export default function RunningPage() {
       </header>
 
       <div className="px-6 pt-6 max-w-xl mx-auto">
+
+        {/* ── Page title ──────────────────────────────────── */}
         <section className="mb-8">
           <h2 className="font-headline font-extrabold text-3xl tracking-tighter uppercase mb-1">Running Plan</h2>
-          {tenKTarget && (
-            <p className="text-on-surface-variant text-sm">
-              Goal: <span className="text-secondary font-bold">{typeof tenKTarget === 'string' ? tenKTarget : ''}</span>
-            </p>
-          )}
         </section>
 
-        {/* Week selector */}
-        {runWeeks.length > 0 && (
-          <div className="flex gap-3 overflow-x-auto no-scrollbar pb-3 mb-8 -mx-6 px-6">
-            {runWeeks.map((week, i) => {
-              const done = (runCompleted[String(i)] || []).filter(Boolean).length >= 3;
-              return (
-                <button
-                  key={i}
-                  onClick={() => updateConfig({ run_week: i })}
-                  className={`shrink-0 w-20 h-20 rounded-lg flex flex-col items-center justify-center transition-all active:scale-95 ${
-                    i === runWeek ? 'bg-primary-container text-on-primary-fixed'
-                    : done        ? 'bg-surface-container text-secondary'
-                    :               'bg-surface-container text-on-surface-variant hover:text-on-surface'
-                  }`}
-                >
-                  <span className="font-label font-bold text-xs uppercase">Week</span>
-                  <span className="font-headline font-black text-3xl tracking-tighter">
-                    {String(week.week || i + 1).padStart(2, '0')}
-                  </span>
-                </button>
-              );
-            })}
+        {/* ── Week selector ───────────────────────────────── */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-headline font-bold text-lg uppercase tracking-tight">Weeks</h3>
+            <button
+              onClick={addWeek}
+              className="flex items-center gap-1.5 text-[10px] text-secondary font-black uppercase tracking-widest hover:text-secondary/80 transition-colors"
+            >
+              <span className="material-symbols-outlined text-sm">add</span>
+              Add Week
+            </button>
           </div>
-        )}
-
-        {/* Current week sessions */}
-        {currentWeekData && (
-          <div className="mb-8 space-y-4">
-            <h3 className="font-headline font-bold text-lg uppercase tracking-tight">Week {currentWeekData.week} Sessions</h3>
-            {['mon','tue','wed','thu','fri','sat','sun']
-              .filter(d => currentWeekData[d])
-              .map((dayKey, dayIdx) => {
-                const done    = weekCompletions[dayIdx] === true;
-                const label   = SHORT_DAY[['mon','tue','wed','thu','fri','sat','sun'].indexOf(dayKey)];
-                const isToday = ['mon','tue','wed','thu','fri','sat','sun'].indexOf(dayKey) === todayIdx;
+          {runWeeks.length > 0 ? (
+            <div className="flex gap-3 overflow-x-auto no-scrollbar pb-3 -mx-6 px-6">
+              {runWeeks.map((week, i) => {
+                const weekDone = Object.values(runCompleted[String(i)] || {}).filter(Boolean).length;
+                const allDone  = enriched.length > 0 && weekDone >= enriched.length;
                 return (
-                  <div
-                    key={dayKey}
-                    className={`rounded-lg overflow-hidden ${isToday ? 'border border-primary-container/20 bg-surface-container-high' : 'bg-surface-container'} ${done ? 'opacity-60' : ''}`}
-                  >
-                    <div className={`px-6 py-4 flex justify-between items-center ${isToday ? 'border-b border-outline-variant/10' : ''}`}>
-                      <div>
-                        <p className={`text-[10px] font-black uppercase tracking-widest mb-0.5 ${isToday ? 'text-secondary' : 'text-on-surface-variant'}`}>
-                          {label}{isToday ? ' · Today' : ''}
-                        </p>
-                        <h4 className="font-headline font-bold text-lg uppercase tracking-tight">{currentWeekData[dayKey]}</h4>
-                      </div>
-                      {done
-                        ? <span className="material-symbols-outlined text-primary-fixed text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                        : <span className="material-symbols-outlined text-on-surface-variant">directions_run</span>
-                      }
-                    </div>
-                    {!done && (
-                      <div className="px-6 pb-4 flex justify-end gap-2">
-                        <button
-                          onClick={() => startRun({ name: currentWeekData[dayKey], key: `week${runWeek}_${dayKey}`, id: `week${runWeek}_${dayKey}` })}
-                          className={`px-4 py-2 rounded-full font-bold text-xs uppercase tracking-wide active:scale-95 transition-colors ${isToday ? 'bg-secondary text-on-secondary' : 'bg-surface-container-highest text-on-surface hover:bg-surface-bright'}`}
-                        >
-                          Start
-                        </button>
-                        <button
-                          onClick={() => markRunDone(runWeek, dayIdx)}
-                          className="px-4 py-2 rounded-full border border-outline-variant/30 text-on-surface-variant font-bold text-xs uppercase tracking-wide hover:text-on-surface transition-colors active:scale-95"
-                        >
-                          Done
-                        </button>
-                      </div>
-                    )}
+                  <div key={i} className="shrink-0 relative group">
+                    <button
+                      onClick={() => updateConfig({ run_week: i })}
+                      className={`w-20 h-20 rounded-lg flex flex-col items-center justify-center transition-all active:scale-95 ${
+                        i === runWeek ? 'bg-primary-container text-on-primary-fixed'
+                        : allDone     ? 'bg-surface-container text-secondary'
+                        :               'bg-surface-container text-on-surface-variant hover:text-on-surface'
+                      }`}
+                    >
+                      <span className="font-label font-bold text-xs uppercase">Week</span>
+                      <span className="font-headline font-black text-3xl tracking-tighter">
+                        {String(week.week || i + 1).padStart(2, '0')}
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => removeWeek(i)}
+                      className="absolute top-1 right-1 w-5 h-5 rounded-full bg-error text-on-error flex items-center justify-center opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity z-10 shadow-md touch-manipulation"
+                      style={{ WebkitTapHighlightColor: 'transparent' }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>close</span>
+                    </button>
                   </div>
                 );
               })}
+            </div>
+          ) : (
+            <div className="bg-surface-container rounded-xl px-5 py-6 text-center border border-outline-variant/10">
+              <p className="text-on-surface-variant text-xs font-bold uppercase tracking-widest mb-3">No weeks yet</p>
+              <button
+                onClick={addWeek}
+                className="px-4 py-2 rounded-lg bg-secondary text-on-secondary font-bold text-xs uppercase tracking-wide active:scale-95 transition-all"
+              >
+                Add First Week
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* ── Week sessions ───────────────────────────────── */}
+        {currentWeekData && (
+          <div className="mb-8 space-y-3">
+            <h3 className="font-headline font-bold text-lg uppercase tracking-tight">
+              Week {currentWeekData.week} Sessions
+            </h3>
+            {enriched.length === 0 ? (
+              <div className="bg-surface-container rounded-xl px-5 py-8 text-center border border-outline-variant/10">
+                <span className="material-symbols-outlined text-3xl text-on-surface-variant/30 block mb-2">directions_run</span>
+                <p className="text-on-surface-variant text-xs font-bold uppercase tracking-widest">Add run types below to build your week</p>
+              </div>
+            ) : (
+              enriched.map((rt) => {
+                const rtId        = rt.id || rt.key || rt.name;
+                const sessionText = (currentWeekData.sessions || {})[rtId] || '';
+                const done        = !!(runCompleted[String(runWeek)] || {})[rtId];
+                const isEditing   = editingSession?.weekIdx === runWeek && editingSession?.rtId === rtId;
+
+                return (
+                  <div
+                    key={rtId}
+                    className={`rounded-lg overflow-hidden bg-surface-container border border-outline-variant/10 ${done ? 'opacity-60' : ''}`}
+                  >
+                    <div className="px-5 py-4 flex items-center gap-3">
+                      <div
+                        className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                        style={{ background: `${rt.color}20`, color: rt.color }}
+                      >
+                        <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>
+                          {rt.icon || 'directions_run'}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[10px] font-black uppercase tracking-widest mb-0.5" style={{ color: rt.color }}>
+                          {rt.name}
+                        </p>
+                        {isEditing ? (
+                          <div className="flex items-center gap-2 mt-1">
+                            <input
+                              autoFocus
+                              type="text"
+                              value={editSessionValue}
+                              onChange={e => setEditSessionValue(e.target.value)}
+                              onKeyDown={e => { if (e.key === 'Enter') saveSession(); if (e.key === 'Escape') cancelEditSession(); }}
+                              className="flex-1 bg-surface-container-highest border border-outline-variant/20 rounded-lg px-3 py-1.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-secondary/40 transition-all"
+                            />
+                            <button onClick={saveSession} className="text-secondary hover:text-secondary/80 transition-colors shrink-0">
+                              <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                            </button>
+                            <button onClick={cancelEditSession} className="text-on-surface-variant/40 hover:text-on-surface-variant transition-colors shrink-0">
+                              <span className="material-symbols-outlined text-lg">cancel</span>
+                            </button>
+                          </div>
+                        ) : (
+                          <h4 className="font-headline font-bold text-base uppercase tracking-tight truncate">
+                            {sessionText || <span className="text-on-surface-variant/40 font-normal normal-case text-sm">No session set</span>}
+                          </h4>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {!done && !isEditing && (
+                          <button
+                            onClick={() => startEditSession(runWeek, rtId, sessionText)}
+                            className="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant/40 hover:text-secondary hover:bg-secondary/10 transition-all touch-manipulation"
+                          >
+                            <span className="material-symbols-outlined text-base">edit</span>
+                          </button>
+                        )}
+                        {done
+                          ? <span className="material-symbols-outlined text-primary-fixed text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                          : !isEditing && (
+                            <button
+                              onClick={() => startWeekRun(runWeek, rtId, rt.name)}
+                              className="px-4 py-2.5 min-h-[40px] rounded-full bg-secondary/10 text-secondary font-bold text-xs uppercase tracking-wide hover:bg-secondary/20 active:scale-95 transition-all touch-manipulation"
+                            >
+                              Start
+                            </button>
+                          )
+                        }
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         )}
 
-        {/* Quick-start run types */}
-        {enriched.length > 0 && (
-          <section className="mb-8">
-            <h3 className="font-headline font-bold text-lg uppercase tracking-tight mb-4">Quick Start a Run</h3>
-            <div className="space-y-3">
-              {enriched.map(rt => (
-                <button
-                  key={rt.id || rt.key}
-                  onClick={() => startRun(rt)}
-                  className="w-full bg-surface-container rounded-lg p-5 flex items-center gap-4 hover:bg-surface-container-high transition-colors active:scale-[0.98] text-left"
-                >
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${rt.color}20`, color: rt.color }}>
-                    <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>directions_run</span>
-                  </div>
-                  <div>
-                    <p className="font-headline font-bold uppercase tracking-tight" style={{ color: rt.color }}>{rt.name}</p>
-                    <p className="text-on-surface-variant text-xs">{rt.desc}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </section>
-        )}
+        {/* ── Warm-up Exercises ───────────────────────────── */}
+        <section className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-headline font-bold text-lg uppercase tracking-tight">Warm-up Exercises</h3>
+            <button
+              onClick={() => { setShowAddWarmup(s => !s); setAddWarmupMode('picker'); }}
+              className="flex items-center gap-1.5 text-[10px] text-secondary font-black uppercase tracking-widest hover:text-secondary/80 transition-colors min-h-[36px] px-1 touch-manipulation"
+            >
+              <span className="material-symbols-outlined text-sm">add</span>
+              Add Exercise
+            </button>
+          </div>
 
+          <div className="bg-surface-container rounded-xl overflow-hidden border border-outline-variant/10">
+            {warmupExercises.length === 0 && !showAddWarmup ? (
+              <div className="px-5 py-8 text-center">
+                <span className="material-symbols-outlined text-3xl text-on-surface-variant/30 block mb-2">self_improvement</span>
+                <p className="text-on-surface-variant text-xs font-bold uppercase tracking-widest">No warm-up exercises yet</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-outline-variant/10">
+                {warmupExercises.map(ex => {
+                  const checked   = warmupChecked.has(ex.id);
+                  const isEditing = editingWarmupId === ex.id;
+                  return (
+                    <div key={ex.id} className={`flex items-center gap-3 px-5 py-2.5 transition-colors ${checked ? 'bg-primary-container/5' : ''}`}>
+                      <button
+                        onClick={() => toggleWarmup(ex.id)}
+                        className={`w-8 h-8 rounded-full border-2 flex items-center justify-center shrink-0 transition-all touch-manipulation ${
+                          checked ? 'bg-primary-fixed border-primary-fixed' : 'border-outline-variant/40 hover:border-secondary/60'
+                        }`}
+                      >
+                        {checked && (
+                          <span className="material-symbols-outlined text-on-primary-fixed" style={{ fontVariationSettings: "'FILL' 1", fontSize: '14px' }}>check</span>
+                        )}
+                      </button>
+                      {isEditing ? (
+                        <div className="flex-1 flex items-center gap-2">
+                          <input
+                            autoFocus type="text" value={editWarmupValue}
+                            onChange={e => setEditWarmupValue(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter') saveWarmup(); if (e.key === 'Escape') setEditingWarmupId(null); }}
+                            className="flex-1 bg-surface-container-highest border border-outline-variant/20 rounded-lg px-3 py-1.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-secondary/40 transition-all"
+                          />
+                          <button onClick={saveWarmup} className="text-secondary hover:text-secondary/80 transition-colors shrink-0">
+                            <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                          </button>
+                          <button onClick={() => setEditingWarmupId(null)} className="text-on-surface-variant/40 hover:text-on-surface-variant transition-colors shrink-0">
+                            <span className="material-symbols-outlined text-lg">cancel</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <p className={`flex-1 text-sm font-bold transition-all ${checked ? 'line-through text-on-surface-variant/50' : 'text-on-surface'}`}>
+                            {ex.name}
+                          </p>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button onClick={() => startEditWarmup(ex.id, ex.name)} className="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant/40 hover:text-secondary hover:bg-secondary/10 transition-all touch-manipulation">
+                              <span className="material-symbols-outlined text-base">edit</span>
+                            </button>
+                            <button onClick={() => removeWarmup(ex.id)} className="w-10 h-10 rounded-full flex items-center justify-center text-outline/40 hover:text-error hover:bg-error/5 transition-all touch-manipulation">
+                              <span className="material-symbols-outlined text-base">delete</span>
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            <AnimatePresence>
+              {showAddWarmup && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden border-t border-outline-variant/10"
+                >
+                  {/* Mode tabs */}
+                  <div className="flex border-b border-outline-variant/10">
+                    <button
+                      onClick={() => setAddWarmupMode('picker')}
+                      className={`flex-1 py-3 min-h-[44px] text-[10px] font-black uppercase tracking-widest transition-colors ${addWarmupMode === 'picker' ? 'text-secondary border-b-2 border-secondary' : 'text-on-surface-variant'}`}
+                    >
+                      From Defaults
+                    </button>
+                    <button
+                      onClick={() => setAddWarmupMode('custom')}
+                      className={`flex-1 py-3 min-h-[44px] text-[10px] font-black uppercase tracking-widest transition-colors ${addWarmupMode === 'custom' ? 'text-secondary border-b-2 border-secondary' : 'text-on-surface-variant'}`}
+                    >
+                      Custom
+                    </button>
+                  </div>
+
+                  {addWarmupMode === 'picker' ? (
+                    <div className="max-h-64 overflow-y-auto divide-y divide-outline-variant/10">
+                      {DEFAULT_WARMUP_EXERCISES.filter(d => !warmupExercises.some(e => e.id === d.id)).length === 0 ? (
+                        <p className="px-5 py-6 text-center text-xs font-bold uppercase tracking-widest text-on-surface-variant/50">All defaults added</p>
+                      ) : (
+                        DEFAULT_WARMUP_EXERCISES
+                          .filter(d => !warmupExercises.some(e => e.id === d.id))
+                          .map(preset => (
+                            <button
+                              key={preset.id}
+                              onClick={() => addWarmupFromPreset(preset)}
+                              className="w-full flex items-center gap-3 px-5 py-3.5 min-h-[48px] text-left hover:bg-surface-container-high active:scale-[0.99] transition-all touch-manipulation"
+                            >
+                              <span className="material-symbols-outlined text-secondary/60 text-base shrink-0">add_circle</span>
+                              <span className="text-sm font-bold text-on-surface leading-snug">{preset.name}</span>
+                            </button>
+                          ))
+                      )}
+                    </div>
+                  ) : (
+                    <div className="px-5 py-4 flex items-center gap-3">
+                      <input
+                        autoFocus type="text" value={newWarmupName}
+                        onChange={e => setNewWarmupName(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') addWarmup(); if (e.key === 'Escape') { setShowAddWarmup(false); setNewWarmupName(''); } }}
+                        placeholder="e.g. Hip Circles, Leg Swings"
+                        className="flex-1 bg-surface-container-highest border border-outline-variant/20 rounded-lg px-3 py-3 min-h-[44px] text-sm focus:outline-none focus:ring-2 focus:ring-secondary/40 transition-all"
+                      />
+                      <button onClick={addWarmup} className="px-4 py-3 min-h-[44px] rounded-lg bg-secondary text-on-secondary font-bold text-xs uppercase tracking-wide transition-colors active:scale-95 shrink-0 touch-manipulation">
+                        Save
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="px-5 pb-3">
+                    <button
+                      onClick={() => { setShowAddWarmup(false); setNewWarmupName(''); setAddWarmupMode('picker'); }}
+                      className="w-full py-3 min-h-[44px] rounded-lg border border-outline-variant/20 text-on-surface-variant font-bold text-xs uppercase tracking-wide hover:bg-surface-container-high transition-all mt-2"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {warmupExercises.length > 0 && (
+            <div className="mt-2 flex items-center justify-between px-1">
+              <p className="text-[10px] text-on-surface-variant/50 font-black uppercase tracking-widest">
+                {warmupChecked.size}/{warmupExercises.length} completed
+              </p>
+              {warmupChecked.size > 0 && (
+                <button
+                  onClick={() => setWarmupChecked(new Set())}
+                  className="text-[10px] text-on-surface-variant/50 hover:text-on-surface-variant font-black uppercase tracking-widest transition-colors"
+                >
+                  Reset
+                </button>
+              )}
+            </div>
+          )}
+        </section>
+
+        {/* ── Goals ───────────────────────────────────────── */}
+        <section className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-headline font-bold text-lg uppercase tracking-tight">Goals</h3>
+            <button
+              onClick={() => setShowAddGoal(s => !s)}
+              className="flex items-center gap-1.5 text-[10px] text-secondary font-black uppercase tracking-widest hover:text-secondary/80 transition-colors"
+            >
+              <span className="material-symbols-outlined text-sm">add</span>
+              Add Goal
+            </button>
+          </div>
+          <div className="bg-surface-container rounded-xl overflow-hidden border border-outline-variant/10">
+            {runGoals.length === 0 && !showAddGoal ? (
+              <div className="px-5 py-8 text-center">
+                <span className="material-symbols-outlined text-3xl text-on-surface-variant/30 block mb-2">flag</span>
+                <p className="text-on-surface-variant text-xs font-bold uppercase tracking-widest">No goals yet</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-outline-variant/10">
+                {runGoals.map(goal => (
+                  <div key={goal.id} className="flex items-center gap-3 px-5 py-4">
+                    <span className="material-symbols-outlined text-secondary text-base shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>flag</span>
+                    <p className="flex-1 text-sm font-bold text-on-surface">{goal.text}</p>
+                    <button onClick={() => removeGoal(goal.id)} className="text-outline/40 hover:text-error transition-colors shrink-0">
+                      <span className="material-symbols-outlined text-lg">remove_circle</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <AnimatePresence>
+              {showAddGoal && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden border-t border-outline-variant/10"
+                >
+                  <div className="px-5 py-4 flex items-center gap-3">
+                    <input
+                      autoFocus type="text" value={newGoalText}
+                      onChange={e => setNewGoalText(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') addGoal(); if (e.key === 'Escape') { setShowAddGoal(false); setNewGoalText(''); } }}
+                      placeholder="e.g. Run 10K in 55 min"
+                      className="flex-1 bg-surface-container-highest border border-outline-variant/20 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-secondary/40 transition-all"
+                    />
+                    <button onClick={addGoal} className="px-4 py-2 rounded-lg bg-secondary text-on-secondary font-bold text-xs uppercase tracking-wide transition-colors active:scale-95 shrink-0">
+                      Save
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </section>
+
+        {/* ── Manage Run Types ────────────────────────────── */}
+        <section className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-headline font-bold text-lg uppercase tracking-tight">Manage Run Types</h3>
+            <button
+              onClick={() => { setShowAddRunType(s => !s); setAddRunTypeMode('preset'); }}
+              className="flex items-center gap-1.5 text-[10px] text-secondary font-black uppercase tracking-widest hover:text-secondary/80 transition-colors"
+            >
+              <span className="material-symbols-outlined text-sm">add</span>
+              Add Type
+            </button>
+          </div>
+
+          <div className="space-y-3">
+            {enriched.map(rt => {
+              const rtKey = rt.id || rt.key || rt.name;
+              return (
+                <div key={rtKey} className="w-full bg-surface-container rounded-lg overflow-hidden flex items-stretch border border-outline-variant/10">
+                  <button
+                    onClick={() => startRun(rt)}
+                    className="flex-1 p-4 flex items-center gap-4 hover:bg-surface-container-high transition-colors active:scale-[0.98] text-left"
+                  >
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${rt.color}20`, color: rt.color }}>
+                      <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>
+                        {rt.icon || 'directions_run'}
+                      </span>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-headline font-bold uppercase tracking-tight" style={{ color: rt.color }}>{rt.name}</p>
+                      {rt.desc && <p className="text-on-surface-variant text-xs truncate">{rt.desc}</p>}
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => removeRunType(rtKey)}
+                    className="px-4 border-l border-outline-variant/10 text-outline/40 hover:text-error hover:bg-error/5 transition-all"
+                  >
+                    <span className="material-symbols-outlined text-xl">delete</span>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          <AnimatePresence>
+            {showAddRunType && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden mt-3"
+              >
+                <div className="bg-surface-container rounded-xl border border-outline-variant/10 overflow-hidden">
+                  {/* Mode tabs */}
+                  <div className="flex border-b border-outline-variant/10">
+                    <button
+                      onClick={() => setAddRunTypeMode('preset')}
+                      className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest transition-colors ${addRunTypeMode === 'preset' ? 'text-secondary border-b-2 border-secondary' : 'text-on-surface-variant hover:text-on-surface'}`}
+                    >
+                      Choose Preset
+                    </button>
+                    <button
+                      onClick={() => setAddRunTypeMode('custom')}
+                      className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest transition-colors ${addRunTypeMode === 'custom' ? 'text-secondary border-b-2 border-secondary' : 'text-on-surface-variant hover:text-on-surface'}`}
+                    >
+                      Custom
+                    </button>
+                  </div>
+
+                  {addRunTypeMode === 'preset' ? (
+                    <div className="p-3 space-y-1">
+                      {RUN_TYPE_PRESETS.map(preset => {
+                        const alreadyAdded = runTypes.some(rt => rt.presetKey === preset.key);
+                        return (
+                          <button
+                            key={preset.key}
+                            onClick={() => !alreadyAdded && addRunTypeFromPreset(preset)}
+                            disabled={alreadyAdded}
+                            className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-all ${alreadyAdded ? 'opacity-40 cursor-not-allowed' : 'hover:bg-surface-container-high active:scale-[0.98]'}`}
+                          >
+                            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-secondary/10 text-secondary">
+                              <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>{preset.icon}</span>
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="font-bold text-sm text-on-surface uppercase tracking-tight">{preset.name}</p>
+                              <p className="text-on-surface-variant text-xs truncate">{preset.desc}</p>
+                            </div>
+                            {alreadyAdded && (
+                              <span className="material-symbols-outlined text-secondary text-lg shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                            )}
+                          </button>
+                        );
+                      })}
+                      <button
+                        onClick={() => setShowAddRunType(false)}
+                        className="w-full mt-2 py-2.5 rounded-lg border border-outline-variant/20 text-on-surface-variant font-bold text-xs uppercase tracking-wide hover:bg-surface-container-high transition-all"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="p-5 space-y-3">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Custom Run Type</p>
+                      <input
+                        autoFocus type="text" value={newRTName}
+                        onChange={e => setNewRTName(e.target.value)}
+                        placeholder="Name (e.g. Track Workout)"
+                        className="w-full bg-surface-container-highest border border-outline-variant/20 rounded-lg px-3 py-2.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-secondary/40 transition-all"
+                      />
+                      <input
+                        type="text" value={newRTDesc}
+                        onChange={e => setNewRTDesc(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') addCustomRunType(); if (e.key === 'Escape') { setShowAddRunType(false); setNewRTName(''); setNewRTDesc(''); } }}
+                        placeholder="Description (optional)"
+                        className="w-full bg-surface-container-highest border border-outline-variant/20 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-secondary/40 transition-all"
+                      />
+                      <div className="flex gap-2">
+                        <button onClick={addCustomRunType} className="flex-1 py-2.5 rounded-lg bg-secondary text-on-secondary font-bold text-xs uppercase tracking-wide transition-colors active:scale-95">
+                          Add Run Type
+                        </button>
+                        <button
+                          onClick={() => { setShowAddRunType(false); setNewRTName(''); setNewRTDesc(''); }}
+                          className="px-4 py-2.5 rounded-lg border border-outline-variant/20 text-on-surface-variant font-bold text-xs uppercase tracking-wide hover:bg-surface-container-high transition-all"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {enriched.length === 0 && !showAddRunType && (
+            <div className="bg-surface-container rounded-xl px-5 py-8 text-center border border-outline-variant/10 mt-3">
+              <span className="material-symbols-outlined text-3xl text-on-surface-variant/30 block mb-2">directions_run</span>
+              <p className="text-on-surface-variant text-xs font-bold uppercase tracking-widest">No run types yet</p>
+            </div>
+          )}
+        </section>
+
+        {/* ── Free Run ─────────────────────────────────────── */}
         <button
           onClick={() => startRun({ name: 'Free Run', key: 'free', id: 'free' })}
           className="w-full py-4 rounded-full border border-secondary/30 text-secondary font-headline font-bold uppercase tracking-tighter hover:bg-secondary/10 transition-colors active:scale-95"
@@ -411,6 +1014,7 @@ export default function RunningPage() {
         </button>
       </div>
 
+      {/* ── Toast ─────────────────────────────────────────── */}
       <AnimatePresence>
         {toast && (
           <motion.div

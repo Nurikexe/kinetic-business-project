@@ -21,6 +21,8 @@ const DEFAULTS = {
   active_run_session: null,
   ten_k_time:    '',
   ten_k_target:  '10K|6:00',
+  show_performance: true,
+  show_methodology: true,
 };
 
 const DEFAULT_GYM_CONFIG = {

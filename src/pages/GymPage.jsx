@@ -312,6 +312,7 @@ export default function GymPage() {
     gym_rules:     gymRules    = [],
     lifts          = [],
     show_performance = true,
+    show_methodology = true,
   } = config;
 
   const effectiveDays      = gymDays.slice(0, gymDayCount);
@@ -442,15 +443,6 @@ export default function GymPage() {
         <section className="mb-8">
           <div className="flex items-end justify-between mb-1">
             <h2 className="font-headline font-extrabold text-3xl tracking-tighter uppercase">Gym Plan</h2>
-            <button
-              onClick={() => updateConfig({ show_performance: !show_performance })}
-              className="mb-1 text-[9px] text-on-surface-variant hover:text-primary-fixed uppercase font-black tracking-[0.2em] transition-colors flex items-center gap-1.5"
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
-                {show_performance ? 'visibility_off' : 'visibility'}
-              </span>
-              {show_performance ? 'Hide Stats' : 'Show Stats'}
-            </button>
           </div>
           <div className="flex items-center justify-between mb-3">
             <p className="text-on-surface-variant text-sm">{doneCount}/{gymDayCount} days complete this week</p>
@@ -466,33 +458,48 @@ export default function GymPage() {
         </section>
 
         {/* ── Performance Targets ──────────────────────── */}
-        <AnimatePresence>
-          {show_performance && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden"
-            >
-              {lifts.length > 0 && (
-                <section className="mb-8">
-                  <div className="flex items-end justify-between mb-4">
-                    <div>
-                      <p className="text-[9px] font-black uppercase tracking-[0.2em] text-on-surface-variant/40 mb-0.5">
-                        Performance
-                      </p>
-                      <h3 className="font-headline font-extrabold text-2xl uppercase tracking-tighter leading-none">
-                        Targets
-                      </h3>
-                    </div>
-                    <button
-                      onClick={() => setShowProgressionEdit(true)}
-                      className="flex items-center gap-1.5 text-[10px] text-on-surface-variant/60 hover:text-primary-fixed uppercase font-black tracking-widest transition-colors pb-0.5"
-                    >
-                      <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>edit</span>
-                      Edit
-                    </button>
-                  </div>
+        {lifts.length > 0 && (
+          <section className="mb-8">
+            <div className="flex items-end justify-between mb-4">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-on-surface-variant/40 mb-0.5">
+                  Performance
+                </p>
+                <h3 className="font-headline font-extrabold text-2xl uppercase tracking-tighter leading-none">
+                  Targets
+                </h3>
+              </div>
+              <div className="flex items-center gap-3 pb-0.5">
+                <button
+                  onClick={() => updateConfig({ show_performance: !show_performance })}
+                  className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors duration-200 ${
+                    show_performance ? 'bg-primary-container' : 'bg-surface-container-highest'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-3.5 w-3.5 transform rounded-full transition-transform duration-200 ${
+                      show_performance ? 'translate-x-[18px] bg-on-primary-fixed' : 'translate-x-[3px] bg-on-surface-variant/40'
+                    }`}
+                  />
+                </button>
+                <button
+                  onClick={() => setShowProgressionEdit(true)}
+                  className="flex items-center gap-1.5 text-[10px] text-on-surface-variant/60 hover:text-primary-fixed uppercase font-black tracking-widest transition-colors"
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>edit</span>
+                  Edit
+                </button>
+              </div>
+            </div>
+            <AnimatePresence>
+              {show_performance && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+                  className="overflow-hidden"
+                >
 
                   <div className="space-y-3">
                     {lifts.map((lift, i) => {
@@ -591,24 +598,24 @@ export default function GymPage() {
                       );
                     })}
                   </div>
-                </section>
+                </motion.div>
               )}
+            </AnimatePresence>
+          </section>
+        )}
 
-              {/* Fallback: legacy goal string */}
-              {lifts.length === 0 && gymGoals && (
-                <div className="bg-surface-container rounded-xl p-5 mb-8 flex items-center justify-between">
-                  <p className="text-on-surface-variant text-sm flex-1">{gymGoals}</p>
-                  <button
-                    onClick={() => setShowProgressionEdit(true)}
-                    className="ml-4 text-[10px] text-on-surface-variant/60 hover:text-primary-fixed uppercase font-black tracking-widest transition-colors shrink-0"
-                  >
-                    Edit
-                  </button>
-                </div>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Fallback: legacy goal string */}
+        {lifts.length === 0 && gymGoals && (
+          <div className="bg-surface-container rounded-xl p-5 mb-8 flex items-center justify-between">
+            <p className="text-on-surface-variant text-sm flex-1">{gymGoals}</p>
+            <button
+              onClick={() => setShowProgressionEdit(true)}
+              className="ml-4 text-[10px] text-on-surface-variant/60 hover:text-primary-fixed uppercase font-black tracking-widest transition-colors shrink-0"
+            >
+              Edit
+            </button>
+          </div>
+        )}
 
         {/* Day cards */}
         <div className="space-y-3">
@@ -709,35 +716,49 @@ export default function GymPage() {
           Add Day
         </button>
 
-        {/* ── Progression Rules ────────────────────────── */}
-        <AnimatePresence>
-          {show_performance && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden"
-            >
-              {Array.isArray(gymRules) && gymRules.length > 0 && (
-                <section className="mt-8 mb-4">
-                  <div className="flex items-end justify-between mb-4">
-                    <div>
-                      <p className="text-[9px] font-black uppercase tracking-[0.2em] text-on-surface-variant/40 mb-0.5">
-                        Methodology
-                      </p>
-                      <h3 className="font-headline font-extrabold text-2xl uppercase tracking-tighter leading-none">
-                        Progression
-                      </h3>
-                    </div>
-                    <button
-                      onClick={() => setShowRulesEdit(true)}
-                      className="flex items-center gap-1.5 text-[10px] text-on-surface-variant/60 hover:text-primary-fixed uppercase font-black tracking-widest transition-colors pb-0.5"
-                    >
-                      <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>edit</span>
-                      Edit
-                    </button>
-                  </div>
-
+        {/* ── Methodology Progression ──────────────────── */}
+        {Array.isArray(gymRules) && gymRules.length > 0 && (
+          <section className="mt-8 mb-4">
+            <div className="flex items-end justify-between mb-4">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-on-surface-variant/40 mb-0.5">
+                  Methodology
+                </p>
+                <h3 className="font-headline font-extrabold text-2xl uppercase tracking-tighter leading-none">
+                  Progression
+                </h3>
+              </div>
+              <div className="flex items-center gap-3 pb-0.5">
+                <button
+                  onClick={() => updateConfig({ show_methodology: !show_methodology })}
+                  className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors duration-200 ${
+                    show_methodology ? 'bg-primary-container' : 'bg-surface-container-highest'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-3.5 w-3.5 transform rounded-full transition-transform duration-200 ${
+                      show_methodology ? 'translate-x-[18px] bg-on-primary-fixed' : 'translate-x-[3px] bg-on-surface-variant/40'
+                    }`}
+                  />
+                </button>
+                <button
+                  onClick={() => setShowRulesEdit(true)}
+                  className="flex items-center gap-1.5 text-[10px] text-on-surface-variant/60 hover:text-primary-fixed uppercase font-black tracking-widest transition-colors"
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>edit</span>
+                  Edit
+                </button>
+              </div>
+            </div>
+            <AnimatePresence>
+              {show_methodology && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+                  className="overflow-hidden"
+                >
                   <div className="space-y-2">
                     {gymRules.map((rule, i) => {
                       const roman = ['I','II','III','IV','V','VI','VII','VIII','IX','X'][i] ?? String(i + 1);
@@ -773,31 +794,31 @@ export default function GymPage() {
                       );
                     })}
                   </div>
-                </section>
+                </motion.div>
               )}
+            </AnimatePresence>
+          </section>
+        )}
 
-              {/* Setup CTAs if nothing configured */}
-              {lifts.length === 0 && !gymGoals && (
-                <button
-                  onClick={() => setShowProgressionEdit(true)}
-                  className="mt-4 w-full py-3 rounded-xl border border-outline-variant/20 flex items-center justify-center gap-2 text-on-surface-variant text-sm font-bold uppercase tracking-widest hover:bg-surface-container transition-all"
-                >
-                  <span className="material-symbols-outlined text-base">add_chart</span>
-                  Add Performance Targets
-                </button>
-              )}
-              {gymRules.length === 0 && (
-                <button
-                  onClick={() => setShowRulesEdit(true)}
-                  className="mt-3 w-full py-3 rounded-xl border border-outline-variant/20 flex items-center justify-center gap-2 text-on-surface-variant text-sm font-bold uppercase tracking-widest hover:bg-surface-container transition-all"
-                >
-                  <span className="material-symbols-outlined text-base">rule</span>
-                  Add Progression Rules
-                </button>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Setup CTAs if nothing configured */}
+        {lifts.length === 0 && !gymGoals && (
+          <button
+            onClick={() => setShowProgressionEdit(true)}
+            className="mt-4 w-full py-3 rounded-xl border border-outline-variant/20 flex items-center justify-center gap-2 text-on-surface-variant text-sm font-bold uppercase tracking-widest hover:bg-surface-container transition-all"
+          >
+            <span className="material-symbols-outlined text-base">add_chart</span>
+            Add Performance Targets
+          </button>
+        )}
+        {gymRules.length === 0 && (
+          <button
+            onClick={() => setShowRulesEdit(true)}
+            className="mt-3 w-full py-3 rounded-xl border border-outline-variant/20 flex items-center justify-center gap-2 text-on-surface-variant text-sm font-bold uppercase tracking-widest hover:bg-surface-container transition-all"
+          >
+            <span className="material-symbols-outlined text-base">rule</span>
+            Add Progression Rules
+          </button>
+        )}
       </div>
 
       {/* Toast */}
