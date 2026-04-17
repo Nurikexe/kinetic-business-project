@@ -251,7 +251,7 @@ export default function CabinetPage({ setPage }) {
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-tr from-surface-container-highest via-primary-container/20 to-surface-container-highest flex items-center justify-center relative overflow-hidden">
+                  <div className="w-full h-full bg-gradient-to-tr from-surface-container-highest via-primary-container/20 to-surface-container-highest flex items-center justify-center relative overflow-hidden transition-opacity duration-300 group-hover:opacity-20">
                     {/* Decorative pattern for placeholder */}
                     <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, var(--primary-fixed) 1px, transparent 0)', backgroundSize: '12px 12px' }} />
                     <span className="font-headline font-black text-4xl text-primary-fixed drop-shadow-2xl relative z-10">{initials}</span>
