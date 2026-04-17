@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { streamChat } from '../lib/openrouter';
 import { buildOnboardingConfig } from '../data/onboarding';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { CommunityPlanCard, CommunityPlanModal } from '../components/CommunityPlan';
 
 const SLIDE = {
   initial: { opacity: 0, x: 32 },
@@ -218,13 +219,14 @@ ${extras.join('\n')}`,
 function CommunityPlansView({ onSelect, onBack }) {
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedPlan, setSelectedPlan] = useState(null);
 
-  useState(() => {
+  useEffect(() => {
     supabase
       .from('community_plans')
-      .select('*')
+      .select('*, author:user_config(avatar_url)')
       .order('likes', { ascending: false })
-      .limit(20)
+      .limit(30)
       .then(({ data }) => {
         setPlans(data ?? []);
         setLoading(false);
@@ -232,56 +234,76 @@ function CommunityPlansView({ onSelect, onBack }) {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen bg-background pb-8">
-      <header className="flex items-center gap-3 px-6 py-4 border-b border-outline-variant/10">
-        <button onClick={onBack} className="text-on-surface-variant hover:text-on-surface transition-colors">
-          <span className="material-symbols-outlined">arrow_back</span>
-        </button>
-        <span className="font-headline font-bold text-xl uppercase tracking-tight">Community Plans</span>
+    <div className="flex flex-col min-h-screen bg-background">
+      {/* ── Header ── */}
+      <header className="px-6 py-6 sticky top-0 z-20 bg-background/90 backdrop-blur-xl border-b border-outline-variant/10">
+        <div className="max-w-xl mx-auto flex items-center gap-5">
+          <button 
+            onClick={onBack} 
+            className="w-12 h-12 rounded-2xl bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all active:scale-95"
+          >
+            <span className="material-symbols-outlined text-2xl">arrow_back</span>
+          </button>
+          <div>
+            <h2 className="font-headline font-black text-3xl uppercase tracking-tighter leading-none mb-1">Elite <span className="text-secondary">Vault</span></h2>
+            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-on-surface-variant opacity-70">Community Shared Programs</p>
+          </div>
+        </div>
       </header>
 
-      <div className="flex-1 px-6 pt-6">
+      {/* ── Content ── */}
+      <main className="flex-1 max-w-xl mx-auto w-full px-6 pt-8 pb-32">
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 rounded-full border-2 border-primary-container/30 border-t-primary-container animate-spin" />
+          <div className="flex flex-col items-center justify-center py-32 gap-6">
+            <div className="relative w-16 h-16">
+              <div className="absolute inset-0 rounded-full border-2 border-secondary/10 border-t-secondary animate-spin" />
+              <div className="absolute inset-2 rounded-full border-2 border-primary-container/10 border-b-primary-container animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }} />
+            </div>
+            <p className="font-headline font-bold text-xs uppercase tracking-widest text-on-surface-variant animate-pulse">Scanning the Vault...</p>
           </div>
         ) : plans.length === 0 ? (
-          <div className="text-center py-20">
-            <span className="material-symbols-outlined text-5xl text-outline mb-4 block">group</span>
-            <p className="text-on-surface-variant font-medium">No community plans yet.</p>
-            <p className="text-on-surface-variant/60 text-sm mt-1">Be the first to share!</p>
+          <div className="text-center py-24 flex flex-col items-center">
+            <div className="w-20 h-20 rounded-3xl bg-surface-container flex items-center justify-center mb-6">
+              <span className="material-symbols-outlined text-4xl text-outline-variant">folder_off</span>
+            </div>
+            <h3 className="font-headline font-black text-xl uppercase tracking-tight mb-2">The Vault is Empty</h3>
+            <p className="text-on-surface-variant text-sm max-w-[240px] leading-relaxed mx-auto italic">
+              Be the first to upload a blueprint and lead the community.
+            </p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-5">
             {plans.map(plan => (
-              <button
+              <CommunityPlanCard 
                 key={plan.id}
-                onClick={() => onSelect(plan)}
-                className="w-full text-left bg-surface-container rounded-lg p-6 hover:bg-surface-container-high transition-colors active:scale-[0.98]"
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-headline font-bold text-lg uppercase tracking-tight">{plan.title}</h3>
-                  <span className="flex items-center gap-1 text-xs text-on-surface-variant">
-                    <span className="material-symbols-outlined text-sm">favorite</span>
-                    {plan.likes ?? 0}
-                  </span>
-                </div>
-                <p className="text-on-surface-variant text-sm mb-3">{plan.description}</p>
-                <div className="flex gap-2">
-                  <span className="px-3 py-1 bg-primary-container/10 text-primary-fixed text-xs font-bold rounded-full uppercase">
-                    {plan.plan_type}
-                  </span>
-                  {plan.difficulty && (
-                    <span className="px-3 py-1 bg-surface-container-highest text-on-surface-variant text-xs font-bold rounded-full uppercase">
-                      {plan.difficulty}
-                    </span>
-                  )}
-                </div>
-              </button>
+                plan={plan}
+                onClick={setSelectedPlan}
+                isLiked={false}
+                onLike={null}
+                isOwn={false}
+              />
             ))}
           </div>
         )}
+      </main>
+
+      {/* ── Decorative Background Elements ── */}
+      <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
+        <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[40%] bg-secondary/5 blur-[120px] rounded-full" />
+        <div className="absolute bottom-[-5%] left-[-10%] w-[40%] h-[30%] bg-primary-container/5 blur-[100px] rounded-full" />
       </div>
+
+      {/* ── Detail Modal ── */}
+      {selectedPlan && (
+        <CommunityPlanModal 
+          plan={selectedPlan}
+          onClose={() => setSelectedPlan(null)}
+          onUsePlan={onSelect}
+          isLiked={false}
+          onLike={null}
+          isOwn={false}
+        />
+      )}
     </div>
   );
 }

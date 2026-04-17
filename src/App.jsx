@@ -175,8 +175,65 @@ function AppContent({ page, setPage }) {
         ten_k_target: ''
       }, { immediate: true });
     } else if (mode === 'community' && data?.plan) {
-      // TODO: apply community plan data here
-      updateConfig({}, { immediate: true });
+      const plan = data.plan;
+      const pd = plan.plan_data || {};
+      const isGym = plan.plan_type === 'gym';
+      const isRun = plan.plan_type === 'running';
+      const isHybrid = plan.plan_type === 'hybrid';
+      const patch = {};
+
+      if ((isGym || isHybrid) && pd.days) {
+        const gymDays = pd.days.map((d, i) => {
+          const exercises = (d.exercises || []).map((ex, j) => ({
+            id: `ex-${i}-${j}-${Date.now()}`, // unique ID
+            name: ex.name,
+            sets: ex.sets,
+            reps: ex.reps,
+            weight: '',
+          }));
+          return {
+            id: i + 1,
+            num: `Day ${i + 1}`,
+            name: d.name,
+            sub: d.focus || '',
+            schedule: d.schedule || '',
+            exercises
+          };
+        });
+        patch.gym_days = gymDays;
+        patch.gym_day_count = gymDays.length;
+        patch.completed = Array(gymDays.length).fill(false);
+        if (pd.goals) patch.gym_goals = pd.goals;
+        if (pd.rules) patch.gym_rules = pd.rules;
+      }
+
+      if ((isRun || isHybrid) && pd.weeks) {
+        patch.run_weeks = pd.weeks;
+        patch.run_types = (pd.run_types || []).map((rt, i) => ({
+          id: `rt-${i}-${Date.now()}`,
+          day: rt.day || '',
+          name: rt.name,
+          desc: rt.desc || rt.name || '',
+          iconKey: rt.iconKey || 'bolt',
+          color: rt.color || '#ffb020',
+        }));
+        patch.run_week = 0;
+        patch.run_completed = Object.fromEntries(
+          Array.from({ length: pd.weeks.length }, (_, i) => [i, [false, false, false]])
+        );
+        if (pd.goal) {
+          patch.run_goals = [{ id: `goal-${Date.now()}`, text: pd.goal }];
+        }
+      }
+
+      // Hybrid specific fallback/overview
+      if (isHybrid && pd.overview) {
+        // We already handled gym and run components if they exist in the JSON.
+        // If there's extra hybrid metadata, we could store it, but current schema 
+        // focus is on gym_days and run_weeks.
+      }
+
+      updateConfig(patch, { immediate: true });
     } else {
       // Fallback — always ensure a config row exists
       updateConfig({}, { immediate: true });
