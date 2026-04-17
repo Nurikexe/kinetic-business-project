@@ -23,6 +23,8 @@ CREATE TABLE IF NOT EXISTS user_config (
   ten_k_target   TEXT     NOT NULL DEFAULT '60:00',
   show_performance BOOLEAN NOT NULL DEFAULT TRUE,
   show_methodology BOOLEAN NOT NULL DEFAULT TRUE,
+  run_goals      JSONB    NOT NULL DEFAULT '[]',
+  run_warmup_exercises JSONB NOT NULL DEFAULT '[]',
   liked_plans    JSONB    NOT NULL DEFAULT '[]',
   updated_at     TIMESTAMPTZ DEFAULT NOW()
 );
@@ -38,6 +40,8 @@ ALTER TABLE user_config ADD COLUMN IF NOT EXISTS ten_k_target TEXT NOT NULL DEFA
 ALTER TABLE user_config ADD COLUMN IF NOT EXISTS show_performance BOOLEAN NOT NULL DEFAULT TRUE;
 ALTER TABLE user_config ADD COLUMN IF NOT EXISTS liked_plans JSONB NOT NULL DEFAULT '[]';
 ALTER TABLE user_config ADD COLUMN IF NOT EXISTS show_methodology BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE user_config ADD COLUMN IF NOT EXISTS run_goals JSONB NOT NULL DEFAULT '[]';
+ALTER TABLE user_config ADD COLUMN IF NOT EXISTS run_warmup_exercises JSONB NOT NULL DEFAULT '[]';
 
 ALTER TABLE user_config ENABLE ROW LEVEL SECURITY;
 
