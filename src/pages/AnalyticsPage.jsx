@@ -217,6 +217,7 @@ function ActivityDetailModal({ session, onClose, onDelete }) {
     ? new Date(session.submitted_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
     : null;
   const exercises = Array.isArray(session.exercises) ? session.exercises : session.exercises?.items ?? [];
+  const sessionNotes = session.notes || session.exercises?.notes || '';
 
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -254,7 +255,10 @@ function ActivityDetailModal({ session, onClose, onDelete }) {
       td{padding:6px 10px;border-bottom:1px solid #eee}@media print{body{padding:20px}}</style></head>
       <body><div class="meta">${isRun ? 'RUNNING' : 'GYM'} · ${dateStr}${timeStr ? ' · ' + timeStr : ''} · KINETIC</div>
       <h1>${title}</h1>${body}
-      ${session.notes ? `<p style="margin-top:16px;font-size:12px"><b>Notes:</b> ${session.notes}</p>` : ''}
+      ${sessionNotes ? `<div style="margin-top:24px;padding:16px;background:#fffbeb;border-left:4px solid #f59e0b;border-radius:4px">
+        <div style="font-size:10px;font-weight:900;text-transform:uppercase;color:#b45309;margin-bottom:6px;letter-spacing:1px">Feedback</div>
+        <div style="font-size:13px;line-height:1.6;color:#444">${sessionNotes}</div>
+      </div>` : ''}
       </body></html>`;
     const w = window.open('', '_blank');
     w.document.write(html); w.document.close(); w.focus();
@@ -279,13 +283,35 @@ function ActivityDetailModal({ session, onClose, onDelete }) {
         exercises.forEach(ex => lines.push(`| ${ex.name || ''} | ${ex.sets || ''}x${ex.reps || ''} | ${ex.weight ? ex.weight + ' kg' : '—'} |`));
       }
     }
-    if (session.notes) lines.push('', '## Notes', '', session.notes);
+    if (sessionNotes) lines.push('', '## Feedback', '', `> ${sessionNotes}`);
     lines.push('', '---', '*Exported from KINETIC*');
     const blob = new Blob([lines.join('\n')], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = `kinetic_${title.replace(/\s+/g, '_').toLowerCase()}_${(session.date || 'session')}.md`;
+    a.click(); URL.revokeObjectURL(url);
+  };
+
+  const exportCSV = () => {
+    const lines = ['Session Details', `Title,${title}`, `Type,${isRun ? 'Running' : 'Gym Workout'}`, `Date,"${dateStr}${timeStr ? ' · ' + timeStr : ''}"`, ''];
+    if (isRun) {
+      lines.push('Stats');
+      lines.push(`Distance,${session.total_distance ?? 0} km`);
+      lines.push(`Avg Pace,${session.avg_pace ?? '—'}/km`);
+      lines.push(`Duration,${session.duration ?? '—'}`);
+    } else {
+      if (session.day_focus) lines.push(`Focus,${session.day_focus}`);
+      lines.push('', 'Exercises');
+      lines.push('Exercise,Sets,Reps,Weight (kg)');
+      exercises.forEach(ex => lines.push(`"${ex.name || ''}",${ex.sets || ''},${ex.reps || ''},${ex.weight || ''}`));
+    }
+    if (sessionNotes) lines.push('', 'Feedback', `"${sessionNotes.replace(/"/g, '""')}"`);
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `kinetic_${title.replace(/\s+/g, '_').toLowerCase()}_${(session.date || 'session')}.csv`;
     a.click(); URL.revokeObjectURL(url);
   };
 
@@ -350,10 +376,10 @@ function ActivityDetailModal({ session, onClose, onDelete }) {
               )}
             </>
           )}
-          {session.notes && (
+          {sessionNotes && (
             <div className="bg-surface-container rounded-xl p-4">
-              <p className="text-on-surface-variant text-[10px] font-black uppercase tracking-widest mb-2">Notes</p>
-              <p className="text-sm text-on-surface leading-relaxed">{session.notes}</p>
+              <p className="text-on-surface-variant text-[10px] font-black uppercase tracking-widest mb-2">Feedback</p>
+              <p className="text-sm text-on-surface leading-relaxed whitespace-pre-wrap">{sessionNotes}</p>
             </div>
           )}
         </div>
@@ -369,6 +395,9 @@ function ActivityDetailModal({ session, onClose, onDelete }) {
               </button>
               <button onClick={exportMD} className="flex-1 py-2.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-headline font-bold uppercase text-[10px] tracking-wide active:scale-95 transition-all flex items-center justify-center gap-1.5">
                 <span className="material-symbols-outlined text-sm">description</span> Markdown
+              </button>
+              <button onClick={exportCSV} className="flex-1 py-2.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-headline font-bold uppercase text-[10px] tracking-wide active:scale-95 transition-all flex items-center justify-center gap-1.5">
+                <span className="material-symbols-outlined text-sm">table_view</span> CSV
               </button>
             </div>
           </div>
@@ -403,8 +432,9 @@ function buildFilteredRows(gymData, runData, from, to) {
     const d = new Date(w.submitted_at || w.date); return d >= fromDate && d <= toDate;
   }).map(w => {
     const exs = Array.isArray(w.exercises) ? w.exercises : (w.exercises?.items ?? []);
+    const fdb = w.exercises?.notes || w.notes || '';
     const vol = exs.reduce((s, ex) => { const r = parseInt(String(ex.reps || '1').split('-')[0]) || 1; return s + (parseFloat(ex.weight) || 0) * (parseInt(ex.sets) || 1) * r; }, 0);
-    return { type: 'gym', date: w.date, name: w.day_name || 'Workout', focus: w.day_focus || '', exercises: exs, volume: Math.round(vol), notes: w.notes || '' };
+    return { type: 'gym', date: w.date, name: w.day_name || 'Workout', focus: w.day_focus || '', exercises: exs, volume: Math.round(vol), notes: fdb };
   });
   const runRows = runData.filter(r => {
     const d = new Date(r.submitted_at || r.date); return d >= fromDate && d <= toDate;
