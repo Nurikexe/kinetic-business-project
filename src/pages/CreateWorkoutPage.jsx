@@ -195,7 +195,7 @@ function InlineExercisePicker({ onAdd }) {
 
 // ── Main page ─────────────────────────────────────────────────
 export default function CreateWorkoutPage({ setPage }) {
-  const { user } = useAuth();
+  const { user, displayName } = useAuth();
 
   // ── Shared meta ──────────────────────────────────────────────
   const [title, setTitle]           = useState('');
@@ -302,11 +302,11 @@ export default function CreateWorkoutPage({ setPage }) {
     // Build plan_data based on type
     let plan_data = {};
     if (planType === 'gym') {
-      plan_data = { days, thumbnail_url: thumbnail };
+      plan_data = { days, thumbnail_url: thumbnail, author_name: displayName };
     } else if (planType === 'running') {
-      plan_data = { runTypes, weeks: runWeeks, thumbnail_url: thumbnail };
+      plan_data = { runTypes, weeks: runWeeks, thumbnail_url: thumbnail, author_name: displayName };
     } else {
-      plan_data = { days, runTypes, weeks: runWeeks, thumbnail_url: thumbnail };
+      plan_data = { days, runTypes, weeks: runWeeks, thumbnail_url: thumbnail, author_name: displayName };
     }
 
     setSaving(true); setError('');

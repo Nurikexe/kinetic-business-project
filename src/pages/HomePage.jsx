@@ -264,7 +264,7 @@ function CommunityPlanModal({ plan, onClose, onUsePlan, isLiked, onLike, isOwn, 
   const isHybrid = plan.plan_type === 'hybrid';
   const accentClass = isRun ? 'text-primary-fixed' : isHybrid ? 'text-tertiary' : 'text-secondary';
   const heroBg = pd.thumbnail_url || (isRun ? '/run_activity.jpg' : '/gym_activity.jpg');
-  const authorName = pd.author_name ?? 'Nurassyl';
+  const authorName = pd.author_name || 'Community Member';
 
   const handleUse = () => {
     if (!confirming) { setConfirming(true); return; }
@@ -537,6 +537,8 @@ function CommunityPlanCard({ plan, onClick, isLiked, onLike, isOwn }) {
             {plan.title}
           </h4>
           <div className="flex items-center gap-2 mt-0.5">
+            <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant">by {plan.plan_data?.author_name || 'Member'}</span>
+            <span className="w-1 h-1 rounded-full bg-outline-variant shrink-0" />
             <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant">{plan.plan_type}</span>
             {plan.difficulty && (
               <>
@@ -881,6 +883,29 @@ export default function HomePage({ setPage }) {
 
           {communityPlans.length > 0 ? (
             <div className="space-y-3">
+              {/* ── Your Shared Workouts section ── */}
+              {communityPlans.some(p => p.user_id === user?.id) && (
+                <div className="mb-8">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-secondary mb-4">Your Shared Workouts</p>
+                  <div className="flex gap-4 overflow-x-auto no-scrollbar -mx-5 px-5 pb-2">
+                    {communityPlans
+                      .filter(p => p.user_id === user?.id)
+                      .map(plan => (
+                        <div key={plan.id} className="min-w-[280px] w-[280px]">
+                          <CommunityPlanCard
+                            plan={plan}
+                            onClick={setSelectedPlan}
+                            isLiked={likedPlans.includes(plan.id)}
+                            onLike={handleLike}
+                            isOwn={true}
+                          />
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant mb-4">Community Feed</p>
               {communityPlans.slice(0, 3).map(plan => (
                 <CommunityPlanCard
                   key={plan.id}
