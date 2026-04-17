@@ -628,15 +628,14 @@ export default function HomePage({ setPage }) {
       .rpc('toggle_plan_like', { plan_id: planId, delta });
 
     if (error) {
-      console.error('Like failed:', error.message);
-      // Rollback optimistic update on failure
+      console.error('Like count sync failed (check if toggle_plan_like RPC is created):', error.message);
+      // Rollback only the counter, keep the heart (optimistic) unless it's a critical failure
       setCommunityPlans(prev =>
         prev.map(p => p.id === planId ? { ...p, likes: currentLikes } : p)
       );
       setSelectedPlan(prev =>
         prev?.id === planId ? { ...prev, likes: currentLikes } : prev
       );
-      updateConfig({ liked_plans: likedPlans }, { immediate: true });
     } else if (typeof actualLikes === 'number') {
       // Sync UI with the authoritative DB value
       setCommunityPlans(prev =>
