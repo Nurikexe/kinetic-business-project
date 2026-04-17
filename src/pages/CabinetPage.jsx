@@ -210,7 +210,7 @@ export default function CabinetPage({ setPage }) {
             <StatPill label="Gym Sessions" value={workoutCount} />
             <div className="w-px h-8 bg-outline-variant/30" />
             <StatPill label="Run Sessions" value={runCount} />
-            {config.gym_day_count && (
+            {config.gym_day_count > 0 && (
               <>
                 <div className="w-px h-8 bg-outline-variant/30" />
                 <StatPill label="Days / Week" value={config.gym_day_count} />

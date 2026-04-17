@@ -370,22 +370,22 @@ export default function CreateWorkoutPage({ setPage }) {
         <div className="bg-surface-container rounded-xl p-6 space-y-5 mb-6">
           <div>
             <label className="font-headline font-bold text-xs uppercase tracking-widest text-primary-container mb-4 block">Select Workout Cover</label>
-            <div className="flex gap-3 overflow-x-auto pb-4 no-scrollbar -mx-2 px-2">
+            <div className="flex gap-4 overflow-x-auto py-4 no-scrollbar -mx-6 px-6">
               {THUMBNAILS.map(t => (
                 <button
                   key={t.id}
                   onClick={() => setThumbnail(t.url)}
-                  className={`shrink-0 relative w-24 h-24 rounded-xl overflow-hidden border-2 transition-all ${
-                    thumbnail === t.url ? 'border-primary-fixed scale-105 shadow-lg' : 'border-transparent opacity-60 hover:opacity-100'
+                  className={`shrink-0 relative w-28 h-28 rounded-2xl overflow-hidden border-2 transition-all duration-300 ${
+                    thumbnail === t.url ? 'border-primary-fixed scale-110 shadow-2xl z-10' : 'border-transparent opacity-50 hover:opacity-80'
                   }`}
                 >
                   <img src={t.url} alt={t.label} className="w-full h-full object-cover" />
-                  <div className="absolute inset-x-0 bottom-0 bg-black/60 py-1 text-[8px] font-black uppercase tracking-widest text-white text-center">
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent pt-4 pb-2 text-[9px] font-black uppercase tracking-widest text-white text-center">
                     {t.label}
                   </div>
                   {thumbnail === t.url && (
-                    <div className="absolute top-1 right-1 bg-primary-fixed text-on-primary-fixed rounded-full p-0.5">
-                      <span className="material-symbols-outlined text-[10px]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                    <div className="absolute top-2 right-2 bg-primary-fixed text-on-primary-fixed rounded-full w-6 h-6 flex items-center justify-center shadow-lg border-2 border-black/20 animate-in zoom-in-50 duration-300">
+                      <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
                     </div>
                   )}
                 </button>

@@ -527,45 +527,44 @@ function CommunityPlanCard({ plan, onClick, isLiked, onLike, isOwn }) {
 
   return (
     <button onClick={() => onClick(plan)}
-      className="w-full bg-surface-container-low border border-outline-variant/10 p-4 rounded-2xl flex justify-between items-center gap-3 group hover:bg-surface-container transition-colors text-left active:scale-[0.99] transition-transform">
-      <div className="flex items-center gap-3 min-w-0 flex-1">
-        <div className={`w-12 h-12 rounded-xl overflow-hidden shrink-0 border ${isRun ? 'border-primary-fixed/20' : 'border-secondary/20'} shadow-sm`}>
+      className="w-full bg-surface-container-low border border-outline-variant/10 p-4 rounded-3xl flex justify-between items-center gap-4 group hover:bg-surface-container transition-all text-left active:scale-[0.98] snap-start">
+      <div className="flex items-center gap-4 min-w-0 flex-1">
+        <div className={`w-14 h-14 rounded-2xl overflow-hidden shrink-0 border ${isRun ? 'border-primary-fixed/20' : 'border-secondary/20'} shadow-sm`}>
           <img src={avatarSrc} alt={plan.title} className="w-full h-full object-cover" />
         </div>
         <div className="min-w-0 flex-1">
-          <h4 className={`font-headline font-black text-sm leading-tight truncate mb-1 ${accentHover} transition-colors`}>
+          <h4 className={`font-headline font-black text-base leading-none truncate mb-1.5 ${accentHover} transition-colors`}>
             {plan.title}
           </h4>
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 max-w-full">
-            <span className="text-[8px] font-black uppercase tracking-[0.1em] text-on-surface-variant flex items-center gap-1">
-              <span className="opacity-40">by</span>
-              <span className="text-on-surface truncate max-w-[80px]">{plan.plan_data?.author_name || 'Member'}</span>
-            </span>
-            <span className="w-0.5 h-0.5 rounded-full bg-outline-variant shrink-0" />
-            <span className="text-[8px] font-black uppercase tracking-[0.1em] text-on-surface-variant">{plan.plan_type}</span>
-            {plan.difficulty && (
-              <>
-                <span className="w-0.5 h-0.5 rounded-full bg-outline-variant shrink-0" />
-                <span className="text-[8px] font-black uppercase tracking-[0.1em] text-on-surface-variant">{plan.difficulty}</span>
-              </>
-            )}
+          <div className="space-y-1">
+            <p className="text-[10px] font-bold text-on-surface-variant/70 uppercase tracking-widest truncate">
+              by <span className="text-on-surface">{plan.plan_data?.author_name || 'Member'}</span>
+            </p>
+            <div className="flex items-center gap-1.5">
+              <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md ${isRun ? 'bg-primary-fixed/10 text-primary-fixed' : 'bg-secondary/10 text-secondary'}`}>
+                {plan.plan_type}
+              </span>
+              {plan.difficulty && (
+                <span className="text-[8px] font-black uppercase tracking-widest text-on-surface-variant/50">
+                  {plan.difficulty}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </div>
-      <div className="flex items-center gap-2 shrink-0 self-center">
+      <div className="flex flex-col items-center gap-1 shrink-0">
         <span
           role="button"
           onClick={e => { e.stopPropagation(); if (!isOwn) onLike(plan.id); }}
-          title={isOwn ? "You can't like your own plan" : undefined}
-          className={`flex items-center gap-1 p-1.5 rounded-lg transition-all ${isOwn ? 'opacity-30 cursor-default' : 'hover:bg-error/10 active:scale-90'}`}
+          className={`flex flex-col items-center justify-center w-10 h-10 rounded-xl transition-all ${isOwn ? 'opacity-20 cursor-default' : 'hover:bg-error/10 active:scale-90 border border-outline-variant/10'}`}
         >
           <span
-            className={`material-symbols-outlined text-base transition-colors ${isLiked ? 'text-error' : 'text-on-surface-variant'}`}
+            className={`material-symbols-outlined text-lg transition-colors ${isLiked ? 'text-error' : 'text-on-surface-variant'}`}
             style={{ fontVariationSettings: isLiked ? "'FILL' 1" : "'FILL' 0" }}
           >favorite</span>
-          <span className={`text-xs font-bold leading-none ${isLiked ? 'text-error' : 'text-on-surface-variant'}`}>{plan.likes ?? 0}</span>
+          <span className={`text-[9px] font-black ${isLiked ? 'text-error' : 'text-on-surface-variant'}`}>{plan.likes ?? 0}</span>
         </span>
-        <span className="material-symbols-outlined text-outline/40 text-lg">chevron_right</span>
       </div>
     </button>
   );
@@ -890,11 +889,11 @@ export default function HomePage({ setPage }) {
               {communityPlans.some(p => p.user_id === user?.id) && (
                 <div className="mb-8">
                   <p className="text-[10px] font-black uppercase tracking-[0.2em] text-secondary mb-4">Your Shared Workouts</p>
-                  <div className="flex gap-4 overflow-x-auto no-scrollbar -mx-5 px-5 pb-2">
+                  <div className="flex gap-4 overflow-x-auto no-scrollbar -mx-5 px-5 pb-4 snap-x snap-mandatory">
                     {communityPlans
                       .filter(p => p.user_id === user?.id)
                       .map(plan => (
-                        <div key={plan.id} className="min-w-[280px] w-[280px]">
+                        <div key={plan.id} className="min-w-[280px] w-[280px] snap-center">
                           <CommunityPlanCard
                             plan={plan}
                             onClick={setSelectedPlan}
