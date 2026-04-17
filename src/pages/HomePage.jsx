@@ -53,7 +53,7 @@ function ActivityDetailModal({ session, onClose }) {
   const exercises = Array.isArray(session.exercises) ? session.exercises : session.exercises?.items ?? [];
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm sm:p-4" style={{ height: '100dvh' }} onClick={onClose}>
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm sm:p-4" onClick={onClose}>
       <div className="relative w-full h-[100dvh] sm:h-auto sm:max-h-[90dvh] max-w-xl bg-surface-container-low rounded-none sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col min-h-0"
         onClick={e => e.stopPropagation()}>
         <div className="relative h-48 shrink-0 overflow-hidden">
@@ -275,7 +275,7 @@ function CommunityPlanModal({ plan, onClose, onUsePlan, isLiked, onLike, isOwn }
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-md sm:p-4" style={{ height: '100dvh' }} onClick={onClose}>
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-md sm:p-4" onClick={onClose}>
       <div className="relative w-full h-[100dvh] sm:h-auto sm:max-h-[90dvh] max-w-xl bg-surface-container-low rounded-none sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col min-h-0"
         onClick={e => e.stopPropagation()}>
 
@@ -564,6 +564,30 @@ export default function HomePage({ setPage }) {
   const [selectedSession, setSelectedSession] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [showAllCommunity, setShowAllCommunity] = useState(false);
+
+  // Lock scroll natively when any modal is active
+  useEffect(() => {
+    if (selectedSession || selectedPlan || showAllCommunity) {
+      const scrollY = window.scrollY;
+      const prevPosition = document.body.style.position;
+      const prevTop = document.body.style.top;
+      const prevWidth = document.body.style.width;
+      const prevOverflow = document.body.style.overflow;
+      
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+      
+      return () => {
+        document.body.style.position = prevPosition;
+        document.body.style.top = prevTop;
+        document.body.style.width = prevWidth;
+        document.body.style.overflow = prevOverflow;
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [selectedSession, selectedPlan, showAllCommunity]);
 
   // Liked plan IDs — persisted in user_config so they survive across sessions
   const likedPlans = config.liked_plans ?? [];
@@ -865,7 +889,7 @@ export default function HomePage({ setPage }) {
         />
       )}
       {showAllCommunity && createPortal(
-        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-md sm:p-4" style={{ height: '100dvh' }} onClick={() => setShowAllCommunity(false)}>
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-md sm:p-4" onClick={() => setShowAllCommunity(false)}>
           <div className="relative w-full h-[100dvh] sm:h-auto sm:max-h-[90dvh] max-w-2xl bg-surface-container-low rounded-none sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden min-h-0"
             onClick={e => e.stopPropagation()}>
             <div className="shrink-0 z-10 flex items-center justify-between p-5 border-b border-outline-variant/10 bg-surface-container-low/90 backdrop-blur-xl">
