@@ -506,11 +506,11 @@ export default function OnboardingPage({ onComplete }) {
 
   // ── AI: plan-type-specific extras ─────────────────────────
   if (step === 'ai_extras') {
-    const isGym     = answers.plan_type === 'gym';
+    const isGym     = answers.plan_type === 'gym' || answers.plan_type === 'hybrid';
     const isRunning = answers.plan_type === 'running' || answers.plan_type === 'hybrid';
 
     const canContinue = isRunning
-      ? (!!weeksCount && Number(weeksCount) > 0)
+      ? (!!weeksCount && Number(weeksCount) > 0 && Number(weeksCount) <= 52)
       : true;
 
     const handleContinue = () => {
@@ -550,6 +550,7 @@ export default function OnboardingPage({ onComplete }) {
                 onChange={(e) => setGymStats(e.target.value)}
                 placeholder="e.g. Goal: Bench press 100kg. Current: Bench press 40kg"
                 rows={3}
+                maxLength={500}
                 className="w-full bg-surface-container rounded-lg p-4 text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary-container resize-none"
               />
             </div>
@@ -567,6 +568,7 @@ export default function OnboardingPage({ onComplete }) {
                 onChange={(e) => setRunStats(e.target.value)}
                 placeholder="e.g. Current: 5km at 6:00 pace. Goal: 5km at 5:00 pace"
                 rows={3}
+                maxLength={500}
                 className="w-full bg-surface-container rounded-lg p-4 text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary-container resize-none"
               />
             </div>
@@ -584,7 +586,11 @@ export default function OnboardingPage({ onComplete }) {
                 min={1}
                 max={52}
                 value={weeksCount}
-                onChange={(e) => setWeeksCount(e.target.value)}
+                onChange={(e) => {
+                  if (e.target.value.length <= 2) {
+                    setWeeksCount(e.target.value);
+                  }
+                }}
                 className="w-full bg-surface-container rounded-lg p-4 text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary-container"
               />
             </div>
