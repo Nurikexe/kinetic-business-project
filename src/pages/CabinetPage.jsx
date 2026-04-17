@@ -97,14 +97,16 @@ function AvatarPickerModal({ currentAvatar, onSelect, onClose }) {
             <button
               key={i}
               onClick={() => { onSelect(url); onClose(); }}
-              className={`relative rounded-xl overflow-hidden aspect-square border-2 transition-all ${
-                currentAvatar === url ? 'border-primary-fixed scale-95 shadow-[0_0_15px_rgba(212,251,0,0.5)]' : 'border-transparent hover:border-outline-variant'
+              className={`relative rounded-2xl overflow-hidden aspect-square border-2 transition-all duration-300 hover:scale-110 active:scale-95 ${
+                currentAvatar === url ? 'border-primary-fixed shadow-[0_0_20px_rgba(212,251,0,0.4)]' : 'border-outline-variant/30 hover:border-primary-fixed/50'
               }`}
             >
               <img src={url} alt={`Avatar ${i+1}`} className="w-full h-full object-cover" />
               {currentAvatar === url && (
-                <div className="absolute inset-0 bg-primary-fixed/20 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-black font-black">check</span>
+                <div className="absolute inset-0 bg-primary-fixed/20 backdrop-blur-[1px] flex items-center justify-center">
+                  <div className="bg-primary-fixed rounded-full p-1 shadow-lg">
+                    <span className="material-symbols-outlined text-black font-black text-sm">check</span>
+                  </div>
                 </div>
               )}
             </button>
@@ -231,26 +233,53 @@ export default function CabinetPage({ setPage }) {
 
         {/* ── Profile Hero ── */}
         <section className="flex flex-col items-start gap-5">
-          {/* Avatar */}
+          {/* Avatar Container */}
           <div className="relative group">
             <button
               onClick={() => setShowAvatarPicker(true)}
-              className="w-24 h-24 rounded-3xl bg-primary-container flex items-center justify-center overflow-hidden relative transition-transform active:scale-95"
-              style={{ boxShadow: '0 0 40px rgba(212,251,0,0.2)' }}
+              className="relative w-28 h-28 p-1.5 rounded-[2rem] bg-gradient-to-br from-primary-fixed/30 to-secondary/30 transition-all duration-500 hover:rotate-2 active:scale-90"
+              style={{
+                boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
+              }}
             >
-              {config.avatar_url ? (
-                <img src={config.avatar_url} alt={displayName} className="w-full h-full object-cover" />
-              ) : (
-                <span className="font-headline font-black text-4xl text-on-primary-fixed">{initials}</span>
-              )}
-              {/* Overlay on hover */}
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center">
-                <span className="material-symbols-outlined text-white text-2xl">photo_camera</span>
-                <span className="text-[8px] text-white font-black uppercase tracking-tighter mt-1">Change</span>
+              {/* Inner wrapper for image/initials */}
+              <div className="w-full h-full rounded-[1.6rem] bg-surface-container-highest overflow-hidden relative border border-white/5 flex items-center justify-center">
+                {config.avatar_url ? (
+                  <img
+                    src={config.avatar_url}
+                    alt={displayName}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-tr from-surface-container-highest via-primary-container/20 to-surface-container-highest flex items-center justify-center relative overflow-hidden">
+                    {/* Decorative pattern for placeholder */}
+                    <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, var(--primary-fixed) 1px, transparent 0)', backgroundSize: '12px 12px' }} />
+                    <span className="font-headline font-black text-4xl text-primary-fixed drop-shadow-2xl relative z-10">{initials}</span>
+                  </div>
+                )}
+
+                {/* Glassy overlay hint */}
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center backdrop-blur-[2px]">
+                  <span className="material-symbols-outlined text-white text-2xl animate-bounce">photo_camera</span>
+                  <span className="text-[9px] text-white font-black uppercase tracking-[0.2em] mt-1">Update</span>
+                </div>
               </div>
+
+              {/* Decorative rings */}
+              <div className="absolute -inset-1 rounded-[2.2rem] border border-primary-fixed/20 -z-10 animate-pulse" />
+              <div className="absolute -inset-2 rounded-[2.4rem] border border-primary-fixed/5 -z-20" />
             </button>
-            {/* Subtle glow ring */}
-            <div className="absolute -inset-1 rounded-3xl bg-primary-container/10 -z-10 blur-md group-hover:bg-primary-container/20 transition-colors" />
+
+            {/* Change Hint Badge (Always visible on mobile/placeholder) */}
+            <div
+              className="absolute -bottom-1 -right-1 w-10 h-10 rounded-2xl bg-primary-fixed flex items-center justify-center shadow-lg border-4 border-background transform transition-transform group-hover:rotate-12 group-hover:scale-110"
+              style={{ boxShadow: '0 10px 25px rgba(212,251,0,0.4)' }}
+            >
+              <span className="material-symbols-outlined text-black font-black text-xl">edit</span>
+            </div>
+
+            {/* Profile Glow */}
+            <div className="absolute -inset-10 bg-primary-container/10 blur-[60px] -z-30 rounded-full" />
           </div>
 
           {/* Name + email */}
