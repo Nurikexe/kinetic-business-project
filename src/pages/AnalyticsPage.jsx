@@ -181,7 +181,7 @@ function ActivityRow({ session, onClick }) {
 }
 
 // ── Activity Detail Modal ─────────────────────────────────────
-function ActivityDetailModal({ session, onClose }) {
+function ActivityDetailModal({ session, onClose, onDelete }) {
   if (!session) return null;
   const isRun = session.session_type === 'run';
   const title = session.day_name || session.title || 'Workout';
@@ -192,6 +192,23 @@ function ActivityDetailModal({ session, onClose }) {
     ? new Date(session.submitted_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
     : null;
   const exercises = Array.isArray(session.exercises) ? session.exercises : session.exercises?.items ?? [];
+
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!confirmDelete) { setConfirmDelete(true); return; }
+    setDeleting(true);
+    const table = isRun ? 'run_sessions' : 'workouts';
+    const { error } = await supabase.from(table).delete().eq('id', session.id);
+    if (!error) {
+      onDelete(session);   // removes from local state + closes modal
+    } else {
+      console.error('Delete failed:', error.message);
+      setDeleting(false);
+      setConfirmDelete(false);
+    }
+  };
 
   const exportPDF = () => {
     const exRows = exercises.map(ex =>
@@ -262,6 +279,7 @@ function ActivityDetailModal({ session, onClose }) {
             <h2 className="font-headline font-black text-2xl uppercase tracking-tight">{title}</h2>
           </div>
         </div>
+
         {/* Scrollable body */}
         <div className="p-5 space-y-5 overflow-y-auto flex-1 overscroll-contain">
           <div className="flex items-center gap-2 text-on-surface-variant text-xs font-bold uppercase tracking-widest">
@@ -314,17 +332,37 @@ function ActivityDetailModal({ session, onClose }) {
             </div>
           )}
         </div>
-        {/* Export bar */}
-        <div className="p-4 shrink-0 border-t border-outline-variant/10 bg-surface-container-low">
-          <p className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant mb-2">Export this session</p>
-          <div className="flex gap-2">
-            <button onClick={exportPDF} className="flex-1 py-2.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-headline font-bold uppercase text-[10px] tracking-wide active:scale-95 transition-all flex items-center justify-center gap-1.5">
-              <span className="material-symbols-outlined text-sm">picture_as_pdf</span> PDF
-            </button>
-            <button onClick={exportMD} className="flex-1 py-2.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-headline font-bold uppercase text-[10px] tracking-wide active:scale-95 transition-all flex items-center justify-center gap-1.5">
-              <span className="material-symbols-outlined text-sm">description</span> Markdown
-            </button>
+
+        {/* Footer: export + delete */}
+        <div className="p-4 shrink-0 border-t border-outline-variant/10 bg-surface-container-low space-y-3">
+          {/* Export row */}
+          <div>
+            <p className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant mb-2">Export this session</p>
+            <div className="flex gap-2">
+              <button onClick={exportPDF} className="flex-1 py-2.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-headline font-bold uppercase text-[10px] tracking-wide active:scale-95 transition-all flex items-center justify-center gap-1.5">
+                <span className="material-symbols-outlined text-sm">picture_as_pdf</span> PDF
+              </button>
+              <button onClick={exportMD} className="flex-1 py-2.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-headline font-bold uppercase text-[10px] tracking-wide active:scale-95 transition-all flex items-center justify-center gap-1.5">
+                <span className="material-symbols-outlined text-sm">description</span> Markdown
+              </button>
+            </div>
           </div>
+
+          {/* Delete row */}
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className={`w-full py-3 rounded-xl font-headline font-bold uppercase text-xs tracking-wide active:scale-95 transition-all flex items-center justify-center gap-2 ${
+              confirmDelete
+                ? 'bg-error text-on-error shadow-[0_4px_20px_rgba(255,80,80,0.3)]'
+                : 'bg-surface-container hover:bg-error/10 text-error'
+            } disabled:opacity-40`}
+          >
+            <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>
+              {deleting ? 'hourglass_empty' : 'delete'}
+            </span>
+            {deleting ? 'Deleting…' : confirmDelete ? 'Tap again to confirm delete' : 'Delete Session'}
+          </button>
         </div>
       </div>
     </div>,
@@ -934,7 +972,20 @@ Give concise, actionable advice. Answer in 3-5 sentences. Be specific and encour
         </section>
 
         {/* ── Modal ── */}
-        {selectedSession && <ActivityDetailModal session={selectedSession} onClose={() => setSelectedSession(null)} />}
+        {selectedSession && (
+          <ActivityDetailModal
+            session={selectedSession}
+            onClose={() => setSelectedSession(null)}
+            onDelete={(deleted) => {
+              if (deleted.session_type === 'run') {
+                setAllRunData(prev => prev.filter(r => r.id !== deleted.id));
+              } else {
+                setAllGymData(prev => prev.filter(w => w.id !== deleted.id));
+              }
+              setSelectedSession(null);
+            }}
+          />
+        )}
 
         {/* ── Tab Toggle ── */}
         <div className="flex bg-surface-container-low p-1.5 rounded-full">
