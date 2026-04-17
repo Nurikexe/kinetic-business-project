@@ -28,13 +28,19 @@ function AppContent({ page, setPage }) {
     () => sessionStorage.getItem('ha_force_onboarding') === '1'
   );
 
+  const onboardingPreviouslyCompleted =
+    () => localStorage.getItem('ha_onboarding_done') === '1';
+
   const showOnboarding =
-    (forceOnboarding || (loaded && !hasConfigRow)) && !onboardingDone;
+    (forceOnboarding || (loaded && !hasConfigRow && !onboardingPreviouslyCompleted())) && !onboardingDone;
 
   useEffect(() => {
-    if (forceOnboarding && hasConfigRow) {
-      sessionStorage.removeItem('ha_force_onboarding');
-      setForceOnboarding(false);
+    if (hasConfigRow) {
+      localStorage.setItem('ha_onboarding_done', '1');
+      if (forceOnboarding) {
+        sessionStorage.removeItem('ha_force_onboarding');
+        setForceOnboarding(false);
+      }
     }
   }, [forceOnboarding, hasConfigRow]);
 
@@ -75,6 +81,7 @@ function AppContent({ page, setPage }) {
       updateConfig({}, { immediate: true });
     }
     sessionStorage.removeItem('ha_force_onboarding');
+    localStorage.setItem('ha_onboarding_done', '1');
     setForceOnboarding(false);
     setOnboardingDone(true);
     setPage('home');
