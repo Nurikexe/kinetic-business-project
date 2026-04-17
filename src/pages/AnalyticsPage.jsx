@@ -14,28 +14,69 @@ function incrementPromptCount() {
 }
 
 // ── Bar chart ───────────────────────────────────────────────
+// Uses pixel heights (not %) so bars render correctly regardless of flex context
+const BAR_H = 120; // px — height of the bar drawing area
+
 function BarChart({ data, maxValue, color = '#d4fb00', showValues = false }) {
+  if (!data || data.length === 0) return null;
   const max = maxValue || Math.max(...data.map(d => d.value), 1);
+
   return (
-    <div className="flex items-end justify-between h-28 gap-1.5">
-      {data.map((d, i) => (
-        <div key={i} className="flex-1 flex flex-col items-center gap-1 min-w-0">
-          {showValues && (
-            <span className="text-[8px] text-on-surface-variant font-bold" style={{ opacity: d.value > 0 ? 1 : 0 }}>
-              {d.value > 1000 ? `${(d.value / 1000).toFixed(1)}k` : d.value}
-            </span>
-          )}
-          <div
-            className="w-full rounded-t-md transition-all"
+    <div>
+      {/* Bar drawing area — explicit pixel height so % heights resolve correctly */}
+      <div
+        className="flex items-end justify-between gap-1"
+        style={{ height: BAR_H }}
+      >
+        {data.map((d, i) => {
+          const barPx = Math.max((d.value / max) * BAR_H, 4);
+          return (
+            <div
+              key={i}
+              className="flex-1 flex flex-col items-center justify-end gap-1"
+              style={{ height: BAR_H }}
+            >
+              {showValues && (
+                <span
+                  className="text-[8px] font-bold leading-none"
+                  style={{
+                    color: d.highlight ? color : '#888',
+                    opacity: d.value > 0 ? 1 : 0,
+                  }}
+                >
+                  {d.value >= 1000 ? `${(d.value / 1000).toFixed(1)}k` : d.value}
+                </span>
+              )}
+              <div
+                className="w-full rounded-t-sm transition-all duration-500"
+                style={{
+                  height: barPx,
+                  background: d.highlight
+                    ? color
+                    : `${color}30`,
+                  boxShadow: d.highlight ? `0 0 8px ${color}55` : 'none',
+                }}
+              />
+            </div>
+          );
+        })}
+      </div>
+      {/* Labels row */}
+      <div className="flex justify-between gap-1 mt-2">
+        {data.map((d, i) => (
+          <span
+            key={i}
+            className="flex-1 text-center font-bold uppercase truncate"
             style={{
-              height: `${(d.value / max) * 100}%`,
-              background: d.highlight ? color : '#262626',
-              minHeight: 4,
+              fontSize: 9,
+              color: d.highlight ? color : '#666',
+              letterSpacing: '0.06em',
             }}
-          />
-          <span className="text-[9px] text-on-surface-variant font-bold uppercase truncate w-full text-center">{d.label}</span>
-        </div>
-      ))}
+          >
+            {d.label}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
@@ -43,31 +84,62 @@ function BarChart({ data, maxValue, color = '#d4fb00', showValues = false }) {
 // ── SVG line chart ───────────────────────────────────────────
 function LineChart({ points, color = '#00e3fd' }) {
   if (!points || points.length < 2) return (
-    <div className="h-24 flex items-center justify-center text-on-surface-variant text-sm">Not enough data</div>
+    <div className="h-28 flex items-center justify-center text-on-surface-variant text-sm">Not enough data</div>
   );
-  const max = Math.max(...points.map(p => p.value), 1);
-  const min = Math.min(...points.map(p => p.value), 0);
+  const values = points.map(p => p.value);
+  const max = Math.max(...values);
+  const min = Math.min(...values);
   const range = max - min || 1;
-  const w = 400;
-  const h = 100;
+  const W = 400;
+  const H = 110;
+  const PAD = 10;
+
   const coords = points.map((p, i) => ({
-    x: (i / (points.length - 1)) * w,
-    y: h - ((p.value - min) / range) * h * 0.85 - h * 0.075,
+    x: PAD + (i / (points.length - 1)) * (W - PAD * 2),
+    y: PAD + ((max - p.value) / range) * (H - PAD * 2),
   }));
-  const pathD = coords.map((c, i) => `${i === 0 ? 'M' : 'L'}${c.x},${c.y}`).join(' ');
-  const areaD = `${pathD} L${w},${h} L0,${h} Z`;
+
+  const pathD  = coords.map((c, i) => `${i === 0 ? 'M' : 'L'}${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(' ');
+  const areaD  = `${pathD} L${coords[coords.length-1].x},${H} L${coords[0].x},${H} Z`;
+
+  // format pace (decimal minutes) back to M:SS
+  const fmtVal = (v) => {
+    if (v > 3 && v < 20) { // likely a pace value
+      const m = Math.floor(v);
+      const s = Math.round((v - m) * 60);
+      return `${m}:${String(s).padStart(2,'0')}`;
+    }
+    return v >= 1000 ? `${(v/1000).toFixed(1)}k` : v.toFixed(1);
+  };
+
+  const last = coords[coords.length - 1];
 
   return (
-    <div className="relative h-24">
-      <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-full" preserveAspectRatio="none">
-        <path d={areaD} fill={`${color}15`} />
-        <path d={pathD} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+    <div className="relative" style={{ height: H + 24 }}>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: H }} preserveAspectRatio="none">
+        <defs>
+          <linearGradient id={`lg-${color.replace('#','')}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity="0.25" />
+            <stop offset="100%" stopColor={color} stopOpacity="0.02" />
+          </linearGradient>
+        </defs>
+        <path d={areaD} fill={`url(#lg-${color.replace('#','')})`} />
+        <path d={pathD} fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
         {coords.map((c, i) => (
-          <circle key={i} cx={c.x} cy={c.y} r={i === coords.length - 1 ? 5 : 3}
-            fill={i === coords.length - 1 ? color : '#0e0e0e'} stroke={color} strokeWidth="2" />
+          <circle key={i} cx={c.x} cy={c.y}
+            r={i === coords.length - 1 ? 5 : 3}
+            fill={i === coords.length - 1 ? color : '#111'}
+            stroke={color} strokeWidth="2"
+          />
         ))}
+        {/* Latest value tooltip */}
+        <text x={Math.min(last.x + 8, W - 40)} y={last.y - 8}
+          fill={color} fontSize="10" fontWeight="bold" fontFamily="monospace">
+          {fmtVal(points[points.length-1].value)}
+        </text>
       </svg>
-      <div className="flex justify-between mt-1">
+      {/* X-axis labels */}
+      <div className="flex justify-between px-1 mt-1">
         {points.map((p, i) => (
           <span key={i} className="text-[9px] text-on-surface-variant font-bold">{p.label}</span>
         ))}
@@ -258,14 +330,79 @@ export default function AnalyticsPage() {
   })();
 
   const totalVolumeKg = weeklyVolume.reduce((s, w) => s + w.value, 0);
-  const latestMaxLift = (() => {
-    for (let i = gymData.length - 1; i >= 0; i--) {
-      const exercises = Array.isArray(gymData[i].exercises) ? gymData[i].exercises : (gymData[i].exercises?.items ?? []);
-      const deadlift = exercises.find(e => e.name?.toLowerCase().includes('deadlift'));
-      if (deadlift?.weight) return { name: deadlift.name, weight: deadlift.weight };
-    }
-    return null;
+
+  // ── Week-over-week volume delta ─────────────────────────────
+  const wowDelta = (() => {
+    if (weeklyVolume.length < 2) return null;
+    const curr = weeklyVolume[weeklyVolume.length - 1].value;
+    const prev = weeklyVolume[weeklyVolume.length - 2].value;
+    if (!prev) return null;
+    return Math.round(((curr - prev) / prev) * 100);
   })();
+
+  // ── Muscle group breakdown (last 30 days) ───────────────────
+  const muscleGroups = (() => {
+    const MUSCLE_KEYWORDS = {
+      'Chest':    ['bench','chest','push','fly','pec','dip'],
+      'Back':     ['row','pull','deadlift','lat','cable pull','back','chin'],
+      'Legs':     ['squat','leg','lunge','hamstring','calf','glute','hip thrust'],
+      'Shoulders':['shoulder','ohp','lateral','front raise','military'],
+      'Arms':     ['curl','tricep','bicep','hammer','skull','extension'],
+      'Core':     ['plank','crunch','ab','core','sit-up','russian'],
+    };
+    const totals = {};
+    gymData.forEach(w => {
+      const exercises = Array.isArray(w.exercises) ? w.exercises : (w.exercises?.items ?? []);
+      exercises.forEach(ex => {
+        const name = (ex.name || '').toLowerCase();
+        let matched = false;
+        for (const [group, kws] of Object.entries(MUSCLE_KEYWORDS)) {
+          if (kws.some(k => name.includes(k))) {
+            const reps = parseInt(String(ex.reps || '1').split('-')[0]) || 1;
+            totals[group] = (totals[group] || 0) + (parseFloat(ex.weight) || 0) * (parseInt(ex.sets) || 1) * reps;
+            matched = true; break;
+          }
+        }
+        if (!matched) {
+          const reps2 = parseInt(String(ex.reps || '1').split('-')[0]) || 1;
+          totals['Other'] = (totals['Other'] || 0) + (parseFloat(ex.weight) || 0) * (parseInt(ex.sets) || 1) * reps2;
+        }
+      });
+    });
+    const COLORS = {
+      Chest: '#d4fb00', Back: '#00e3fd', Legs: '#ff6b8a',
+      Shoulders: '#f97316', Arms: '#a78bfa', Core: '#34d399', Other: '#6b7280',
+    };
+    const entries = Object.entries(totals).sort(([,a],[,b]) => b - a);
+    const total = entries.reduce((s,[,v]) => s + v, 0) || 1;
+    return entries.map(([name, value]) => ({
+      name, value: Math.round(value),
+      pct: Math.round((value / total) * 100),
+      color: COLORS[name] || '#6b7280',
+    }));
+  })();
+
+  // ── Personal Records (best weight per exercise, all time) ────
+  const personalRecords = (() => {
+    const bests = {};
+    allGymData.forEach(w => {
+      const exercises = Array.isArray(w.exercises) ? w.exercises : (w.exercises?.items ?? []);
+      exercises.forEach(ex => {
+        const name = ex.name;
+        if (!name) return;
+        const weight = parseFloat(ex.weight) || 0;
+        if (weight > 0 && (!bests[name] || weight > bests[name].weight)) {
+          bests[name] = { weight, date: w.date };
+        }
+      });
+    });
+    return Object.entries(bests)
+      .sort(([,a],[,b]) => b.weight - a.weight)
+      .slice(0, 6)
+      .map(([name, { weight, date }]) => ({ name, weight, date }));
+  })();
+
+  const latestMaxLift = personalRecords[0] ?? null;
 
   // ── Run metrics ──────────────────────────────────────────────
   const totalDistance = runData.reduce((s, r) => s + (parseFloat(r.total_distance) || 0), 0);
@@ -296,7 +433,7 @@ export default function AnalyticsPage() {
 
   // Distance by session (last 10 runs)
   const distanceBySession = (() => {
-    const sessions = [...runData].reverse().slice(-10);
+    const sessions = runData.slice(-10);
     return sessions.map((r, i) => {
       const dayLabel = new Date(r.date).toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 2);
       return {
@@ -305,6 +442,16 @@ export default function AnalyticsPage() {
         highlight: i === sessions.length - 1,
       };
     });
+  })();
+
+  // ── Pace improvement (first vs last run in 30 days) ──────────
+  const paceImprovement = (() => {
+    const withPace = runData.filter(r => r.avg_pace);
+    if (withPace.length < 2) return null;
+    const parsePace = (s) => { const [m,sec] = (s||'0:00').split(':').map(Number); return m + (sec||0)/60; };
+    const first = parsePace(withPace[0].avg_pace);
+    const last  = parsePace(withPace[withPace.length - 1].avg_pace);
+    return Math.round((first - last) * 60); // positive = faster (fewer secs/km)
   })();
 
   // Distance by week (last 7 weeks)
@@ -495,13 +642,28 @@ Give concise, actionable advice. Answer in 3-5 sentences. Be specific and encour
                 <div>
                   <p className="font-label text-xs font-black uppercase tracking-widest text-on-surface-variant mb-1">Weekly Volume</p>
                   <h3 className="font-headline text-4xl font-extrabold tracking-tighter">
-                    {totalVolumeKg > 1000 ? `${(totalVolumeKg/1000).toFixed(1)}t` : totalVolumeKg.toLocaleString()}
+                    {totalVolumeKg >= 1000 ? `${(totalVolumeKg/1000).toFixed(1)}t` : totalVolumeKg.toLocaleString()}
                     <span className="text-lg font-bold ml-1 text-on-surface-variant">KG</span>
                   </h3>
                 </div>
-                <div className="bg-secondary-container/20 text-secondary px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
-                  <span className="material-symbols-outlined text-sm">trending_up</span>
-                  {gymData.length} sessions
+                <div className="flex flex-col items-end gap-1">
+                  <div className="bg-surface-container-high text-on-surface-variant px-3 py-1 rounded-full text-xs font-bold">
+                    {gymData.length} sessions
+                  </div>
+                  {wowDelta !== null && (
+                    <div
+                      className="px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1"
+                      style={{
+                        background: wowDelta >= 0 ? '#d4fb0022' : '#ff6b8a22',
+                        color: wowDelta >= 0 ? '#d4fb00' : '#ff6b8a',
+                      }}
+                    >
+                      <span className="material-symbols-outlined text-sm">
+                        {wowDelta >= 0 ? 'trending_up' : 'trending_down'}
+                      </span>
+                      {wowDelta >= 0 ? '+' : ''}{wowDelta}% vs last week
+                    </div>
+                  )}
                 </div>
               </div>
               {weeklyVolume.length > 0
@@ -534,9 +696,69 @@ Give concise, actionable advice. Answer in 3-5 sentences. Be specific and encour
               }
             </div>
 
-            {/* Max Lift + Sessions */}
+            {/* Muscle Group Breakdown */}
+            {muscleGroups.length > 0 && (
+              <div className="bg-surface-container rounded-lg p-6 space-y-4">
+                <div>
+                  <p className="font-label text-xs font-black uppercase tracking-widest text-on-surface-variant mb-1">Muscle Focus</p>
+                  <p className="text-on-surface-variant text-xs">Volume split by muscle group · last 30 days</p>
+                </div>
+                <div className="space-y-3">
+                  {muscleGroups.map(({ name, pct, color }) => (
+                    <div key={name}>
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-xs font-bold" style={{ color }}>{name}</span>
+                        <span className="text-[10px] font-bold text-on-surface-variant">{pct}%</span>
+                      </div>
+                      <div className="w-full h-2 rounded-full" style={{ background: `${color}20` }}>
+                        <div
+                          className="h-2 rounded-full transition-all duration-700"
+                          style={{ width: `${pct}%`, background: color, boxShadow: `0 0 6px ${color}66` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Personal Records */}
+            {personalRecords.length > 0 && (
+              <div className="bg-surface-container rounded-lg p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-label text-xs font-black uppercase tracking-widest text-on-surface-variant mb-1">Personal Records</p>
+                    <p className="text-on-surface-variant text-xs">All-time best weights per exercise</p>
+                  </div>
+                  <span className="material-symbols-outlined text-yellow-400" style={{ fontVariationSettings: "'FILL' 1" }}>emoji_events</span>
+                </div>
+                <div className="space-y-2">
+                  {personalRecords.map(({ name, weight, date }, i) => (
+                    <div key={name} className="flex items-center gap-3 py-2 border-b border-outline-variant/10 last:border-0">
+                      <span
+                        className="text-xs font-black w-5 text-center"
+                        style={{ color: i === 0 ? '#fbbf24' : i === 1 ? '#94a3b8' : i === 2 ? '#b87333' : '#555' }}
+                      >
+                        {i + 1}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold truncate">{name}</p>
+                        <p className="text-[10px] text-on-surface-variant">
+                          {new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </p>
+                      </div>
+                      <span className="font-headline font-extrabold text-lg" style={{ color: '#d4fb00' }}>
+                        {weight}<span className="text-xs text-on-surface-variant ml-0.5">kg</span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Stat tiles */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-surface-container rounded-lg p-5 flex flex-col justify-between aspect-square">
+              <div className="bg-surface-container rounded-lg p-5 flex flex-col justify-between" style={{ minHeight: 120 }}>
                 <div className="space-y-1">
                   <span className="material-symbols-outlined text-primary-container" style={{ fontVariationSettings: "'FILL' 1" }}>fitness_center</span>
                   <p className="font-label text-xs font-bold uppercase tracking-widest text-on-surface-variant">Top Lift</p>
@@ -546,13 +768,13 @@ Give concise, actionable advice. Answer in 3-5 sentences. Be specific and encour
                     {latestMaxLift ? `${latestMaxLift.weight}` : '—'}
                     {latestMaxLift && <span className="text-base text-on-surface-variant">kg</span>}
                   </h4>
-                  <p className="text-on-surface-variant text-[10px] font-bold uppercase mt-1">
+                  <p className="text-on-surface-variant text-[10px] font-bold uppercase mt-1 truncate">
                     {latestMaxLift?.name ?? 'No data'}
                   </p>
                 </div>
               </div>
 
-              <div className="bg-surface-container rounded-lg p-5 flex flex-col justify-between aspect-square">
+              <div className="bg-surface-container rounded-lg p-5 flex flex-col justify-between" style={{ minHeight: 120 }}>
                 <div className="space-y-1">
                   <span className="material-symbols-outlined text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>calendar_today</span>
                   <p className="font-label text-xs font-bold uppercase tracking-widest text-on-surface-variant">Sessions</p>
@@ -566,18 +788,56 @@ Give concise, actionable advice. Answer in 3-5 sentences. Be specific and encour
           </>
         ) : (
           <>
-            {/* Avg Pace with line chart */}
+            {/* Avg Pace + trend */}
             <div className="bg-surface-container-low rounded-lg p-6 space-y-4">
-              <div>
-                <p className="font-label text-xs font-black uppercase tracking-widest text-on-surface-variant mb-1">Average Pace</p>
-                <h3 className="font-headline text-4xl font-extrabold tracking-tighter">
-                  {avgPace}<span className="text-lg font-bold ml-1 text-on-surface-variant">/KM</span>
-                </h3>
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="font-label text-xs font-black uppercase tracking-widest text-on-surface-variant mb-1">Average Pace</p>
+                  <h3 className="font-headline text-4xl font-extrabold tracking-tighter">
+                    {avgPace}<span className="text-lg font-bold ml-1 text-on-surface-variant">/KM</span>
+                  </h3>
+                </div>
+                {paceImprovement !== null && (
+                  <div
+                    className="px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 mt-1"
+                    style={{
+                      background: paceImprovement > 0 ? '#34d39922' : paceImprovement < 0 ? '#ff6b8a22' : '#55555522',
+                      color: paceImprovement > 0 ? '#34d399' : paceImprovement < 0 ? '#ff6b8a' : '#888',
+                    }}
+                  >
+                    <span className="material-symbols-outlined text-sm">
+                      {paceImprovement > 0 ? 'trending_up' : paceImprovement < 0 ? 'trending_down' : 'remove'}
+                    </span>
+                    {paceImprovement > 0 ? `${paceImprovement}s faster` : paceImprovement < 0 ? `${Math.abs(paceImprovement)}s slower` : 'No change'}
+                  </div>
+                )}
               </div>
               {pacePoints.length >= 2
                 ? <LineChart points={pacePoints} />
                 : <p className="text-on-surface-variant text-sm text-center py-4">Log more runs to see your pace trend.</p>
               }
+            </div>
+
+            {/* Stats summary row */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="bg-surface-container rounded-lg p-4 text-center">
+                <p className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant mb-1">Distance</p>
+                <p className="font-headline text-xl font-extrabold">{totalDistance.toFixed(1)}<span className="text-xs text-on-surface-variant ml-0.5">km</span></p>
+                <p className="text-[9px] text-on-surface-variant">30 days</p>
+              </div>
+              <div className="bg-surface-container rounded-lg p-4 text-center">
+                <p className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant mb-1">Sessions</p>
+                <p className="font-headline text-xl font-extrabold">{runData.length}</p>
+                <p className="text-[9px] text-on-surface-variant">30 days</p>
+              </div>
+              <div className="bg-surface-container rounded-lg p-4 text-center">
+                <p className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant mb-1">Avg/Run</p>
+                <p className="font-headline text-xl font-extrabold">
+                  {runData.length > 0 ? (totalDistance / runData.length).toFixed(1) : '—'}
+                  <span className="text-xs text-on-surface-variant ml-0.5">km</span>
+                </p>
+                <p className="text-[9px] text-on-surface-variant">per session</p>
+              </div>
             </div>
 
             {/* Distance by Session */}
@@ -614,27 +874,6 @@ Give concise, actionable advice. Answer in 3-5 sentences. Be specific and encour
                 ? <BarChart data={distanceByMonth} color="#00b4d8" showValues />
                 : <p className="text-on-surface-variant text-sm text-center py-4">Not enough data for monthly view.</p>
               }
-            </div>
-
-            {/* Distance + Sessions */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-surface-container rounded-lg p-5">
-                <div className="flex justify-between items-center mb-4">
-                  <span className="material-symbols-outlined text-primary-container" style={{ fontVariationSettings: "'FILL' 1" }}>directions_run</span>
-                </div>
-                <p className="font-label text-xs font-bold uppercase tracking-widest text-on-surface-variant">Total Distance</p>
-                <h4 className="font-headline text-3xl font-extrabold tracking-tighter">
-                  {totalDistance.toFixed(1)}<span className="text-base text-on-surface-variant ml-1">KM</span>
-                </h4>
-              </div>
-
-              <div className="bg-surface-container rounded-lg p-5">
-                <div className="flex justify-between items-center mb-4">
-                  <span className="material-symbols-outlined text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>timer</span>
-                </div>
-                <p className="font-label text-xs font-bold uppercase tracking-widest text-on-surface-variant">Run Sessions</p>
-                <h4 className="font-headline text-3xl font-extrabold tracking-tighter">{runData.length}</h4>
-              </div>
             </div>
           </>
         )}
