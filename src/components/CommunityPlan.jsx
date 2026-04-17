@@ -378,10 +378,10 @@ export function CommunityPlanCard({ plan, onClick, isLiked, onLike, isOwn }) {
           <img src={avatarSrc} alt={plan.title} className="w-full h-full object-cover" />
         </div>
         <div className="min-w-0 flex-1">
-          <h4 className={`font-headline font-black text-base leading-none truncate mb-1.5 ${accentHover} transition-colors`}>
+          <h4 className={`font-headline font-black text-lg uppercase tracking-tight truncate mb-2 ${accentHover} transition-colors`}>
             {plan.title}
           </h4>
-          <div className="space-y-1">
+          <div className="space-y-2">
             <div className="flex items-center gap-1.5 min-w-0">
               <div className="w-4 h-4 rounded-full overflow-hidden bg-surface-container-highest flex items-center justify-center shrink-0 border border-outline-variant/10">
                 {(plan.author?.avatar_url || plan.plan_data?.author_avatar_url) ? (
@@ -396,12 +396,12 @@ export function CommunityPlanCard({ plan, onClick, isLiked, onLike, isOwn }) {
                   </span>
                 )}
               </div>
-              <p className="text-[10px] font-bold text-on-surface-variant/70 uppercase tracking-widest truncate">
+              <p className="text-[10px] font-bold text-on-surface-variant/70 uppercase tracking-[0.1em] truncate">
                 by <span className="text-on-surface">{plan.plan_data?.author_name || 'Member'}</span>
               </p>
             </div>
-            <div className="flex items-center gap-1.5">
-              <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md ${isRun ? 'bg-primary-fixed/10 text-primary-fixed' : 'bg-secondary/10 text-secondary'}`}>
+            <div className="flex items-center gap-2">
+              <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-md ${isRun ? 'bg-primary-fixed/10 text-primary-fixed' : 'bg-secondary/10 text-secondary'}`}>
                 {plan.plan_type}
               </span>
               {plan.difficulty && (

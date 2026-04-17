@@ -248,7 +248,7 @@ export default function HomePage({ setPage }) {
       setRecent([
         ...gyms.map(s => ({ ...s, session_type: 'gym' })),
         ...runs.map(s => ({ ...s, session_type: 'run' })),
-      ].sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at)).slice(0, 5));
+      ].sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at)).slice(0, 3));
 
       setCommunityPlans(communityRes.data ?? []);
       setLoading(false);
