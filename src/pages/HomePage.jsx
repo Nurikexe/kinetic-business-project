@@ -3,6 +3,8 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { useUserConfig } from '../context/UserConfigContext';
 
+
+
 /* ── Bento stat card ── */
 function BentoStat({ label, value, unit, icon, variant = 'dark' }) {
   const base = 'rounded-2xl p-5 flex flex-col justify-between min-h-[160px] relative overflow-hidden';
@@ -60,24 +62,24 @@ function ActivityDetailModal({ session, onClose }) {
   const exercises = Array.isArray(session.exercises) ? session.exercises : session.exercises?.items ?? [];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-0 sm:px-4" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-      <div className="relative w-full max-w-xl bg-surface-container-low rounded-t-3xl sm:rounded-3xl overflow-hidden max-h-[90dvh] flex flex-col shadow-2xl"
-        onClick={e => e.stopPropagation()}>
-        <div className="relative h-48 shrink-0 overflow-hidden">
-          <img src={isRun ? '/run_activity.jpg' : '/gym_activity.jpg'} alt={title} className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-surface-container-low via-surface-container-low/40 to-transparent" />
-          <button onClick={onClose} className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/50 flex items-center justify-center text-white">
-            <span className="material-symbols-outlined text-xl">close</span>
-          </button>
-          <div className="absolute bottom-4 left-5">
-            <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-1 ${isRun ? 'text-primary-fixed' : 'text-secondary'}`}>
-              {isRun ? 'Running' : 'Strength'}
-            </p>
-            <h2 className="font-headline font-black text-2xl uppercase tracking-tight">{title}</h2>
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm sm:p-4" onClick={onClose}>
+      <div className="flex min-h-full items-end sm:items-center justify-center p-0">
+        <div className="relative w-full max-w-xl bg-surface-container-low rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden mt-10 sm:mt-0"
+          onClick={e => e.stopPropagation()}>
+          <div className="relative h-48 shrink-0 overflow-hidden">
+            <img src={isRun ? '/run_activity.jpg' : '/gym_activity.jpg'} alt={title} className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-surface-container-low via-surface-container-low/40 to-transparent" />
+            <button onClick={onClose} className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/50 flex items-center justify-center text-white">
+              <span className="material-symbols-outlined text-xl">close</span>
+            </button>
+            <div className="absolute bottom-4 left-5">
+              <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-1 ${isRun ? 'text-primary-fixed' : 'text-secondary'}`}>
+                {isRun ? 'Running' : 'Strength'}
+              </p>
+              <h2 className="font-headline font-black text-2xl uppercase tracking-tight">{title}</h2>
+            </div>
           </div>
-        </div>
-        <div className="overflow-y-auto flex-1 min-h-0 p-5 space-y-5" style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}>
+          <div className="p-5 space-y-5">
           <div className="flex items-center gap-2 text-on-surface-variant text-xs font-bold uppercase tracking-widest">
             <span className="material-symbols-outlined text-sm">calendar_today</span>
             {dateStr}{timeStr ? `, ${timeStr}` : ''}
@@ -280,29 +282,29 @@ function CommunityPlanModal({ plan, onClose, onUsePlan, isLiked, onLike, isOwn }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-0 sm:px-4" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-md" />
-      <div className="relative w-full max-w-xl bg-surface-container-low rounded-t-3xl sm:rounded-3xl overflow-hidden max-h-[90dvh] flex flex-col shadow-2xl"
-        onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-md sm:p-4" onClick={onClose}>
+      <div className="flex min-h-full items-end sm:items-center justify-center p-0">
+        <div className="relative w-full max-w-xl bg-surface-container-low rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden mt-10 sm:mt-0"
+          onClick={e => e.stopPropagation()}>
 
-        {/* ── Hero ── */}
-        <div className="relative h-44 shrink-0 overflow-hidden">
-          <img src={heroBg} alt={plan.title} className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-surface-container-low via-surface-container-low/50 to-transparent" />
-          <button onClick={onClose}
-            className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/50 flex items-center justify-center text-white">
-            <span className="material-symbols-outlined text-xl">close</span>
-          </button>
-          <div className="absolute bottom-4 left-5 right-14">
-            <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-1 ${accentClass}`}>
-              {plan.plan_type} · {plan.difficulty}
-            </p>
-            <h2 className="font-headline font-black text-xl uppercase tracking-tight leading-tight">{plan.title}</h2>
+          {/* ── Hero ── */}
+          <div className="relative h-44 shrink-0 overflow-hidden">
+            <img src={heroBg} alt={plan.title} className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-surface-container-low via-surface-container-low/50 to-transparent" />
+            <button onClick={onClose}
+              className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/50 flex items-center justify-center text-white">
+              <span className="material-symbols-outlined text-xl">close</span>
+            </button>
+            <div className="absolute bottom-4 left-5 right-14">
+              <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-1 ${accentClass}`}>
+                {plan.plan_type} · {plan.difficulty}
+              </p>
+              <h2 className="font-headline font-black text-xl uppercase tracking-tight leading-tight">{plan.title}</h2>
+            </div>
           </div>
-        </div>
 
-        {/* ── Scrollable body ── */}
-        <div className="overflow-y-auto flex-1 min-h-0 p-5 space-y-5" style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}>
+          {/* ── Scrollable body ── */}
+          <div className="p-5 space-y-5">
 
           {/* Author + likes */}
           <div className="flex items-center justify-between">
@@ -600,19 +602,23 @@ export default function HomePage({ setPage }) {
     });
   }, [user, period]);
 
-  /* Toggle like on a community plan */
+  /* Toggle like on a community plan with robust optimistic rollback */
   const handleLike = async (planId) => {
+    if (!user) return;
+
     const alreadyLiked = likedPlans.includes(planId);
     const delta = alreadyLiked ? -1 : 1;
     const newLikedPlans = alreadyLiked
       ? likedPlans.filter(id => id !== planId)
       : [...likedPlans, planId];
 
-    // Capture current DB value BEFORE optimistic update
-    const currentLikes = communityPlans.find(p => p.id === planId)?.likes ?? 0;
-    const newLikes = Math.max(0, currentLikes + delta);
+    // Capture current UI local state for potential rollback
+    const originalPlans = [...communityPlans];
+    const planToUpdate = communityPlans.find(p => p.id === planId);
+    const originalLikes = planToUpdate?.likes ?? 0;
+    const newLikes = Math.max(0, originalLikes + delta);
 
-    // Optimistic update — UI responds instantly
+    // 1. Optimistically update local component UI state
     setCommunityPlans(prev =>
       prev.map(p => p.id === planId ? { ...p, likes: newLikes } : p)
     );
@@ -620,24 +626,26 @@ export default function HomePage({ setPage }) {
       prev?.id === planId ? { ...prev, likes: newLikes } : prev
     );
 
-    // Persist liked list in user_config
+    // 2. Persist liked list in user_config optimistically
     updateConfig({ liked_plans: newLikedPlans }, { immediate: true });
 
-    // Update counter in DB via RPC (bypasses RLS so any user can like any plan)
+    // 3. Perform the actual database operation
     const { data: actualLikes, error } = await supabase
       .rpc('toggle_plan_like', { plan_id: planId, delta });
 
-    if (error) {
-      console.error('Like count sync failed (check if toggle_plan_like RPC is created):', error.message);
-      // Rollback only the counter, keep the heart (optimistic) unless it's a critical failure
-      setCommunityPlans(prev =>
-        prev.map(p => p.id === planId ? { ...p, likes: currentLikes } : p)
-      );
+    if (error || typeof actualLikes !== 'number') {
+      console.error('Like count sync failed:', error?.message || 'Invalid RPC response format. Schema update required.');
+      
+      // Rollback UI to accurately reflect the real failed DB state
+      setCommunityPlans(originalPlans);
       setSelectedPlan(prev =>
-        prev?.id === planId ? { ...prev, likes: currentLikes } : prev
+        prev?.id === planId ? { ...prev, likes: originalLikes } : prev
       );
-    } else if (typeof actualLikes === 'number') {
-      // Sync UI with the authoritative DB value
+      
+      // Reset user_config context state
+      updateConfig({ liked_plans: likedPlans }, { immediate: true });
+    } else {
+      // Keep UI synced cleanly with the authoritative value returned by the database
       setCommunityPlans(prev =>
         prev.map(p => p.id === planId ? { ...p, likes: actualLikes } : p)
       );
@@ -795,10 +803,10 @@ export default function HomePage({ setPage }) {
             <h3 className="font-headline font-bold text-lg tracking-tight uppercase">Community Workouts</h3>
             {communityPlans.length > 3 && (
               <button
-                onClick={() => setShowAllCommunity(prev => !prev)}
+                onClick={() => setShowAllCommunity(true)}
                 className="text-secondary text-[10px] font-black tracking-widest uppercase hover:underline"
               >
-                {showAllCommunity ? 'Show Top 3' : 'See Trends'}
+                See All
               </button>
             )}
           </div>
@@ -811,7 +819,7 @@ export default function HomePage({ setPage }) {
 
           {communityPlans.length > 0 ? (
             <div className="space-y-3">
-              {(showAllCommunity ? communityPlans : communityPlans.slice(0, 3)).map(plan => (
+              {communityPlans.slice(0, 3).map(plan => (
                 <CommunityPlanCard
                   key={plan.id}
                   plan={plan}
@@ -844,6 +852,33 @@ export default function HomePage({ setPage }) {
           onLike={handleLike}
           isOwn={selectedPlan.user_id === user?.id}
         />
+      )}
+      {showAllCommunity && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-md sm:p-4" onClick={() => setShowAllCommunity(false)}>
+          <div className="flex min-h-full items-end sm:items-center justify-center p-0">
+            <div className="relative w-full max-w-2xl bg-surface-container-low rounded-t-3xl sm:rounded-3xl shadow-2xl mt-16 sm:mt-0 flex flex-col"
+              onClick={e => e.stopPropagation()}>
+              <div className="sticky top-0 z-10 flex items-center justify-between p-5 border-b border-outline-variant/10 bg-surface-container-low/90 backdrop-blur-xl rounded-t-3xl sm:rounded-t-3xl">
+                <h2 className="font-headline font-black text-xl tracking-tight uppercase">All Community Plans</h2>
+                <button onClick={() => setShowAllCommunity(false)} className="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center text-on-surface hover:text-primary-fixed transition-colors">
+                  <span className="material-symbols-outlined text-xl">close</span>
+                </button>
+              </div>
+              <div className="p-5 space-y-3">
+                {communityPlans.map(plan => (
+                  <CommunityPlanCard
+                    key={plan.id}
+                    plan={plan}
+                    onClick={setSelectedPlan}
+                    isLiked={likedPlans.includes(plan.id)}
+                    onLike={handleLike}
+                    isOwn={plan.user_id === user?.id}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

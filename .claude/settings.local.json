@@ -22,7 +22,12 @@
       "Bash(git push:*)",
       "Bash(cat /Users/nurasylartykbay/Projects/GYM/supabase/*.sql)",
       "Bash(npm ls:*)",
-      "Bash(pkill -f \"vite --port 5175\")"
+      "Bash(pkill -f \"vite --port 5175\")",
+      "Bash(npx vite *)",
+      "Bash(node --input-type=module --experimental-vm-modules)",
+      "Bash(npx --yes eslint src/pages/RunningPage.jsx --no-eslintrc --rule '{\"no-undef\":0}')",
+      "Bash(npx tsc *)",
+      "Bash(git *)"
     ]
   }
 }
