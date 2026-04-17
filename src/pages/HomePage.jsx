@@ -223,7 +223,7 @@ export default function HomePage({ setPage }) {
     Promise.all([
       supabase.from('workouts').select('*').eq('user_id', user.id).gte('date', startDate).order('submitted_at', { ascending: false }),
       supabase.from('run_sessions').select('*').eq('user_id', user.id).gte('date', startDate).order('submitted_at', { ascending: false }),
-      supabase.from('community_plans').select('*, author:user_config(avatar_url)').order('likes', { ascending: false }).order('created_at', { ascending: true }),
+      supabase.from('community_plans').select('*').order('likes', { ascending: false }).order('created_at', { ascending: false }),
     ]).then(([gymRes, runRes, communityRes]) => {
       const gyms = gymRes.data ?? [];
       const runs = runRes.data ?? [];

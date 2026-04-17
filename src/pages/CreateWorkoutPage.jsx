@@ -308,9 +308,22 @@ export default function CreateWorkoutPage({ setPage }) {
     if (planType === 'gym') {
       plan_data = { days, thumbnail_url: thumbnail, author_name: displayName, author_avatar_url };
     } else if (planType === 'running') {
-      plan_data = { runTypes, weeks: runWeeks, thumbnail_url: thumbnail, author_name: displayName, author_avatar_url };
+      plan_data = { 
+        run_types: runTypes.map(rt => ({ ...rt, iconKey: rt.icon || 'bolt' })), 
+        weeks: runWeeks, 
+        thumbnail_url: thumbnail, 
+        author_name: displayName, 
+        author_avatar_url 
+      };
     } else {
-      plan_data = { days, runTypes, weeks: runWeeks, thumbnail_url: thumbnail, author_name: displayName, author_avatar_url };
+      plan_data = { 
+        days, 
+        run_types: runTypes.map(rt => ({ ...rt, iconKey: rt.icon || 'bolt' })), 
+        weeks: runWeeks, 
+        thumbnail_url: thumbnail, 
+        author_name: displayName, 
+        author_avatar_url 
+      };
     }
 
     setSaving(true); setError('');
