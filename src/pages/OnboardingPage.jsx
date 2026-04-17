@@ -224,8 +224,9 @@ function CommunityPlansView({ onSelect, onBack }) {
   useEffect(() => {
     supabase
       .from('community_plans')
-      .select('*, author:user_config(avatar_url)')
+      .select('*')
       .order('likes', { ascending: false })
+      .order('created_at', { ascending: false })
       .limit(30)
       .then(({ data }) => {
         setPlans(data ?? []);
