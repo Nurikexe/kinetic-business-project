@@ -74,12 +74,15 @@ function AppContent({ page, setPage }) {
         completed: [],
         gym_goals: '',
         gym_rules: [],
+        lifts: [],
         run_weeks: [],
         run_week: 0,
         run_completed: {},
         run_types: [],
         run_goals: [],
-        run_warmup_exercises: []
+        run_warmup_exercises: [],
+        ten_k_time: '',
+        ten_k_target: ''
       }, { immediate: true });
     } else if (mode === 'community' && data?.plan) {
       // TODO: apply community plan data here
