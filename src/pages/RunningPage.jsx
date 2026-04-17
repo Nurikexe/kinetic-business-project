@@ -510,7 +510,7 @@ export default function RunningPage() {
             <h3 className="font-headline font-bold text-lg uppercase tracking-tight">Weeks</h3>
           </div>
           {runWeeks.length > 0 ? (
-            <div className="flex gap-3 overflow-x-auto no-scrollbar pb-3 -mx-6 px-6">
+            <div className="flex gap-4 overflow-x-auto no-scrollbar pt-3 pb-4 -mt-3 -mx-6 px-6">
               {runWeeks.map((week, i) => {
                 const weekDone = Object.values(runCompleted[String(i)] || {}).filter(Boolean).length;
                 const allDone  = enriched.length > 0 && weekDone >= enriched.length;
@@ -519,19 +519,19 @@ export default function RunningPage() {
                     <button
                       onClick={() => updateConfig({ run_week: i })}
                       className={`w-20 h-20 rounded-lg flex flex-col items-center justify-center transition-all active:scale-95 ${
-                        i === runWeek ? 'bg-primary-container text-on-primary-fixed'
+                        i === runWeek ? 'bg-primary-container text-on-primary-fixed block-shadow'
                         : allDone     ? 'bg-surface-container text-secondary'
                         :               'bg-surface-container text-on-surface-variant hover:text-on-surface'
                       }`}
                     >
-                      <span className="font-label font-bold text-xs uppercase">Week</span>
-                      <span className="font-headline font-black text-3xl tracking-tighter">
+                      <span className="font-label font-bold text-xs uppercase text-current">Week</span>
+                      <span className="font-headline font-black text-3xl tracking-tighter text-current">
                         {String(week.week || i + 1).padStart(2, '0')}
                       </span>
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); removeWeek(i); }}
-                      className="absolute top-1 right-1 w-6 h-6 rounded-full bg-surface-container-highest border border-outline-variant/20 text-on-surface-variant flex items-center justify-center hover:bg-error hover:text-on-error hover:border-error transition-all z-10 shadow-sm touch-manipulation active:scale-90"
+                      className="absolute -top-2 -right-2 w-[22px] h-[22px] rounded-full bg-surface-container border border-outline-variant/30 text-on-surface-variant flex items-center justify-center hover:bg-error hover:text-on-error hover:border-error transition-all z-10 shadow-sm touch-manipulation active:scale-90"
                       style={{ WebkitTapHighlightColor: 'transparent' }}
                     >
                       <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>close</span>
