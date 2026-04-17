@@ -4,14 +4,39 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { streamChat } from '../lib/openrouter';
 
-const AI_LIMIT = 10;
-const AI_STORAGE_KEY = 'kinetic_ai_prompts_used';
+const AI_LIMIT = 20;
+const RESET_HOURS = 5;
+const AI_STORAGE_KEY = 'kinetic_ai_state_v2';
 
-function getPromptCount() {
-  try { return parseInt(localStorage.getItem(AI_STORAGE_KEY) || '0'); } catch { return 0; }
+function getAiState() {
+  try {
+    const raw = localStorage.getItem(AI_STORAGE_KEY);
+    if (!raw) return { count: 0, resetAt: Date.now() + RESET_HOURS * 3600 * 1000 };
+    const s = JSON.parse(raw);
+    // If reset time has passed, start fresh
+    if (Date.now() >= s.resetAt) {
+      const fresh = { count: 0, resetAt: Date.now() + RESET_HOURS * 3600 * 1000 };
+      localStorage.setItem(AI_STORAGE_KEY, JSON.stringify(fresh));
+      return fresh;
+    }
+    return s;
+  } catch { return { count: 0, resetAt: Date.now() + RESET_HOURS * 3600 * 1000 }; }
 }
-function incrementPromptCount() {
-  try { localStorage.setItem(AI_STORAGE_KEY, String(getPromptCount() + 1)); } catch {}
+function incrementAiState() {
+  try {
+    const s = getAiState();
+    s.count += 1;
+    localStorage.setItem(AI_STORAGE_KEY, JSON.stringify(s));
+    return s;
+  } catch { return { count: 1, resetAt: Date.now() + RESET_HOURS * 3600 * 1000 }; }
+}
+function fmtCountdown(ms) {
+  if (ms <= 0) return '0:00:00';
+  const totalSec = Math.floor(ms / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
 // ── Bar chart ───────────────────────────────────────────────
@@ -544,10 +569,24 @@ export default function AnalyticsPage() {
   const [allGymData, setAllGymData] = useState([]);
   const [allRunData, setAllRunData] = useState([]);
   const [loading, setLoading]       = useState(true);
-  const [aiInput, setAiInput]       = useState('');
-  const [aiResponse, setAiResponse] = useState('');
-  const [aiStreaming, setAiStreaming] = useState(false);
-  const [promptsUsed, setPromptsUsed] = useState(getPromptCount());
+  const [aiInput, setAiInput]         = useState('');
+  const [aiResponse, setAiResponse]   = useState('');
+  const [aiStreaming, setAiStreaming]  = useState(false);
+  const [aiContextLoading, setAiContextLoading] = useState(false);
+  const [aiState, setAiState]         = useState(getAiState);
+  const [countdown, setCountdown]     = useState(() => Math.max(0, getAiState().resetAt - Date.now()));
+
+  // Countdown timer — tick every second
+  useEffect(() => {
+    const tick = () => {
+      const s = getAiState();
+      setAiState(s);
+      setCountdown(Math.max(0, s.resetAt - Date.now()));
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
 
   // Download date pickers
   const [dlFrom, setDlFrom] = useState(() => {
@@ -558,7 +597,7 @@ export default function AnalyticsPage() {
 
   // Activities: selection + pagination
   const [selectedSession, setSelectedSession] = useState(null);
-  const PAGE_SIZE = 8;
+  const PAGE_SIZE = 5;
   const [activityPage, setActivityPage] = useState(0);
 
   // Scroll-lock while modal is open
@@ -830,31 +869,102 @@ export default function AnalyticsPage() {
   })();
 
   // ── AI insight ────────────────────────────────────────────
-  const buildReport = () => {
-    const gymSummary = `Gym sessions last 30 days: ${gymData.length}. Total volume: ${totalVolumeKg.toLocaleString()} kg.`;
-    const runSummary = `Running sessions: ${runData.length}. Total distance: ${totalDistance.toFixed(1)} km. Avg pace: ${avgPace}/km.`;
-    return `${gymSummary} ${runSummary}`;
+  const buildRichContext = async () => {
+    // Fetch targeted data: last 10 workouts with exercises, last 10 runs, user_config
+    const [wRes, rRes, cfgRes] = await Promise.all([
+      supabase.from('workouts')
+        .select('date, day_name, day_focus, exercises, notes')
+        .eq('user_id', user.id)
+        .order('date', { ascending: false })
+        .limit(10),
+      supabase.from('run_sessions')
+        .select('date, title, total_distance, avg_pace, duration, notes')
+        .eq('user_id', user.id)
+        .order('date', { ascending: false })
+        .limit(10),
+      supabase.from('user_config')
+        .select('config')
+        .eq('user_id', user.id)
+        .maybeSingle(),
+    ]);
+
+    const workouts = wRes.data ?? [];
+    const runs = rRes.data ?? [];
+    const cfg = cfgRes.data?.config ?? {};
+
+    // Personal records from already-loaded allGymData
+    const prs = personalRecords.slice(0, 5);
+
+    // Build concise context string
+    const lines = [];
+
+    // User profile / plan goals
+    if (cfg.athleteType) lines.push(`Athlete type: ${cfg.athleteType}.`);
+    if (cfg.goals?.primary) lines.push(`Primary goal: ${cfg.goals.primary}.`);
+    if (cfg.goals?.targetWeight) lines.push(`Target weight: ${cfg.goals.targetWeight} kg.`);
+    if (cfg.workoutPlan?.days?.length) {
+      const planDays = cfg.workoutPlan.days.map(d => `${d.name}(${d.focus || 'general'})`).join(', ');
+      lines.push(`Current workout plan days: ${planDays}.`);
+    }
+
+    // Last 10 gym sessions
+    if (workouts.length > 0) {
+      lines.push(`\nRecent gym sessions (${workouts.length}):`);
+      workouts.forEach(w => {
+        const exs = Array.isArray(w.exercises) ? w.exercises : (w.exercises?.items ?? []);
+        const vol = exs.reduce((s, ex) => {
+          const r = parseInt(String(ex.reps || '1').split('-')[0]) || 1;
+          return s + (parseFloat(ex.weight) || 0) * (parseInt(ex.sets) || 1) * r;
+        }, 0);
+        const exNames = exs.slice(0, 5).map(e => `${e.name}(${e.sets}x${e.reps}${e.weight ? `@${e.weight}kg` : ''})`).join(', ');
+        lines.push(`  • ${w.date} — ${w.day_name || 'Workout'}${w.day_focus ? ` [${w.day_focus}]` : ''}: ${exNames || 'no details'}. Volume≈${Math.round(vol)}kg.${w.notes ? ` Notes: ${w.notes}` : ''}`);
+      });
+    }
+
+    // Last 10 runs
+    if (runs.length > 0) {
+      lines.push(`\nRecent runs (${runs.length}):`);
+      runs.forEach(r => {
+        lines.push(`  • ${r.date} — ${r.title || 'Run'}: ${r.total_distance ?? '?'}km, pace ${r.avg_pace ?? '?'}/km, ${r.duration ?? '?'}${r.notes ? `. Notes: ${r.notes}` : ''}`);
+      });
+    }
+
+    // PRs
+    if (prs.length > 0) {
+      lines.push(`\nPersonal records (all-time best weight): ${prs.map(p => `${p.name} ${p.weight}kg`).join(', ')}.`);
+    }
+
+    // Summary stats
+    lines.push(`\nLast 30 days: ${gymData.length} gym sessions, total volume ${totalVolumeKg.toLocaleString()}kg. ${runData.length} runs, ${totalDistance.toFixed(1)}km total, avg pace ${avgPace}/km.`);
+
+    return lines.join('\n');
   };
 
   const handleAiSubmit = async () => {
-    if (!aiInput.trim() || promptsUsed >= AI_LIMIT || aiStreaming) return;
-    const report = buildReport();
-    const messages = [
-      {
-        role: 'system',
-        content: `You are an expert fitness coach. The user's training report: ${report}
-Give concise, actionable advice. Answer in 3-5 sentences. Be specific and encouraging.`,
-      },
-      { role: 'user', content: aiInput.trim() },
-    ];
+    if (!aiInput.trim() || aiState.count >= AI_LIMIT || aiStreaming) return;
     setAiStreaming(true);
+    setAiContextLoading(true);
     setAiResponse('');
     try {
+      const context = await buildRichContext();
+      setAiContextLoading(false);
+      const messages = [
+        {
+          role: 'system',
+          content: `You are KINETIC AI, an expert hybrid athlete coach. Use the user's real training data below to give highly personalized, actionable advice. Be specific, reference their actual numbers, and be encouraging. Answer in 3-6 sentences.
+
+=== USER TRAINING DATA ===
+${context}
+=== END DATA ===`,
+        },
+        { role: 'user', content: aiInput.trim() },
+      ];
       await streamChat(messages, (chunk) => setAiResponse(r => r + chunk));
-      incrementPromptCount();
-      const newCount = getPromptCount();
-      setPromptsUsed(newCount);
+      const newState = incrementAiState();
+      setAiState(newState);
+      setCountdown(Math.max(0, newState.resetAt - Date.now()));
     } catch (e) {
+      setAiContextLoading(false);
       setAiResponse('Sorry, something went wrong. Please try again.');
     } finally {
       setAiStreaming(false);
@@ -862,7 +972,7 @@ Give concise, actionable advice. Answer in 3-5 sentences. Be specific and encour
     }
   };
 
-  const promptsLeft = AI_LIMIT - promptsUsed;
+  const promptsLeft = AI_LIMIT - aiState.count;
 
   return (
     <div className="pb-32">
@@ -979,6 +1089,219 @@ Give concise, actionable advice. Answer in 3-5 sentences. Be specific and encour
                 <span className="material-symbols-outlined text-sm">description</span> .MD
               </button>
             </div>
+          </div>
+        </section>
+
+        {/* ── AI Coach Section (right after activities) ── */}
+        <section
+          style={{
+            background: 'linear-gradient(135deg, rgba(212,251,0,0.06) 0%, rgba(0,227,253,0.06) 100%)',
+            border: '1px solid rgba(212,251,0,0.18)',
+            borderRadius: '1.25rem',
+            backdropFilter: 'blur(20px)',
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          {/* Decorative glow blobs */}
+          <div style={{
+            position: 'absolute', top: -40, right: -40, width: 160, height: 160,
+            background: 'radial-gradient(circle, rgba(212,251,0,0.18) 0%, transparent 70%)',
+            pointerEvents: 'none',
+          }} />
+          <div style={{
+            position: 'absolute', bottom: -30, left: -30, width: 120, height: 120,
+            background: 'radial-gradient(circle, rgba(0,227,253,0.12) 0%, transparent 70%)',
+            pointerEvents: 'none',
+          }} />
+
+          <div className="relative p-5 space-y-4">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div style={{
+                  width: 44, height: 44, borderRadius: '0.875rem',
+                  background: 'linear-gradient(135deg, #d4fb00 0%, #9bdd00 100%)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  boxShadow: '0 4px 20px rgba(212,251,0,0.4)',
+                  flexShrink: 0,
+                }}>
+                  <span className="material-symbols-outlined text-black text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>psychology</span>
+                </div>
+                <div>
+                  <h4 className="font-headline font-black text-sm uppercase tracking-wide" style={{ color: '#d4fb00', letterSpacing: '0.08em' }}>Kinetic AI Coach</h4>
+                  <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">Powered by your real data</p>
+                </div>
+              </div>
+              {/* Prompts badge + timer */}
+              <div className="flex flex-col items-end gap-1">
+                <div style={{
+                  background: promptsLeft > 5 ? 'rgba(212,251,0,0.15)' : promptsLeft > 0 ? 'rgba(249,115,22,0.15)' : 'rgba(255,107,138,0.15)',
+                  border: `1px solid ${promptsLeft > 5 ? 'rgba(212,251,0,0.3)' : promptsLeft > 0 ? 'rgba(249,115,22,0.3)' : 'rgba(255,107,138,0.3)'}`,
+                  borderRadius: '2rem',
+                  padding: '3px 10px',
+                  fontSize: 11,
+                  fontWeight: 900,
+                  color: promptsLeft > 5 ? '#d4fb00' : promptsLeft > 0 ? '#f97316' : '#ff6b8a',
+                  fontFamily: 'monospace',
+                  letterSpacing: '0.04em',
+                }}>
+                  {promptsLeft}/{AI_LIMIT} left
+                </div>
+                {countdown > 0 && (
+                  <div style={{
+                    fontSize: 9, fontWeight: 700, color: '#666',
+                    fontFamily: 'monospace', letterSpacing: '0.05em',
+                    display: 'flex', alignItems: 'center', gap: 3,
+                  }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: 10 }}>timer</span>
+                    resets in {fmtCountdown(countdown)}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Progress bar for prompts */}
+            <div style={{ height: 3, borderRadius: 99, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+              <div style={{
+                height: '100%',
+                borderRadius: 99,
+                width: `${(promptsLeft / AI_LIMIT) * 100}%`,
+                background: promptsLeft > 5
+                  ? 'linear-gradient(90deg, #d4fb00, #9bdd00)'
+                  : promptsLeft > 0
+                  ? 'linear-gradient(90deg, #f97316, #fb923c)'
+                  : '#ff6b8a',
+                boxShadow: promptsLeft > 5 ? '0 0 8px rgba(212,251,0,0.6)' : 'none',
+                transition: 'width 0.5s ease',
+              }} />
+            </div>
+
+            {/* Context loading indicator */}
+            {aiContextLoading && (
+              <div className="flex items-center gap-2 text-xs font-bold" style={{ color: '#00e3fd' }}>
+                <div className="w-3 h-3 rounded-full border border-t-transparent animate-spin" style={{ borderColor: '#00e3fd', borderTopColor: 'transparent' }} />
+                Fetching your training data…
+              </div>
+            )}
+
+            {/* AI Response */}
+            {aiResponse && (
+              <div style={{
+                background: 'rgba(255,255,255,0.04)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '0.875rem',
+                padding: '1rem',
+                fontSize: 13,
+                lineHeight: 1.7,
+                color: 'var(--on-surface)',
+              }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="material-symbols-outlined text-sm" style={{ color: '#d4fb00', fontVariationSettings: "'FILL' 1" }}>smart_toy</span>
+                  <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: '#d4fb00' }}>AI Response</span>
+                </div>
+                {aiResponse}
+                {aiStreaming && <span className="inline-block w-0.5 h-4 animate-pulse ml-1 align-middle" style={{ background: '#d4fb00' }} />}
+              </div>
+            )}
+
+            {/* Input area */}
+            {promptsLeft > 0 ? (
+              <div style={{ display: 'flex', gap: 10 }}>
+                <input
+                  type="text"
+                  value={aiInput}
+                  onChange={e => setAiInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleAiSubmit()}
+                  placeholder="Ask about your training…"
+                  disabled={aiStreaming || aiContextLoading}
+                  style={{
+                    flex: 1,
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(212,251,0,0.2)',
+                    borderRadius: '3rem',
+                    padding: '12px 20px',
+                    fontSize: 13,
+                    color: 'var(--on-surface)',
+                    outline: 'none',
+                    transition: 'border-color 0.2s',
+                  }}
+                  onFocus={e => e.target.style.borderColor = 'rgba(212,251,0,0.6)'}
+                  onBlur={e => e.target.style.borderColor = 'rgba(212,251,0,0.2)'}
+                />
+                <button
+                  onClick={handleAiSubmit}
+                  disabled={!aiInput.trim() || aiStreaming || aiContextLoading}
+                  style={{
+                    background: !aiInput.trim() || aiStreaming || aiContextLoading
+                      ? 'rgba(212,251,0,0.3)'
+                      : 'linear-gradient(135deg, #d4fb00 0%, #9bdd00 100%)',
+                    border: 'none',
+                    borderRadius: '3rem',
+                    padding: '12px 22px',
+                    color: '#000',
+                    fontWeight: 900,
+                    fontSize: 12,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    cursor: !aiInput.trim() || aiStreaming || aiContextLoading ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.2s',
+                    boxShadow: !aiInput.trim() || aiStreaming || aiContextLoading ? 'none' : '0 4px 20px rgba(212,251,0,0.4)',
+                    fontFamily: 'var(--font-headline, inherit)',
+                    flexShrink: 0,
+                  }}
+                >
+                  {aiStreaming ? '…' : 'Ask'}
+                </button>
+              </div>
+            ) : (
+              <div style={{
+                textAlign: 'center',
+                padding: '1rem',
+                background: 'rgba(255,107,138,0.08)',
+                border: '1px solid rgba(255,107,138,0.2)',
+                borderRadius: '0.875rem',
+              }}>
+                <span className="material-symbols-outlined block mb-1" style={{ color: '#ff6b8a', fontVariationSettings: "'FILL' 1" }}>hourglass_empty</span>
+                <p className="text-sm font-bold" style={{ color: '#ff6b8a' }}>Daily limit reached</p>
+                <p className="text-xs text-on-surface-variant mt-1">Resets in <span style={{ fontFamily: 'monospace', color: '#ff6b8a', fontWeight: 700 }}>{fmtCountdown(countdown)}</span></p>
+              </div>
+            )}
+
+            {/* Quick prompts */}
+            {promptsLeft > 0 && !aiStreaming && !aiResponse && (
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant mb-2">Quick ask</p>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    'How is my progress?',
+                    'Am I overtraining?',
+                    'What should I focus on?',
+                    'Improve my pace?',
+                  ].map(q => (
+                    <button
+                      key={q}
+                      onClick={() => { setAiInput(q); }}
+                      style={{
+                        background: 'rgba(212,251,0,0.08)',
+                        border: '1px solid rgba(212,251,0,0.15)',
+                        borderRadius: '2rem',
+                        padding: '5px 12px',
+                        fontSize: 11,
+                        color: 'var(--on-surface-variant)',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s',
+                        fontWeight: 600,
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(212,251,0,0.16)'; e.currentTarget.style.color = '#d4fb00'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(212,251,0,0.08)'; e.currentTarget.style.color = 'var(--on-surface-variant)'; }}
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </section>
 
@@ -1262,49 +1585,7 @@ Give concise, actionable advice. Answer in 3-5 sentences. Be specific and encour
           </>
         )}
 
-        {/* AI Insight Section */}
-        <section className="bg-surface-container/40 backdrop-blur-xl border border-outline-variant/15 rounded-lg p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-primary-container flex items-center justify-center shrink-0">
-              <span className="material-symbols-outlined text-on-primary-fixed" style={{ fontVariationSettings: "'FILL' 1" }}>bolt</span>
-            </div>
-            <div>
-              <h4 className="font-headline text-sm font-bold uppercase tracking-tight">AI Kinetic Insight</h4>
-              <p className="text-xs text-on-surface-variant">{promptsLeft} of {AI_LIMIT} prompts remaining</p>
-            </div>
-          </div>
 
-          {aiResponse && (
-            <div className="bg-surface-container rounded-lg p-4 mb-4 text-sm text-on-surface leading-relaxed">
-              {aiResponse}
-              {aiStreaming && <span className="inline-block w-1 h-4 bg-primary-container animate-pulse ml-1 align-middle" />}
-            </div>
-          )}
-
-          {promptsLeft > 0 ? (
-            <div className="flex gap-3">
-              <input
-                type="text"
-                value={aiInput}
-                onChange={e => setAiInput(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleAiSubmit()}
-                placeholder="How can I improve my sessions?"
-                className="flex-1 bg-surface-container-highest border border-outline-variant/20 rounded-full px-5 py-3 text-sm placeholder:text-outline focus:outline-none focus:border-primary-container/50 transition-colors"
-              />
-              <button
-                onClick={handleAiSubmit}
-                disabled={!aiInput.trim() || aiStreaming}
-                className="px-5 py-3 rounded-full bg-primary-container text-on-primary-fixed font-headline font-bold uppercase text-xs tracking-wide disabled:opacity-40 hover:bg-primary-dim transition-colors active:scale-95"
-              >
-                {aiStreaming ? '…' : 'Ask'}
-              </button>
-            </div>
-          ) : (
-            <div className="text-center py-3 text-on-surface-variant text-sm">
-              You've used all {AI_LIMIT} AI prompts for this session.
-            </div>
-          )}
-        </section>
       </div>
     </div>
   );
