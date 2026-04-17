@@ -341,38 +341,147 @@ function buildFilteredRows(gymData, runData, from, to) {
   }).map(w => {
     const exs = Array.isArray(w.exercises) ? w.exercises : (w.exercises?.items ?? []);
     const vol = exs.reduce((s, ex) => { const r = parseInt(String(ex.reps || '1').split('-')[0]) || 1; return s + (parseFloat(ex.weight) || 0) * (parseInt(ex.sets) || 1) * r; }, 0);
-    return { type: 'gym', date: w.date, name: w.day_name || 'Workout', detail: `${exs.length} exercises`, extra: `${Math.round(vol)} kg volume` };
+    return { type: 'gym', date: w.date, name: w.day_name || 'Workout', focus: w.day_focus || '', exercises: exs, volume: Math.round(vol) };
   });
   const runRows = runData.filter(r => {
     const d = new Date(r.submitted_at || r.date); return d >= fromDate && d <= toDate;
-  }).map(r => ({ type: 'run', date: r.date, name: r.title || 'Run', detail: `${r.total_distance ?? 0} km`, extra: `${r.avg_pace ?? '—'}/km` }));
+  }).map(r => ({
+    type: 'run', date: r.date, name: r.title || 'Run', focus: '',
+    exercises: [], distance: r.total_distance ?? 0, pace: r.avg_pace ?? '—', duration: r.duration ?? '—'
+  }));
   return [...gymRows, ...runRows].sort((a, b) => a.date.localeCompare(b.date));
 }
+
 function downloadCSV(gymData, runData, from, to) {
   const rows = buildFilteredRows(gymData, runData, from, to);
-  const csv = ['Date,Type,Name,Detail,Volume/Pace', ...rows.map(r => `${r.date},${r.type === 'gym' ? 'Gym' : 'Running'},"${r.name}",${r.detail},${r.extra}`)].join('\n');
+  const lines = ['Date,Type,Session,Focus,Exercise,Sets,Reps,Weight (kg),Volume (kg)'];
+  rows.forEach(r => {
+    if (r.type === 'run') {
+      lines.push(`${r.date},Running,"${r.name}",,Distance ${r.distance} km,,,,`);
+      lines.push(`,,,,"Avg Pace: ${r.pace}/km  Duration: ${r.duration}",,,,`);
+    } else {
+      if (r.exercises.length === 0) {
+        lines.push(`${r.date},Gym,"${r.name}","${r.focus}",—,,,, ${r.volume} kg total`);
+      } else {
+        r.exercises.forEach((ex, i) => {
+          const reps = parseInt(String(ex.reps || '1').split('-')[0]) || 1;
+          const exVol = (parseFloat(ex.weight) || 0) * (parseInt(ex.sets) || 1) * reps;
+          lines.push(`${i === 0 ? r.date : ''},${i === 0 ? 'Gym' : ''},"${i === 0 ? r.name : ''}","${i === 0 ? r.focus : ''}","${ex.name || ''}",${ex.sets || ''},${ex.reps || ''},${ex.weight || ''},${Math.round(exVol) || ''}`);
+        });
+      }
+    }
+  });
+  const csv = lines.join('\n');
   const blob = new Blob([csv], { type: 'text/csv' }); const url = URL.createObjectURL(blob); const a = document.createElement('a');
   a.href = url; a.download = `kinetic_activities_${from}_to_${to}.csv`; a.click(); URL.revokeObjectURL(url);
 }
+
 function downloadAllPDF(gymData, runData, from, to) {
   const rows = buildFilteredRows(gymData, runData, from, to);
+  const sessionBlocks = rows.map(r => {
+    if (r.type === 'run') {
+      return `
+        <div class="session">
+          <div class="session-header">
+            <span class="session-date">${r.date}</span>
+            <span class="session-type run">Running</span>
+            <span class="session-name">${r.name}</span>
+          </div>
+          <table><thead><tr><th>Distance</th><th>Avg Pace</th><th>Duration</th></tr></thead>
+          <tbody><tr><td>${r.distance} km</td><td>${r.pace}/km</td><td>${r.duration}</td></tr></tbody></table>
+        </div>`;
+    }
+    const exRows = r.exercises.length
+      ? r.exercises.map(ex => {
+          const reps = parseInt(String(ex.reps || '1').split('-')[0]) || 1;
+          const vol = (parseFloat(ex.weight) || 0) * (parseInt(ex.sets) || 1) * reps;
+          return `<tr><td>${ex.name || '—'}</td><td>${ex.sets || '—'}</td><td>${ex.reps || '—'}</td><td>${ex.weight ? ex.weight + ' kg' : '—'}</td><td>${vol ? Math.round(vol) + ' kg' : '—'}</td></tr>`;
+        }).join('')
+      : `<tr><td colspan="5" style="color:#999">No exercises recorded</td></tr>`;
+    return `
+      <div class="session">
+        <div class="session-header">
+          <span class="session-date">${r.date}</span>
+          <span class="session-type gym">Gym</span>
+          <span class="session-name">${r.name}</span>
+          ${r.focus ? `<span class="session-focus">${r.focus}</span>` : ''}
+          <span class="session-vol">${r.volume} kg total</span>
+        </div>
+        <table><thead><tr><th>Exercise</th><th>Sets</th><th>Reps</th><th>Weight</th><th>Volume</th></tr></thead>
+        <tbody>${exRows}</tbody></table>
+      </div>`;
+  }).join('');
+
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>KINETIC Activity Log</title>
-    <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Helvetica,sans-serif;color:#111;padding:32px;font-size:12px}
-    h1{font-size:20px;font-weight:900;text-transform:uppercase;margin-bottom:4px}.meta{color:#666;font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;border-bottom:2px solid #000;padding-bottom:10px}
-    table{width:100%;border-collapse:collapse}th{background:#111;color:#fff;padding:6px 8px;text-align:left;font-size:10px;text-transform:uppercase}
-    td{padding:5px 8px;border-bottom:1px solid #eee;font-size:11px}</style></head><body>
-    <div class="meta">KINETIC · ${from} → ${to} · ${rows.length} activities</div><h1>Activity Log</h1>
-    <table><thead><tr><th>Date</th><th>Type</th><th>Name</th><th>Detail</th><th>Volume/Pace</th></tr></thead><tbody>
-    ${rows.map(r => `<tr><td>${r.date}</td><td>${r.type === 'gym' ? 'Gym' : 'Run'}</td><td>${r.name}</td><td>${r.detail}</td><td>${r.extra}</td></tr>`).join('')}
-    </tbody></table></body></html>`;
+    <style>
+      *{box-sizing:border-box;margin:0;padding:0}
+      body{font-family:Helvetica,sans-serif;color:#111;padding:32px;font-size:12px}
+      h1{font-size:20px;font-weight:900;text-transform:uppercase;margin-bottom:4px}
+      .meta{color:#666;font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:20px;border-bottom:2px solid #000;padding-bottom:10px}
+      .session{margin-bottom:24px;page-break-inside:avoid}
+      .session-header{display:flex;align-items:baseline;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+      .session-date{font-size:10px;color:#888;font-weight:700;min-width:90px}
+      .session-type{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:1px;padding:2px 7px;border-radius:99px}
+      .session-type.gym{background:#111;color:#fff}
+      .session-type.run{background:#0ea5e9;color:#fff}
+      .session-name{font-size:14px;font-weight:900;text-transform:uppercase}
+      .session-focus{font-size:10px;color:#555;text-transform:uppercase;letter-spacing:0.5px}
+      .session-vol{margin-left:auto;font-size:10px;font-weight:700;color:#555}
+      table{width:100%;border-collapse:collapse}
+      th{background:#f5f5f5;padding:5px 8px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:#555}
+      td{padding:5px 8px;border-bottom:1px solid #f0f0f0;font-size:11px}
+      @media print{body{padding:16px}.session{page-break-inside:avoid}}
+    </style></head><body>
+    <div class="meta">KINETIC · ${from} → ${to} · ${rows.length} sessions</div>
+    <h1>Activity Log</h1>
+    ${sessionBlocks}
+    </body></html>`;
   const w = window.open('', '_blank'); w.document.write(html); w.document.close(); w.focus(); setTimeout(() => w.print(), 400);
 }
+
 function downloadAllMD(gymData, runData, from, to) {
   const rows = buildFilteredRows(gymData, runData, from, to);
-  const lines = ['# KINETIC Activity Log', '', `**Period:** ${from} → ${to}`, `**Total:** ${rows.length} activities`, '',
-    '| Date | Type | Name | Detail | Volume/Pace |', '|------|------|------|--------|-------------|',
-    ...rows.map(r => `| ${r.date} | ${r.type === 'gym' ? 'Gym' : 'Running'} | ${r.name} | ${r.detail} | ${r.extra} |`),
-    '', '---', '*Exported from KINETIC*'];
+  const lines = [
+    '# KINETIC Activity Log',
+    '',
+    `**Period:** ${from} → ${to}`,
+    `**Total sessions:** ${rows.length}`,
+    '',
+    '---',
+    '',
+  ];
+  rows.forEach(r => {
+    lines.push(`## ${r.date} — ${r.name}`);
+    lines.push('');
+    if (r.type === 'run') {
+      lines.push(`**Type:** Running`);
+      lines.push('');
+      lines.push('| Stat | Value |');
+      lines.push('|------|-------|');
+      lines.push(`| Distance | ${r.distance} km |`);
+      lines.push(`| Avg Pace | ${r.pace}/km |`);
+      lines.push(`| Duration | ${r.duration} |`);
+    } else {
+      lines.push(`**Type:** Gym Workout${r.focus ? `  ·  **Focus:** ${r.focus}` : ''}`);
+      lines.push(`**Total Volume:** ${r.volume} kg`);
+      lines.push('');
+      if (r.exercises.length > 0) {
+        lines.push('| Exercise | Sets | Reps | Weight | Volume |');
+        lines.push('|----------|------|------|--------|--------|');
+        r.exercises.forEach(ex => {
+          const reps = parseInt(String(ex.reps || '1').split('-')[0]) || 1;
+          const vol = (parseFloat(ex.weight) || 0) * (parseInt(ex.sets) || 1) * reps;
+          lines.push(`| ${ex.name || '—'} | ${ex.sets || '—'} | ${ex.reps || '—'} | ${ex.weight ? ex.weight + ' kg' : '—'} | ${vol ? Math.round(vol) + ' kg' : '—'} |`);
+        });
+      } else {
+        lines.push('_No exercises recorded_');
+      }
+    }
+    lines.push('');
+    lines.push('---');
+    lines.push('');
+  });
+  lines.push('*Exported from KINETIC*');
   const blob = new Blob([lines.join('\n')], { type: 'text/markdown' }); const url = URL.createObjectURL(blob); const a = document.createElement('a');
   a.href = url; a.download = `kinetic_activities_${from}_to_${to}.md`; a.click(); URL.revokeObjectURL(url);
 }
