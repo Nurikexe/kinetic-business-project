@@ -253,6 +253,9 @@ function downloadPlanAsPDF(plan) {
 function CommunityPlanModal({ plan, onClose, onUsePlan, isLiked, onLike, isOwn }) {
   const [confirming, setConfirming] = useState(false);
   const [applied, setApplied] = useState(false);
+  const [expandedDays, setExpandedDays] = useState({});
+  const [expandedWeeks, setExpandedWeeks] = useState({});
+
   if (!plan) return null;
 
   const pd = plan.plan_data ?? {};
@@ -274,7 +277,7 @@ function CommunityPlanModal({ plan, onClose, onUsePlan, isLiked, onLike, isOwn }
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-md sm:p-4" onClick={onClose}>
       <div className="flex min-h-full items-end sm:items-center justify-center p-0">
-        <div className="relative w-full max-w-xl bg-surface-container-low rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden mt-16 sm:mt-0 flex flex-col"
+        <div className="relative w-full max-w-xl bg-surface-container-low rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden mt-16 sm:mt-0 flex flex-col max-h-[85vh]"
           onClick={e => e.stopPropagation()}>
 
           {/* ── Hero ── */}
@@ -294,7 +297,7 @@ function CommunityPlanModal({ plan, onClose, onUsePlan, isLiked, onLike, isOwn }
           </div>
 
           {/* ── Scrollable body ── */}
-          <div className="p-5 space-y-5">
+          <div className="p-5 space-y-5 overflow-y-auto flex-1">
 
           {/* Author + likes */}
           <div className="flex items-center justify-between">
@@ -334,21 +337,31 @@ function CommunityPlanModal({ plan, onClose, onUsePlan, isLiked, onLike, isOwn }
               </p>
               {pd.days.map((day, di) => (
                 <div key={di} className="bg-surface-container rounded-2xl overflow-hidden">
-                  <div className="flex items-center justify-between px-4 py-3 border-b border-outline-variant/10">
+                  <div 
+                    className="flex items-center justify-between px-4 py-3 cursor-pointer select-none hover:bg-surface-container-high transition-colors"
+                    onClick={() => setExpandedDays(prev => ({ ...prev, [di]: !prev[di] }))}
+                  >
                     <div>
                       <span className="font-headline font-black text-sm uppercase">{day.name}</span>
                       {day.focus && <span className="text-on-surface-variant text-[10px] font-bold uppercase tracking-widest ml-2">{day.focus}</span>}
                     </div>
-                    <span className="text-on-surface-variant text-[10px] font-bold uppercase tracking-widest">{day.schedule}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-on-surface-variant text-[10px] font-bold uppercase tracking-widest hidden sm:inline">{day.schedule}</span>
+                      <span className="material-symbols-outlined text-outline text-lg transition-transform" style={{ transform: expandedDays[di] ? 'rotate(180deg)' : 'none' }}>
+                        expand_more
+                      </span>
+                    </div>
                   </div>
-                  <div className="px-4 py-2 space-y-1.5">
-                    {(day.exercises || []).map((ex, ei) => (
-                      <div key={ei} className="flex items-center justify-between py-1">
-                        <span className="text-sm font-medium">{ex.name}</span>
-                        <span className="text-on-surface-variant text-xs font-bold">{ex.sets}×{ex.reps}</span>
-                      </div>
-                    ))}
-                  </div>
+                  {expandedDays[di] && (
+                    <div className="px-4 py-2 space-y-1.5 border-t border-outline-variant/10">
+                      {(day.exercises || []).map((ex, ei) => (
+                        <div key={ei} className="flex items-center justify-between py-1">
+                          <span className="text-sm font-medium">{ex.name}</span>
+                          <span className="text-on-surface-variant text-xs font-bold">{ex.sets}×{ex.reps}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
               {pd.goals && (
@@ -391,18 +404,26 @@ function CommunityPlanModal({ plan, onClose, onUsePlan, isLiked, onLike, isOwn }
                   </p>
                   <div className="space-y-1.5">
                     {pd.weeks.map((w, i) => (
-                      <div key={i} className="bg-surface-container rounded-xl px-4 py-3">
-                        <div className="flex items-center gap-2 mb-1.5">
+                      <div key={i} className="bg-surface-container rounded-xl overflow-hidden">
+                        <div 
+                          className="flex items-center justify-between px-4 py-3 cursor-pointer select-none hover:bg-surface-container-high transition-colors"
+                          onClick={() => setExpandedWeeks(prev => ({ ...prev, [i]: !prev[i] }))}
+                        >
                           <span className="text-[9px] font-black uppercase tracking-widest text-primary-fixed">Week {w.week}</span>
+                          <span className="material-symbols-outlined text-outline text-lg transition-transform" style={{ transform: expandedWeeks[i] ? 'rotate(180deg)' : 'none' }}>
+                            expand_more
+                          </span>
                         </div>
-                        <div className="space-y-1">
-                          {[{ label: 'Mon', val: w.mon }, { label: 'Thu', val: w.thu }, { label: 'Sat', val: w.sat }].map(d => (
-                            <div key={d.label} className="flex gap-3 text-xs">
-                              <span className="text-on-surface-variant font-bold w-7 shrink-0">{d.label}</span>
-                              <span className="text-on-surface">{d.val}</span>
-                            </div>
-                          ))}
-                        </div>
+                        {expandedWeeks[i] && (
+                          <div className="px-4 pb-3 space-y-1 border-t border-outline-variant/10 pt-2">
+                            {[{ label: 'Mon', val: w.mon }, { label: 'Thu', val: w.thu }, { label: 'Sat', val: w.sat }].map(d => (
+                              <div key={d.label} className="flex gap-3 text-xs">
+                                <span className="text-on-surface-variant font-bold w-7 shrink-0">{d.label}</span>
+                                <span className="text-on-surface">{d.val}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -438,7 +459,7 @@ function CommunityPlanModal({ plan, onClose, onUsePlan, isLiked, onLike, isOwn }
         </div>
 
         {/* ── Action buttons ── */}
-        <div className="p-4 pt-0 space-y-2 shrink-0">
+        <div className="p-4 pt-4 space-y-2 shrink-0 border-t border-outline-variant/10 bg-surface-container-low">
           {applied ? (
             <div className="w-full py-4 rounded-2xl bg-surface-container flex items-center justify-center gap-2 text-primary-fixed font-headline font-black uppercase text-sm tracking-wide">
               <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
