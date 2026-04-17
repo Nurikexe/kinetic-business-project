@@ -188,8 +188,18 @@ Schema:
 }
 
 Only include gymDays if the plan has gym. Only include runningDays and weeks if the plan has running. The "weeks" array length MUST equal the user's requested number of weeks and each week's "sessions" keys must match the "name" of each runningDay.
-${isGym ? (answers.gym_stats?.trim() ? '\\nA gym goal/stats was provided. You MUST generate 2 to 4 progression rules in the "methodology" array and set "performanceTargets" based on their input.' : '\\nNo valid gym goal/stats provided. You MUST leave "performanceTargets" and "methodology" arrays completely empty.') : ''}
-${isRunning ? (answers.run_stats?.trim() ? '\\nA running goal/stats was provided. You MUST generate the progression "weeks" based on the delta between their current and goal stats.' : '\\nNo valid running goal/stats provided or none asked. You MUST generate the progression "weeks" using default average distances and speeds.') : ''}`
+${isGym ? (answers.gym_stats?.trim() ? '\nA gym goal/stats was provided. You MUST generate 2 to 4 progression rules in the "methodology" array and set "performanceTargets" based on their input.' : '\nNo valid gym goal/stats provided. You MUST leave "performanceTargets" and "methodology" arrays completely empty.') : ''}
+${isRunning ? `
+CRITICAL RUNNING PROGRESSION RULES — THESE ARE MANDATORY, NOT OPTIONAL:
+1. EVERY session in the "weeks" array MUST show clear, measurable week-over-week progression. It is STRICTLY FORBIDDEN for any session to have the same distance AND same pace as the identical session in any previous week.
+2. Distance progression: increase each run type by 5–10% per week (roughly 0.5–2km depending on base). Example: Long Run 10km (wk1) → 11km (wk2) → 12km (wk3) → 13km (wk4).
+3. Pace progression: tempo, interval, and threshold paces must improve by at least 5–10 sec/km per week OR volume must increase.
+4. EVERY session description MUST explicitly state the exact distance in km AND the target pace in min/km format, e.g. "12km at 5:30/km — push the final 2km".
+5. NEVER write vague descriptions like "Continue long run training" or "Similar to last week". Always include specific numbers that differ from the previous week.
+6. Deload weeks (if included): must be explicitly 80% of the previous week's volume — not a copy of it.
+7. Before writing the JSON, mentally verify that no two consecutive weeks share identical numbers for the same session type.
+${answers.run_stats?.trim() ? 'Running goal/stats were provided. Build the progression so the athlete reaches (or closely approaches) their stated goal by the final week. Make the delta visible across every week.' : 'No running goals provided. Start from sensible defaults for the experience level and apply the 10% weekly volume rule throughout all weeks.'}
+` : ''}`
     },
     {
       role: 'user',
