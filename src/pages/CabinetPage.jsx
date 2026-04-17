@@ -142,7 +142,6 @@ export default function CabinetPage({ setPage }) {
 
   const handleLogout = async () => {
     setLoggingOut(true);
-    localStorage.removeItem('ha_onboarding_done');
     await logout();
   };
 
