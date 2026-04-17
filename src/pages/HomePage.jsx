@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { useUserConfig } from '../context/UserConfigContext';
@@ -51,8 +52,8 @@ function ActivityDetailModal({ session, onClose }) {
     : null;
   const exercises = Array.isArray(session.exercises) ? session.exercises : session.exercises?.items ?? [];
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm sm:p-4" style={{ height: '100dvh' }} onClick={onClose}>
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm sm:p-4" style={{ height: '100dvh' }} onClick={onClose}>
       <div className="relative w-full h-[100dvh] sm:h-auto sm:max-h-[90dvh] max-w-xl bg-surface-container-low rounded-none sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col min-h-0"
         onClick={e => e.stopPropagation()}>
         <div className="relative h-48 shrink-0 overflow-hidden">
@@ -120,7 +121,8 @@ function ActivityDetailModal({ session, onClose }) {
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -272,8 +274,8 @@ function CommunityPlanModal({ plan, onClose, onUsePlan, isLiked, onLike, isOwn }
     setTimeout(onClose, 1200);
   };
 
-  return (
-    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-md sm:p-4" style={{ height: '100dvh' }} onClick={onClose}>
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-md sm:p-4" style={{ height: '100dvh' }} onClick={onClose}>
       <div className="relative w-full h-[100dvh] sm:h-auto sm:max-h-[90dvh] max-w-xl bg-surface-container-low rounded-none sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col min-h-0"
         onClick={e => e.stopPropagation()}>
 
@@ -496,7 +498,8 @@ function CommunityPlanModal({ plan, onClose, onUsePlan, isLiked, onLike, isOwn }
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -861,8 +864,8 @@ export default function HomePage({ setPage }) {
           isOwn={selectedPlan.user_id === user?.id}
         />
       )}
-      {showAllCommunity && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-md sm:p-4" style={{ height: '100dvh' }} onClick={() => setShowAllCommunity(false)}>
+      {showAllCommunity && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-md sm:p-4" style={{ height: '100dvh' }} onClick={() => setShowAllCommunity(false)}>
           <div className="relative w-full h-[100dvh] sm:h-auto sm:max-h-[90dvh] max-w-2xl bg-surface-container-low rounded-none sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden min-h-0"
             onClick={e => e.stopPropagation()}>
             <div className="shrink-0 z-10 flex items-center justify-between p-5 border-b border-outline-variant/10 bg-surface-container-low/90 backdrop-blur-xl">
@@ -884,7 +887,8 @@ export default function HomePage({ setPage }) {
                 ))}
               </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
