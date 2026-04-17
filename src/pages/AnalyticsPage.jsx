@@ -13,13 +13,18 @@ function incrementPromptCount() {
   try { localStorage.setItem(AI_STORAGE_KEY, String(getPromptCount() + 1)); } catch {}
 }
 
-// Simple bar chart component
-function BarChart({ data, maxValue, color = '#d4fb00' }) {
+// ── Bar chart ───────────────────────────────────────────────
+function BarChart({ data, maxValue, color = '#d4fb00', showValues = false }) {
   const max = maxValue || Math.max(...data.map(d => d.value), 1);
   return (
     <div className="flex items-end justify-between h-28 gap-1.5">
       {data.map((d, i) => (
-        <div key={i} className="flex-1 flex flex-col items-center gap-1">
+        <div key={i} className="flex-1 flex flex-col items-center gap-1 min-w-0">
+          {showValues && (
+            <span className="text-[8px] text-on-surface-variant font-bold" style={{ opacity: d.value > 0 ? 1 : 0 }}>
+              {d.value > 1000 ? `${(d.value / 1000).toFixed(1)}k` : d.value}
+            </span>
+          )}
           <div
             className="w-full rounded-t-md transition-all"
             style={{
@@ -28,14 +33,14 @@ function BarChart({ data, maxValue, color = '#d4fb00' }) {
               minHeight: 4,
             }}
           />
-          <span className="text-[9px] text-on-surface-variant font-bold uppercase">{d.label}</span>
+          <span className="text-[9px] text-on-surface-variant font-bold uppercase truncate w-full text-center">{d.label}</span>
         </div>
       ))}
     </div>
   );
 }
 
-// SVG line chart
+// ── SVG line chart ───────────────────────────────────────────
 function LineChart({ points, color = '#00e3fd' }) {
   if (!points || points.length < 2) return (
     <div className="h-24 flex items-center justify-center text-on-surface-variant text-sm">Not enough data</div>
@@ -71,16 +76,96 @@ function LineChart({ points, color = '#00e3fd' }) {
   );
 }
 
+// ── Activity row (compact) ────────────────────────────────────
+function ActivityRow({ session }) {
+  const isRun = session.session_type === 'run';
+  const title = session.day_name || session.title || 'Workout';
+  const dateStr = new Date(session.submitted_at || session.date).toLocaleDateString('en-US', {
+    month: 'short', day: 'numeric', year: 'numeric',
+  });
+
+  return (
+    <div className="flex items-center gap-3 bg-surface-container rounded-xl px-4 py-3">
+      <div className={`w-2 h-2 rounded-full shrink-0 ${isRun ? 'bg-primary-fixed' : 'bg-secondary'}`} />
+      <div className="flex-1 min-w-0">
+        <p className="font-headline font-bold text-sm truncate">{title}</p>
+        <p className={`text-[9px] font-black uppercase tracking-widest ${isRun ? 'text-primary-fixed' : 'text-secondary'}`}>
+          {isRun ? 'Running' : 'Gym'}
+          {isRun && session.total_distance != null && ` · ${Number(session.total_distance).toFixed(1)} km`}
+          {isRun && session.avg_pace && ` · ${session.avg_pace}/km`}
+          {!isRun && session.exercises && ` · ${Array.isArray(session.exercises) ? session.exercises.length : '—'} exercises`}
+        </p>
+      </div>
+      <span className="text-on-surface-variant text-[10px] font-bold uppercase tracking-widest shrink-0">{dateStr}</span>
+    </div>
+  );
+}
+
+// ── Download CSV helper ──────────────────────────────────────
+function downloadCSV(gymData, runData, from, to) {
+  const fromDate = new Date(from);
+  const toDate = new Date(to);
+  toDate.setHours(23, 59, 59);
+
+  const gymRows = gymData
+    .filter(w => {
+      const d = new Date(w.submitted_at || w.date);
+      return d >= fromDate && d <= toDate;
+    })
+    .map(w => {
+      const exercises = Array.isArray(w.exercises) ? w.exercises : (w.exercises?.items ?? []);
+      const vol = exercises.reduce((s, ex) => {
+        const reps = parseInt(String(ex.reps || '1').split('-')[0]) || 1;
+        return s + (parseFloat(ex.weight) || 0) * (parseInt(ex.sets) || 1) * reps;
+      }, 0);
+      return `${w.date},Gym,"${w.day_name || 'Workout'}",${exercises.length} exercises,${Math.round(vol)} kg volume`;
+    });
+
+  const runRows = runData
+    .filter(r => {
+      const d = new Date(r.submitted_at || r.date);
+      return d >= fromDate && d <= toDate;
+    })
+    .map(r => `${r.date},Running,"${r.title || 'Run'}",${r.total_distance ?? 0} km,${r.avg_pace ?? '—'}/km`);
+
+  const all = [...gymRows, ...runRows].sort();
+  const csv = [
+    'Date,Type,Name,Detail,Volume/Pace',
+    ...all,
+  ].join('\n');
+
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `kinetic_activities_${from}_to_${to}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── Main Page ────────────────────────────────────────────────
 export default function AnalyticsPage() {
   const { user } = useAuth();
   const [tab, setTab]               = useState('strength');
   const [gymData, setGymData]       = useState([]);
   const [runData, setRunData]       = useState([]);
+  const [allGymData, setAllGymData] = useState([]);
+  const [allRunData, setAllRunData] = useState([]);
   const [loading, setLoading]       = useState(true);
   const [aiInput, setAiInput]       = useState('');
   const [aiResponse, setAiResponse] = useState('');
   const [aiStreaming, setAiStreaming] = useState(false);
   const [promptsUsed, setPromptsUsed] = useState(getPromptCount());
+
+  // Download date pickers
+  const [dlFrom, setDlFrom] = useState(() => {
+    const d = new Date(); d.setDate(d.getDate() - 30);
+    return d.toISOString().split('T')[0];
+  });
+  const [dlTo, setDlTo] = useState(() => new Date().toISOString().split('T')[0]);
+
+  // Activities section show-more
+  const [showAllActivities, setShowAllActivities] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -89,16 +174,31 @@ export default function AnalyticsPage() {
     const since = thirtyDaysAgo.toISOString().split('T')[0];
 
     Promise.all([
+      // Last 30 days for charts
       supabase.from('workouts').select('*').eq('user_id', user.id).gte('date', since).order('date'),
       supabase.from('run_sessions').select('*').eq('user_id', user.id).gte('date', since).order('date'),
-    ]).then(([gymRes, runRes]) => {
+      // All time for recent activities + download
+      supabase.from('workouts').select('*').eq('user_id', user.id).order('date', { ascending: false }),
+      supabase.from('run_sessions').select('*').eq('user_id', user.id).order('date', { ascending: false }),
+    ]).then(([gymRes, runRes, allGymRes, allRunRes]) => {
       setGymData(gymRes.data ?? []);
       setRunData(runRes.data ?? []);
+      setAllGymData(allGymRes.data ?? []);
+      setAllRunData(allRunRes.data ?? []);
       setLoading(false);
     });
   }, [user]);
 
-  // ── Gym metrics ───────────────────────────────────────────
+  // ── All activities merged + sorted ─────────────────────────
+  const allActivities = [
+    ...allGymData.map(s => ({ ...s, session_type: 'gym' })),
+    ...allRunData.map(s => ({ ...s, session_type: 'run' })),
+  ].sort((a, b) => new Date(b.submitted_at || b.date) - new Date(a.submitted_at || a.date));
+
+  const visibleActivities = showAllActivities ? allActivities : allActivities.slice(0, 8);
+
+  // ── Gym metrics ─────────────────────────────────────────────
+  // Weekly volume (last 7 weeks)
   const weeklyVolume = (() => {
     const weeks = {};
     gymData.forEach(w => {
@@ -121,6 +221,42 @@ export default function AnalyticsPage() {
     }));
   })();
 
+  // Volume by session (last 10 sessions)
+  const volumeBySession = (() => {
+    const sessions = [...gymData].reverse().slice(-10);
+    return sessions.map((w, i) => {
+      const exercises = Array.isArray(w.exercises) ? w.exercises : (w.exercises?.items ?? []);
+      const vol = exercises.reduce((s, ex) => {
+        const reps = parseInt(String(ex.reps || '1').split('-')[0]) || 1;
+        return s + (parseFloat(ex.weight) || 0) * (parseInt(ex.sets) || 1) * reps;
+      }, 0);
+      const dayLabel = new Date(w.date).toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 2);
+      return { label: dayLabel, value: Math.round(vol), highlight: i === sessions.length - 1 };
+    });
+  })();
+
+  // Volume by month (last 6 months from allGymData)
+  const volumeByMonth = (() => {
+    const months = {};
+    allGymData.forEach(w => {
+      const d = new Date(w.date);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      if (!months[key]) months[key] = 0;
+      const exercises = Array.isArray(w.exercises) ? w.exercises : (w.exercises?.items ?? []);
+      exercises.forEach(ex => {
+        const reps = parseInt(String(ex.reps || '1').split('-')[0]) || 1;
+        months[key] += (parseFloat(ex.weight) || 0) * (parseInt(ex.sets) || 1) * reps;
+      });
+    });
+    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const sorted = Object.entries(months).sort(([a], [b]) => a.localeCompare(b)).slice(-6);
+    return sorted.map(([key, val], i) => ({
+      label: monthNames[parseInt(key.split('-')[1]) - 1],
+      value: Math.round(val),
+      highlight: i === sorted.length - 1,
+    }));
+  })();
+
   const totalVolumeKg = weeklyVolume.reduce((s, w) => s + w.value, 0);
   const latestMaxLift = (() => {
     for (let i = gymData.length - 1; i >= 0; i--) {
@@ -131,9 +267,10 @@ export default function AnalyticsPage() {
     return null;
   })();
 
-  // ── Run metrics ───────────────────────────────────────────
+  // ── Run metrics ──────────────────────────────────────────────
   const totalDistance = runData.reduce((s, r) => s + (parseFloat(r.total_distance) || 0), 0);
 
+  // Pace trend last 7 runs
   const pacePoints = runData.slice(-7).map((r, i) => {
     const paceStr = r.avg_pace || '';
     const [m, s] = paceStr.split(':').map(Number);
@@ -155,6 +292,56 @@ export default function AnalyticsPage() {
     const mins = Math.floor(avg);
     const secs = Math.round((avg - mins) * 60);
     return `${mins}:${String(secs).padStart(2, '0')}`;
+  })();
+
+  // Distance by session (last 10 runs)
+  const distanceBySession = (() => {
+    const sessions = [...runData].reverse().slice(-10);
+    return sessions.map((r, i) => {
+      const dayLabel = new Date(r.date).toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 2);
+      return {
+        label: dayLabel,
+        value: parseFloat(r.total_distance) || 0,
+        highlight: i === sessions.length - 1,
+      };
+    });
+  })();
+
+  // Distance by week (last 7 weeks)
+  const weeklyDistance = (() => {
+    const weeks = {};
+    runData.forEach(r => {
+      const d = new Date(r.date);
+      const weekStart = new Date(d);
+      weekStart.setDate(d.getDate() - d.getDay());
+      const key = weekStart.toISOString().split('T')[0];
+      if (!weeks[key]) weeks[key] = 0;
+      weeks[key] += parseFloat(r.total_distance) || 0;
+    });
+    const sorted = Object.entries(weeks).sort(([a], [b]) => a.localeCompare(b)).slice(-7);
+    return sorted.map(([, val], i) => ({
+      label: ['W1','W2','W3','W4','W5','W6','W7'][i] || `W${i+1}`,
+      value: Math.round(val * 10) / 10,
+      highlight: i === sorted.length - 1,
+    }));
+  })();
+
+  // Distance by month (last 6 months)
+  const distanceByMonth = (() => {
+    const months = {};
+    allRunData.forEach(r => {
+      const d = new Date(r.date);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      if (!months[key]) months[key] = 0;
+      months[key] += parseFloat(r.total_distance) || 0;
+    });
+    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const sorted = Object.entries(months).sort(([a], [b]) => a.localeCompare(b)).slice(-6);
+    return sorted.map(([key, val], i) => ({
+      label: monthNames[parseInt(key.split('-')[1]) - 1],
+      value: Math.round(val * 10) / 10,
+      highlight: i === sorted.length - 1,
+    }));
   })();
 
   // ── AI insight ────────────────────────────────────────────
@@ -210,7 +397,77 @@ Give concise, actionable advice. Answer in 3-5 sentences. Be specific and encour
           <p className="text-on-surface-variant font-medium text-sm">Real-time training trends — last 30 days</p>
         </section>
 
-        {/* Tab Toggle */}
+        {/* ── Recent Activities ── */}
+        <section>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-headline font-bold text-lg tracking-tight uppercase">All Activities</h3>
+            <span className="text-on-surface-variant text-xs font-bold uppercase tracking-widest">{allActivities.length} total</span>
+          </div>
+
+          {loading ? (
+            <div className="flex items-center justify-center py-10">
+              <div className="w-6 h-6 rounded-full border-2 border-primary-container/30 border-t-primary-container animate-spin" />
+            </div>
+          ) : allActivities.length === 0 ? (
+            <div className="bg-surface-container rounded-2xl p-8 text-center">
+              <span className="material-symbols-outlined text-4xl text-outline mb-3 block" style={{ fontVariationSettings: "'FILL' 1" }}>fitness_center</span>
+              <p className="text-on-surface-variant font-medium text-sm">No activities yet. Log your first workout!</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {visibleActivities.map(s => <ActivityRow key={`${s.session_type}-${s.id}`} session={s} />)}
+              {allActivities.length > 8 && (
+                <button
+                  onClick={() => setShowAllActivities(v => !v)}
+                  className="w-full py-3 rounded-xl bg-surface-container text-on-surface-variant font-headline font-bold text-xs uppercase tracking-widest hover:bg-surface-container-high transition-colors"
+                >
+                  {showAllActivities ? 'Show Less' : `Show All ${allActivities.length} Activities`}
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* ── Download by date range ── */}
+          <div className="mt-4 bg-surface-container/60 border border-outline-variant/15 rounded-xl p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary-container text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>download</span>
+              <p className="font-headline font-bold text-sm uppercase tracking-tight">Download Activities</p>
+            </div>
+            <p className="text-on-surface-variant text-xs">Export your activities as a CSV between two dates.</p>
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant block mb-1">From</label>
+                <input
+                  type="date"
+                  value={dlFrom}
+                  max={dlTo}
+                  onChange={e => setDlFrom(e.target.value)}
+                  className="w-full bg-surface-container-highest border border-outline-variant/20 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-container/50 transition-colors"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant block mb-1">To</label>
+                <input
+                  type="date"
+                  value={dlTo}
+                  min={dlFrom}
+                  max={new Date().toISOString().split('T')[0]}
+                  onChange={e => setDlTo(e.target.value)}
+                  className="w-full bg-surface-container-highest border border-outline-variant/20 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-container/50 transition-colors"
+                />
+              </div>
+            </div>
+            <button
+              onClick={() => downloadCSV(allGymData, allRunData, dlFrom, dlTo)}
+              className="w-full py-3 rounded-xl bg-primary-container text-on-primary-fixed font-headline font-bold uppercase text-xs tracking-wide hover:bg-primary-dim transition-colors active:scale-95 flex items-center justify-center gap-2"
+            >
+              <span className="material-symbols-outlined text-base">download</span>
+              Export CSV
+            </button>
+          </div>
+        </section>
+
+        {/* ── Tab Toggle ── */}
         <div className="flex bg-surface-container-low p-1.5 rounded-full">
           <button
             onClick={() => setTab('strength')}
@@ -248,8 +505,32 @@ Give concise, actionable advice. Answer in 3-5 sentences. Be specific and encour
                 </div>
               </div>
               {weeklyVolume.length > 0
-                ? <BarChart data={weeklyVolume} />
+                ? <BarChart data={weeklyVolume} showValues />
                 : <p className="text-on-surface-variant text-sm text-center py-4">No gym data yet. Log your first workout!</p>
+              }
+            </div>
+
+            {/* Volume by Session */}
+            <div className="bg-surface-container rounded-lg p-6 space-y-5">
+              <div>
+                <p className="font-label text-xs font-black uppercase tracking-widest text-on-surface-variant mb-1">Volume by Session</p>
+                <p className="text-on-surface-variant text-xs">Last 10 sessions</p>
+              </div>
+              {volumeBySession.length > 0
+                ? <BarChart data={volumeBySession} color="#a8ff78" showValues />
+                : <p className="text-on-surface-variant text-sm text-center py-4">No session data yet.</p>
+              }
+            </div>
+
+            {/* Volume by Month */}
+            <div className="bg-surface-container rounded-lg p-6 space-y-5">
+              <div>
+                <p className="font-label text-xs font-black uppercase tracking-widest text-on-surface-variant mb-1">Monthly Volume</p>
+                <p className="text-on-surface-variant text-xs">Last 6 months</p>
+              </div>
+              {volumeByMonth.length > 0
+                ? <BarChart data={volumeByMonth} color="#d4fb00" showValues />
+                : <p className="text-on-surface-variant text-sm text-center py-4">Not enough data for monthly view.</p>
               }
             </div>
 
@@ -285,7 +566,7 @@ Give concise, actionable advice. Answer in 3-5 sentences. Be specific and encour
           </>
         ) : (
           <>
-            {/* Running Pace */}
+            {/* Avg Pace with line chart */}
             <div className="bg-surface-container-low rounded-lg p-6 space-y-4">
               <div>
                 <p className="font-label text-xs font-black uppercase tracking-widest text-on-surface-variant mb-1">Average Pace</p>
@@ -296,6 +577,42 @@ Give concise, actionable advice. Answer in 3-5 sentences. Be specific and encour
               {pacePoints.length >= 2
                 ? <LineChart points={pacePoints} />
                 : <p className="text-on-surface-variant text-sm text-center py-4">Log more runs to see your pace trend.</p>
+              }
+            </div>
+
+            {/* Distance by Session */}
+            <div className="bg-surface-container rounded-lg p-6 space-y-5">
+              <div>
+                <p className="font-label text-xs font-black uppercase tracking-widest text-on-surface-variant mb-1">Distance by Session</p>
+                <p className="text-on-surface-variant text-xs">Last 10 runs (km)</p>
+              </div>
+              {distanceBySession.length > 0
+                ? <BarChart data={distanceBySession} color="#00e3fd" showValues />
+                : <p className="text-on-surface-variant text-sm text-center py-4">No run data yet.</p>
+              }
+            </div>
+
+            {/* Weekly Distance */}
+            <div className="bg-surface-container rounded-lg p-6 space-y-5">
+              <div>
+                <p className="font-label text-xs font-black uppercase tracking-widest text-on-surface-variant mb-1">Weekly Distance</p>
+                <p className="text-on-surface-variant text-xs">Last 7 weeks (km)</p>
+              </div>
+              {weeklyDistance.length > 0
+                ? <BarChart data={weeklyDistance} color="#00e3fd" showValues />
+                : <p className="text-on-surface-variant text-sm text-center py-4">No weekly data yet.</p>
+              }
+            </div>
+
+            {/* Monthly Distance */}
+            <div className="bg-surface-container rounded-lg p-6 space-y-5">
+              <div>
+                <p className="font-label text-xs font-black uppercase tracking-widest text-on-surface-variant mb-1">Monthly Distance</p>
+                <p className="text-on-surface-variant text-xs">Last 6 months (km)</p>
+              </div>
+              {distanceByMonth.length > 0
+                ? <BarChart data={distanceByMonth} color="#00b4d8" showValues />
+                : <p className="text-on-surface-variant text-sm text-center py-4">Not enough data for monthly view.</p>
               }
             </div>
 
