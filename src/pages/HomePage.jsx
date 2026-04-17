@@ -301,8 +301,18 @@ function CommunityPlanModal({ plan, onClose, onUsePlan, isLiked, onLike, isOwn, 
           {/* Author + likes */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full overflow-hidden border border-outline-variant/30 shrink-0">
-                <img src="/community_avatar1.jpg" alt={authorName} className="w-full h-full object-cover" />
+              <div className="w-10 h-10 rounded-xl overflow-hidden border border-outline-variant/30 shrink-0 bg-surface-container-highest flex items-center justify-center">
+                {pd.author_avatar_url || plan.author?.avatar_url ? (
+                  <img 
+                    src={plan.author?.avatar_url || pd.author_avatar_url} 
+                    alt={authorName} 
+                    className="w-full h-full object-cover" 
+                  />
+                ) : (
+                  <span className="font-headline font-black text-xs text-primary-fixed">
+                    {authorName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                  </span>
+                )}
               </div>
               <div>
                 <p className="font-headline font-bold text-sm">{authorName}</p>
@@ -537,9 +547,24 @@ function CommunityPlanCard({ plan, onClick, isLiked, onLike, isOwn }) {
             {plan.title}
           </h4>
           <div className="space-y-1">
-            <p className="text-[10px] font-bold text-on-surface-variant/70 uppercase tracking-widest truncate">
-              by <span className="text-on-surface">{plan.plan_data?.author_name || 'Member'}</span>
-            </p>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <div className="w-4 h-4 rounded-full overflow-hidden bg-surface-container-highest flex items-center justify-center shrink-0 border border-outline-variant/10">
+                {(plan.author?.avatar_url || plan.plan_data?.author_avatar_url) ? (
+                  <img 
+                    src={plan.author?.avatar_url || plan.plan_data?.author_avatar_url} 
+                    alt={plan.plan_data?.author_name} 
+                    className="w-full h-full object-cover" 
+                  />
+                ) : (
+                  <span className="text-[6px] font-black text-primary-fixed uppercase">
+                    {(plan.plan_data?.author_name || 'M').charAt(0)}
+                  </span>
+                )}
+              </div>
+              <p className="text-[10px] font-bold text-on-surface-variant/70 uppercase tracking-widest truncate">
+                by <span className="text-on-surface">{plan.plan_data?.author_name || 'Member'}</span>
+              </p>
+            </div>
             <div className="flex items-center gap-1.5">
               <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md ${isRun ? 'bg-primary-fixed/10 text-primary-fixed' : 'bg-secondary/10 text-secondary'}`}>
                 {plan.plan_type}
@@ -624,7 +649,7 @@ export default function HomePage({ setPage }) {
     Promise.all([
       supabase.from('workouts').select('*').eq('user_id', user.id).gte('date', startDate).order('submitted_at', { ascending: false }),
       supabase.from('run_sessions').select('*').eq('user_id', user.id).gte('date', startDate).order('submitted_at', { ascending: false }),
-      supabase.from('community_plans').select('id, user_id, title, description, plan_type, difficulty, likes, plan_data, created_at').order('likes', { ascending: false }).order('created_at', { ascending: true }),
+      supabase.from('community_plans').select('*, author:user_config(avatar_url)').order('likes', { ascending: false }).order('created_at', { ascending: true }),
     ]).then(([gymRes, runRes, communityRes]) => {
       const gyms = gymRes.data ?? [];
       const runs = runRes.data ?? [];

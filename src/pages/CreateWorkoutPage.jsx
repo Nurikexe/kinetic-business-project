@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { useUserConfig } from '../context/UserConfigContext';
 import { supabase } from '../lib/supabase';
 import { EXERCISES, MUSCLE_GROUPS } from '../data/exercises';
 import { REP_SCHEMES, SCHEME_CATEGORIES } from '../data/reps';
@@ -196,6 +197,7 @@ function InlineExercisePicker({ onAdd }) {
 // ── Main page ─────────────────────────────────────────────────
 export default function CreateWorkoutPage({ setPage }) {
   const { user, displayName } = useAuth();
+  const { config } = useUserConfig();
 
   // ── Shared meta ──────────────────────────────────────────────
   const [title, setTitle]           = useState('');
@@ -301,12 +303,14 @@ export default function CreateWorkoutPage({ setPage }) {
 
     // Build plan_data based on type
     let plan_data = {};
+    const author_avatar_url = config.avatar_url;
+
     if (planType === 'gym') {
-      plan_data = { days, thumbnail_url: thumbnail, author_name: displayName };
+      plan_data = { days, thumbnail_url: thumbnail, author_name: displayName, author_avatar_url };
     } else if (planType === 'running') {
-      plan_data = { runTypes, weeks: runWeeks, thumbnail_url: thumbnail, author_name: displayName };
+      plan_data = { runTypes, weeks: runWeeks, thumbnail_url: thumbnail, author_name: displayName, author_avatar_url };
     } else {
-      plan_data = { days, runTypes, weeks: runWeeks, thumbnail_url: thumbnail, author_name: displayName };
+      plan_data = { days, runTypes, weeks: runWeeks, thumbnail_url: thumbnail, author_name: displayName, author_avatar_url };
     }
 
     setSaving(true); setError('');
