@@ -886,15 +886,15 @@ export default function RunningPage() {
                 <div key={rtKey} className="w-full bg-surface-container rounded-lg overflow-hidden flex items-stretch border border-outline-variant/10">
                   <button
                     onClick={() => startRun(rt)}
-                    className="flex-1 p-4 flex items-center gap-4 hover:bg-surface-container-high transition-colors active:scale-[0.98] text-left"
+                    className="flex-1 min-w-0 p-4 flex items-center gap-4 hover:bg-surface-container-high transition-colors active:scale-[0.98] text-left overflow-hidden"
                   >
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${rt.color}20`, color: rt.color }}>
                       <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>
                         {rt.icon || 'directions_run'}
                       </span>
                     </div>
-                    <div className="min-w-0">
-                      <p className="font-headline font-bold uppercase tracking-tight" style={{ color: rt.color }}>{rt.name}</p>
+                    <div className="min-w-0 flex-1 overflow-hidden">
+                      <p className="font-headline font-bold uppercase tracking-tight truncate" style={{ color: rt.color }}>{rt.name}</p>
                       {rt.desc && <p className="text-on-surface-variant text-xs truncate">{rt.desc}</p>}
                     </div>
                   </button>
