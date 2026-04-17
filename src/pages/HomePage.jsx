@@ -132,6 +132,7 @@ function ActivityDetailModal({ session, onClose }) {
         </div>
       </div>
     </div>
+    </div>
   );
 }
 
@@ -488,6 +489,7 @@ function CommunityPlanModal({ plan, onClose, onUsePlan, isLiked, onLike, isOwn }
           )}
         </div>
       </div>
+    </div>
     </div>
   );
 }
