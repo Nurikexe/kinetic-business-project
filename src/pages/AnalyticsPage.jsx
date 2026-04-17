@@ -288,9 +288,15 @@ function ActivityDetailModal({ session, onClose, onDelete }) {
     const blob = new Blob([lines.join('\n')], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
+    a.style.display = 'none';
     a.href = url;
     a.download = `kinetic_${title.replace(/\s+/g, '_').toLowerCase()}_${(session.date || 'session')}.md`;
-    a.click(); URL.revokeObjectURL(url);
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
   };
 
   const exportCSV = () => {
@@ -310,9 +316,15 @@ function ActivityDetailModal({ session, onClose, onDelete }) {
     const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
+    a.style.display = 'none';
     a.href = url;
     a.download = `kinetic_${title.replace(/\s+/g, '_').toLowerCase()}_${(session.date || 'session')}.csv`;
-    a.click(); URL.revokeObjectURL(url);
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
   };
 
   return createPortal(
@@ -468,8 +480,18 @@ function downloadCSV(gymData, runData, from, to) {
     }
   });
   const csv = lines.join('\n');
-  const blob = new Blob([csv], { type: 'text/csv' }); const url = URL.createObjectURL(blob); const a = document.createElement('a');
-  a.href = url; a.download = `kinetic_activities_${from}_to_${to}.csv`; a.click(); URL.revokeObjectURL(url);
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.style.display = 'none';
+  a.href = url;
+  a.download = `kinetic_activities_${from}_to_${to}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 100);
 }
 
 function downloadAllPDF(gymData, runData, from, to) {
@@ -586,8 +608,18 @@ function downloadAllMD(gymData, runData, from, to) {
     lines.push('');
   });
   lines.push('*Exported from KINETIC*');
-  const blob = new Blob([lines.join('\n')], { type: 'text/markdown' }); const url = URL.createObjectURL(blob); const a = document.createElement('a');
-  a.href = url; a.download = `kinetic_activities_${from}_to_${to}.md`; a.click(); URL.revokeObjectURL(url);
+  const blob = new Blob([lines.join('\n')], { type: 'text/markdown' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.style.display = 'none';
+  a.href = url;
+  a.download = `kinetic_activities_${from}_to_${to}.md`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 100);
 }
 
 // ── Main Page ────────────────────────────────────────────────
