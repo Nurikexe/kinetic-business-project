@@ -81,9 +81,6 @@ function SettingsRow({ icon, label, right, destructive = false, onClick }) {
   );
 }
 
-  );
-}
-
 /* ── Avatar Picker Modal ── */
 function AvatarPickerModal({ currentAvatar, onSelect, onClose }) {
   return (
