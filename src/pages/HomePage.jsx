@@ -39,19 +39,9 @@ function BentoStat({ label, value, unit, icon, variant = 'dark' }) {
   );
 }
 
-/* ── Body scroll lock hook ── */
-function useBodyScrollLock(active) {
-  useEffect(() => {
-    if (!active) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = prev; };
-  }, [active]);
-}
 
 /* ── Activity detail modal ── */
 function ActivityDetailModal({ session, onClose }) {
-  useBodyScrollLock(!!session);
   if (!session) return null;
   const isRun = session.session_type === 'run';
   const title = session.day_name || session.title || 'Workout';
@@ -64,7 +54,7 @@ function ActivityDetailModal({ session, onClose }) {
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm sm:p-4" onClick={onClose}>
       <div className="flex min-h-full items-end sm:items-center justify-center p-0">
-        <div className="relative w-full max-w-xl bg-surface-container-low rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden mt-10 sm:mt-0"
+        <div className="relative w-full max-w-xl bg-surface-container-low rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden mt-16 sm:mt-0 flex flex-col"
           onClick={e => e.stopPropagation()}>
           <div className="relative h-48 shrink-0 overflow-hidden">
             <img src={isRun ? '/run_activity.jpg' : '/gym_activity.jpg'} alt={title} className="w-full h-full object-cover" />
@@ -261,7 +251,6 @@ function downloadPlanAsPDF(plan) {
 
 /* ── Community plan modal ── */
 function CommunityPlanModal({ plan, onClose, onUsePlan, isLiked, onLike, isOwn }) {
-  useBodyScrollLock(!!plan);
   const [confirming, setConfirming] = useState(false);
   const [applied, setApplied] = useState(false);
   if (!plan) return null;
@@ -285,7 +274,7 @@ function CommunityPlanModal({ plan, onClose, onUsePlan, isLiked, onLike, isOwn }
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-md sm:p-4" onClick={onClose}>
       <div className="flex min-h-full items-end sm:items-center justify-center p-0">
-        <div className="relative w-full max-w-xl bg-surface-container-low rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden mt-10 sm:mt-0"
+        <div className="relative w-full max-w-xl bg-surface-container-low rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden mt-16 sm:mt-0 flex flex-col"
           onClick={e => e.stopPropagation()}>
 
           {/* ── Hero ── */}
