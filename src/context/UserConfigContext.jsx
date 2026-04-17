@@ -23,6 +23,7 @@ const DEFAULTS = {
   ten_k_target:  '10K|6:00',
   show_performance: true,
   show_methodology: true,
+  liked_plans:   [],
 };
 
 const DEFAULT_GYM_CONFIG = {

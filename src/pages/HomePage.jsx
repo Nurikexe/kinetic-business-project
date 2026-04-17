@@ -623,14 +623,13 @@ export default function HomePage({ setPage }) {
     // Persist liked list in user_config
     updateConfig({ liked_plans: newLikedPlans }, { immediate: true });
 
-    // Update counter in DB
-    const { error } = await supabase
-      .from('community_plans')
-      .update({ likes: newLikes })
-      .eq('id', planId);
+    // Update counter in DB via RPC (bypasses RLS so any user can like any plan)
+    const { data: actualLikes, error } = await supabase
+      .rpc('toggle_plan_like', { plan_id: planId, delta });
 
-    // Rollback optimistic update on failure
     if (error) {
+      console.error('Like failed:', error.message);
+      // Rollback optimistic update on failure
       setCommunityPlans(prev =>
         prev.map(p => p.id === planId ? { ...p, likes: currentLikes } : p)
       );
@@ -638,6 +637,14 @@ export default function HomePage({ setPage }) {
         prev?.id === planId ? { ...prev, likes: currentLikes } : prev
       );
       updateConfig({ liked_plans: likedPlans }, { immediate: true });
+    } else if (typeof actualLikes === 'number') {
+      // Sync UI with the authoritative DB value
+      setCommunityPlans(prev =>
+        prev.map(p => p.id === planId ? { ...p, likes: actualLikes } : p)
+      );
+      setSelectedPlan(prev =>
+        prev?.id === planId ? { ...prev, likes: actualLikes } : prev
+      );
     }
   };
 

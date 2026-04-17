@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS user_config (
   ten_k_time     TEXT     NOT NULL DEFAULT '',
   ten_k_target   TEXT     NOT NULL DEFAULT '60:00',
   show_performance BOOLEAN NOT NULL DEFAULT TRUE,
+  liked_plans    JSONB    NOT NULL DEFAULT '[]',
   updated_at     TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -34,6 +35,7 @@ ALTER TABLE user_config ADD COLUMN IF NOT EXISTS run_weeks JSONB NOT NULL DEFAUL
 ALTER TABLE user_config ADD COLUMN IF NOT EXISTS run_types JSONB NOT NULL DEFAULT '[]';
 ALTER TABLE user_config ADD COLUMN IF NOT EXISTS ten_k_target TEXT NOT NULL DEFAULT '60:00';
 ALTER TABLE user_config ADD COLUMN IF NOT EXISTS show_performance BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE user_config ADD COLUMN IF NOT EXISTS liked_plans JSONB NOT NULL DEFAULT '[]';
 
 ALTER TABLE user_config ENABLE ROW LEVEL SECURITY;
 
@@ -114,3 +116,38 @@ CREATE POLICY "Users manage own community plans"
   ON community_plans FOR ALL
   USING  (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
+
+-- ── toggle_plan_like RPC ──────────────────────────────────────
+-- Atomically increment or decrement the likes counter on any
+-- community plan, bypassing RLS so any authenticated user can
+-- like/unlike plans they don't own.
+
+CREATE OR REPLACE FUNCTION toggle_plan_like(plan_id UUID, delta INT)
+RETURNS INT
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  new_likes INT;
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated';
+  END IF;
+
+  IF delta NOT IN (-1, 1) THEN
+    RAISE EXCEPTION 'delta must be -1 or 1';
+  END IF;
+
+  UPDATE community_plans
+    SET likes = GREATEST(0, likes + delta)
+    WHERE id = plan_id
+    RETURNING likes INTO new_likes;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Plan not found';
+  END IF;
+
+  RETURN new_likes;
+END;
+$$;
