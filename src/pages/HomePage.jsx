@@ -250,7 +250,7 @@ function downloadPlanAsPDF(plan) {
 }
 
 /* ── Community plan modal ── */
-function CommunityPlanModal({ plan, onClose, onUsePlan, isLiked, onLike, isOwn }) {
+function CommunityPlanModal({ plan, onClose, onUsePlan, isLiked, onLike, isOwn, onDeletePlan }) {
   const [confirming, setConfirming] = useState(false);
   const [applied, setApplied] = useState(false);
   const [expandedDays, setExpandedDays] = useState({});
@@ -481,19 +481,34 @@ function CommunityPlanModal({ plan, onClose, onUsePlan, isLiked, onLike, isOwn }
               </div>
             </div>
           ) : (
-            <div className="flex gap-2">
-              <button
-                onClick={() => downloadPlanAsPDF(plan)}
-                className="flex-1 py-3 rounded-2xl bg-surface-container hover:bg-surface-container-high text-on-surface font-headline font-bold uppercase text-xs tracking-wide active:scale-95 transition-all flex items-center justify-center gap-2">
-                <span className="material-symbols-outlined text-base">download</span>
-                Download PDF
-              </button>
-              <button
-                onClick={handleUse}
-                className="flex-1 py-3 rounded-2xl kinetic-gradient text-on-primary-fixed font-headline font-black uppercase text-xs tracking-wide active:scale-95 transition-all flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(212,251,0,0.2)]">
-                <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>bolt</span>
-                Use this Plan
-              </button>
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => downloadPlanAsPDF(plan)}
+                  className="flex-1 py-3 rounded-2xl bg-surface-container hover:bg-surface-container-high text-on-surface font-headline font-bold uppercase text-xs tracking-wide active:scale-95 transition-all flex items-center justify-center gap-2">
+                  <span className="material-symbols-outlined text-base">download</span>
+                  Download PDF
+                </button>
+                <button
+                  onClick={handleUse}
+                  className="flex-1 py-3 rounded-2xl kinetic-gradient text-on-primary-fixed font-headline font-black uppercase text-xs tracking-wide active:scale-95 transition-all flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(212,251,0,0.2)]">
+                  <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>bolt</span>
+                  Use this Plan
+                </button>
+              </div>
+              {isOwn && (
+                <button
+                  onClick={() => {
+                    if (window.confirm('Are you sure you want to delete this plan? This cannot be undone.')) {
+                      onDeletePlan(plan.id);
+                    }
+                  }}
+                  className="w-full py-2.5 rounded-xl border border-error/30 text-error font-headline font-bold uppercase text-[10px] tracking-widest hover:bg-error/10 transition-colors flex items-center justify-center gap-2"
+                >
+                  <span className="material-symbols-outlined text-sm">delete</span>
+                  Delete Plan
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -687,6 +702,18 @@ export default function HomePage({ setPage }) {
       setSelectedPlan(prev =>
         prev?.id === planId ? { ...prev, likes: actualLikes } : prev
       );
+    }
+  };
+
+  /* Delete a community plan (only if own) */
+  const handleDeletePlan = async (planId) => {
+    const { error } = await supabase.from('community_plans').delete().eq('id', planId);
+    if (!error) {
+      setCommunityPlans(prev => prev.filter(p => p.id !== planId));
+      setSelectedPlan(null);
+    } else {
+      console.error('Failed to delete plan:', error.message);
+      alert('Could not delete plan. Please try again.');
     }
   };
 
@@ -886,6 +913,7 @@ export default function HomePage({ setPage }) {
           isLiked={likedPlans.includes(selectedPlan.id)}
           onLike={handleLike}
           isOwn={selectedPlan.user_id === user?.id}
+          onDeletePlan={handleDeletePlan}
         />
       )}
       {showAllCommunity && createPortal(
