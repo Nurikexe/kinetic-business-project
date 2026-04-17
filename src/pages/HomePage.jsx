@@ -497,7 +497,6 @@ function CommunityPlanModal({ plan, onClose, onUsePlan, isLiked, onLike, isOwn }
         </div>
       </div>
     </div>
-    </div>
   );
 }
 
