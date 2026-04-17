@@ -102,6 +102,7 @@ export function UserConfigProvider({ children }) {
     if (error) {
       pendingRef.current = payload;
       console.error('Config save failed:', error.message);
+      alert('Config save failed: ' + error.message);
     } else {
       setHasConfigRow(true);
     }
