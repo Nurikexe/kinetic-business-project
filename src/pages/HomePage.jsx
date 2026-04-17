@@ -53,7 +53,7 @@ function ActivityDetailModal({ session, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm sm:p-4" style={{ height: '100dvh' }} onClick={onClose}>
-      <div className="relative w-full max-w-xl bg-surface-container-low rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[90dvh]"
+      <div className="relative w-full h-[100dvh] sm:h-auto sm:max-h-[90dvh] max-w-xl bg-surface-container-low rounded-none sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col min-h-0"
         onClick={e => e.stopPropagation()}>
         <div className="relative h-48 shrink-0 overflow-hidden">
           <img src={isRun ? '/run_activity.jpg' : '/gym_activity.jpg'} alt={title} className="w-full h-full object-cover" />
@@ -274,7 +274,7 @@ function CommunityPlanModal({ plan, onClose, onUsePlan, isLiked, onLike, isOwn }
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-md sm:p-4" style={{ height: '100dvh' }} onClick={onClose}>
-      <div className="relative w-full max-w-xl bg-surface-container-low rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[90dvh]"
+      <div className="relative w-full h-[100dvh] sm:h-auto sm:max-h-[90dvh] max-w-xl bg-surface-container-low rounded-none sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col min-h-0"
         onClick={e => e.stopPropagation()}>
 
           {/* ── Hero ── */}
@@ -863,7 +863,7 @@ export default function HomePage({ setPage }) {
       )}
       {showAllCommunity && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-md sm:p-4" style={{ height: '100dvh' }} onClick={() => setShowAllCommunity(false)}>
-          <div className="relative w-full max-w-2xl bg-surface-container-low rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden max-h-[92dvh] sm:max-h-[90dvh]"
+          <div className="relative w-full h-[100dvh] sm:h-auto sm:max-h-[90dvh] max-w-2xl bg-surface-container-low rounded-none sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden min-h-0"
             onClick={e => e.stopPropagation()}>
             <div className="shrink-0 z-10 flex items-center justify-between p-5 border-b border-outline-variant/10 bg-surface-container-low/90 backdrop-blur-xl">
               <h2 className="font-headline font-black text-xl tracking-tight uppercase">All Community Plans</h2>
