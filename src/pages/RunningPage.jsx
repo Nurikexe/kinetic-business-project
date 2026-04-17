@@ -508,13 +508,6 @@ export default function RunningPage() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-headline font-bold text-lg uppercase tracking-tight">Weeks</h3>
-            <button
-              onClick={addWeek}
-              className="flex items-center gap-1.5 text-[10px] text-secondary font-black uppercase tracking-widest hover:text-secondary/80 transition-colors"
-            >
-              <span className="material-symbols-outlined text-sm">add</span>
-              Add Week
-            </button>
           </div>
           {runWeeks.length > 0 ? (
             <div className="flex gap-3 overflow-x-auto no-scrollbar pb-3 -mx-6 px-6">
@@ -522,7 +515,7 @@ export default function RunningPage() {
                 const weekDone = Object.values(runCompleted[String(i)] || {}).filter(Boolean).length;
                 const allDone  = enriched.length > 0 && weekDone >= enriched.length;
                 return (
-                  <div key={i} className="shrink-0 relative group">
+                  <div key={i} className="shrink-0 relative">
                     <button
                       onClick={() => updateConfig({ run_week: i })}
                       className={`w-20 h-20 rounded-lg flex flex-col items-center justify-center transition-all active:scale-95 ${
@@ -537,15 +530,24 @@ export default function RunningPage() {
                       </span>
                     </button>
                     <button
-                      onClick={() => removeWeek(i)}
-                      className="absolute top-1 right-1 w-5 h-5 rounded-full bg-error text-on-error flex items-center justify-center opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity z-10 shadow-md touch-manipulation"
+                      onClick={(e) => { e.stopPropagation(); removeWeek(i); }}
+                      className="absolute top-1 right-1 w-6 h-6 rounded-full bg-surface-container-highest border border-outline-variant/20 text-on-surface-variant flex items-center justify-center hover:bg-error hover:text-on-error hover:border-error transition-all z-10 shadow-sm touch-manipulation active:scale-90"
                       style={{ WebkitTapHighlightColor: 'transparent' }}
                     >
-                      <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>close</span>
+                      <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>close</span>
                     </button>
                   </div>
                 );
               })}
+              <div className="shrink-0">
+                <button
+                  onClick={addWeek}
+                  className="w-20 h-20 rounded-lg flex flex-col items-center justify-center bg-surface-container border-2 border-dashed border-outline-variant/30 text-on-surface-variant hover:text-secondary hover:border-secondary/50 transition-all active:scale-95 touch-manipulation"
+                >
+                  <span className="material-symbols-outlined text-2xl mb-1">add</span>
+                  <span className="font-label font-bold text-[10px] uppercase tracking-widest">Add</span>
+                </button>
+              </div>
             </div>
           ) : (
             <div className="bg-surface-container rounded-xl px-5 py-6 text-center border border-outline-variant/10">
