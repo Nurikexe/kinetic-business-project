@@ -275,7 +275,7 @@ function CommunityPlanModal({ plan, onClose, onUsePlan, isLiked, onLike, isOwn }
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-md sm:p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-[60] overflow-y-auto bg-black/70 backdrop-blur-md sm:p-4" onClick={onClose}>
       <div className="flex min-h-full items-end sm:items-center justify-center p-0">
         <div className="relative w-full max-w-xl bg-surface-container-low rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden mt-16 sm:mt-0 flex flex-col max-h-[85vh]"
           onClick={e => e.stopPropagation()}>
