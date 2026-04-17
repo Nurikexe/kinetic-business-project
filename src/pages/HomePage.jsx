@@ -263,7 +263,7 @@ function CommunityPlanModal({ plan, onClose, onUsePlan, isLiked, onLike, isOwn }
   const isRun = plan.plan_type === 'running';
   const isHybrid = plan.plan_type === 'hybrid';
   const accentClass = isRun ? 'text-primary-fixed' : isHybrid ? 'text-tertiary' : 'text-secondary';
-  const heroBg = isRun ? '/run_activity.jpg' : '/gym_activity.jpg';
+  const heroBg = pd.thumbnail_url || (isRun ? '/run_activity.jpg' : '/gym_activity.jpg');
   const authorName = pd.author_name ?? 'Nurassyl';
 
   const handleUse = () => {
@@ -507,7 +507,7 @@ function CommunityPlanModal({ plan, onClose, onUsePlan, isLiked, onLike, isOwn }
 function CommunityPlanCard({ plan, onClick, isLiked, onLike, isOwn }) {
   const isRun = plan.plan_type === 'running';
   const isHybrid = plan.plan_type === 'hybrid';
-  const avatarSrc = isRun ? '/run_activity.jpg' : '/community_avatar1.jpg';
+  const avatarSrc = plan.plan_data?.thumbnail_url || (isRun ? '/run_activity.jpg' : '/community_avatar1.jpg');
   const accentHover = isRun ? 'group-hover:text-primary-fixed' : isHybrid ? 'group-hover:text-tertiary' : 'group-hover:text-secondary';
 
   return (

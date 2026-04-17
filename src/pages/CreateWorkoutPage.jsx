@@ -22,6 +22,15 @@ const RUN_TYPE_PRESETS = [
 
 const RT_COLORS = ['#ffb020','#00ccff','#ff3b5c','#00e3fd','#7c3aed','#10b981'];
 
+const THUMBNAILS = [
+  { id: 'gym',    url: '/thumbnails/gym.png',    label: 'Strength' },
+  { id: 'run',    url: '/thumbnails/run.png',    label: 'Running' },
+  { id: 'hybrid', url: '/thumbnails/hybrid.png', label: 'Functional' },
+  { id: 'yoga',   url: '/thumbnails/yoga.png',   label: 'Wellness' },
+  { id: 'boxing', url: '/thumbnails/boxing.png', label: 'Combat' },
+  { id: 'cycle',  url: '/thumbnails/cycle.png',  label: 'Endurance' },
+];
+
 // ── Gym day/exercise helpers ──────────────────────────────────
 let exerciseCounter = 0;
 function newExercise(name = '', sets = 3, reps = '10') {
@@ -193,6 +202,7 @@ export default function CreateWorkoutPage({ setPage }) {
   const [desc, setDesc]             = useState('');
   const [planType, setPlanType]     = useState('gym');
   const [difficulty, setDifficulty] = useState('intermediate');
+  const [thumbnail, setThumbnail]   = useState(THUMBNAILS[0].url);
   const [saving, setSaving]         = useState(false);
   const [error, setError]           = useState('');
   const [success, setSuccess]       = useState(false);
@@ -292,11 +302,11 @@ export default function CreateWorkoutPage({ setPage }) {
     // Build plan_data based on type
     let plan_data = {};
     if (planType === 'gym') {
-      plan_data = { days };
+      plan_data = { days, thumbnail_url: thumbnail };
     } else if (planType === 'running') {
-      plan_data = { runTypes, weeks: runWeeks };
+      plan_data = { runTypes, weeks: runWeeks, thumbnail_url: thumbnail };
     } else {
-      plan_data = { days, runTypes, weeks: runWeeks };
+      plan_data = { days, runTypes, weeks: runWeeks, thumbnail_url: thumbnail };
     }
 
     setSaving(true); setError('');
@@ -358,6 +368,31 @@ export default function CreateWorkoutPage({ setPage }) {
 
         {/* ── Basic Info ──────────────────────────────────────── */}
         <div className="bg-surface-container rounded-xl p-6 space-y-5 mb-6">
+          <div>
+            <label className="font-headline font-bold text-xs uppercase tracking-widest text-primary-container mb-4 block">Select Workout Cover</label>
+            <div className="flex gap-3 overflow-x-auto pb-4 no-scrollbar -mx-2 px-2">
+              {THUMBNAILS.map(t => (
+                <button
+                  key={t.id}
+                  onClick={() => setThumbnail(t.url)}
+                  className={`shrink-0 relative w-24 h-24 rounded-xl overflow-hidden border-2 transition-all ${
+                    thumbnail === t.url ? 'border-primary-fixed scale-105 shadow-lg' : 'border-transparent opacity-60 hover:opacity-100'
+                  }`}
+                >
+                  <img src={t.url} alt={t.label} className="w-full h-full object-cover" />
+                  <div className="absolute inset-x-0 bottom-0 bg-black/60 py-1 text-[8px] font-black uppercase tracking-widest text-white text-center">
+                    {t.label}
+                  </div>
+                  {thumbnail === t.url && (
+                    <div className="absolute top-1 right-1 bg-primary-fixed text-on-primary-fixed rounded-full p-0.5">
+                      <span className="material-symbols-outlined text-[10px]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div>
             <label className="font-headline font-bold text-xs uppercase tracking-widest text-primary-container mb-2 block">Plan Name</label>
             <input
