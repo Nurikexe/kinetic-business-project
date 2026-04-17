@@ -27,7 +27,11 @@
       "Bash(node --input-type=module --experimental-vm-modules)",
       "Bash(npx --yes eslint src/pages/RunningPage.jsx --no-eslintrc --rule '{\"no-undef\":0}')",
       "Bash(npx tsc *)",
-      "Bash(git *)"
+      "Bash(git *)",
+      "mcp__plugin_claude-mem_mcp-search__get_observations",
+      "mcp__plugin_claude-mem_mcp-search__smart_outline",
+      "mcp__plugin_claude-mem_mcp-search__smart_unfold",
+      "Bash(npx --no-install eslint src/pages/OnboardingPage.jsx src/App.jsx src/context/UserConfigContext.jsx)"
     ]
   }
 }

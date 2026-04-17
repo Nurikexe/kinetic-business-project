@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useRef, useCallback } f
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import {
-  DEFAULT_GYM_DAYS, DEFAULT_LIFTS, DEFAULT_GYM_GOALS, DEFAULT_GYM_RULES,
+  DEFAULT_GYM_DAYS, DEFAULT_LIFTS,
   RUN_WEEKS, DEFAULT_RUN_TYPES,
 } from '../data/defaults';
 
@@ -11,8 +11,8 @@ const DEFAULTS = {
   gym_day_count: 5,
   completed:     Array(5).fill(false),
   lifts:         DEFAULT_LIFTS,
-  gym_goals:     DEFAULT_GYM_GOALS,
-  gym_rules:     DEFAULT_GYM_RULES,
+  gym_goals:     '',
+  gym_rules:     [],
   run_week:      0,
   run_completed: Object.fromEntries(Array.from({ length: 8 }, (_, i) => [i, [false, false, false]])),
   run_weeks:     RUN_WEEKS,
@@ -31,8 +31,8 @@ const DEFAULT_GYM_CONFIG = {
   gym_day_count: DEFAULTS.gym_day_count,
   completed: DEFAULTS.completed,
   lifts: DEFAULTS.lifts,
-  gym_goals: DEFAULTS.gym_goals,
-  gym_rules: DEFAULTS.gym_rules,
+  gym_goals: '',
+  gym_rules: [],
 };
 
 const DEFAULT_RUNNING_CONFIG = {

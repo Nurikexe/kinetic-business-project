@@ -43,7 +43,11 @@ function AppContent({ page, setPage }) {
   const handleOnboardingComplete = (mode, data) => {
     if (mode === 'ai' && data?.plan) {
       // Convert AI plan → user config
-      const aiPlan = data.plan;
+      const aiPlan  = data.plan;
+      const answers = data.answers || {};
+      const patch   = {};
+
+      // ── Gym days ──────────────────────────────────────────
       const gymDays = (aiPlan.gymDays || []).map((d, i) => ({
         id: i + 1,
         num: `Day ${i + 1}`,
@@ -58,13 +62,99 @@ function AppContent({ page, setPage }) {
           weight: '',
         })),
       }));
+      if (gymDays.length > 0) {
+        patch.gym_days      = gymDays;
+        patch.gym_day_count = gymDays.length;
+        patch.completed     = Array(gymDays.length).fill(false);
+      }
 
-      const patch = {
-        gym_days:      gymDays.length > 0 ? gymDays : undefined,
-        gym_day_count: gymDays.length || 3,
-        completed:     Array(gymDays.length || 3).fill(false),
-      };
-      Object.keys(patch).forEach(k => patch[k] === undefined && delete patch[k]);
+      // ── Gym extras: specific goals + methodology ─────────
+      if (answers.plan_type === 'gym') {
+        patch.gym_goals = answers.specific_goals?.trim() || '';
+        if (answers.include_methodology === 'yes') {
+          patch.gym_rules = Array.isArray(aiPlan.methodology) && aiPlan.methodology.length > 0
+            ? aiPlan.methodology
+            : [];
+        } else {
+          patch.gym_rules = [];
+        }
+      }
+
+      // ── Running days + weeks (Running & Hybrid) ──────────
+      const isRunning = answers.plan_type === 'running' || answers.plan_type === 'hybrid';
+      const aiRunningDays = Array.isArray(aiPlan.runningDays) ? aiPlan.runningDays : [];
+
+      if (aiRunningDays.length > 0) {
+        const RT_COLORS = ['#ffb020', '#00ccff', '#ff3b5c', '#00e3fd', '#7c3aed', '#10b981'];
+        const runTypes = aiRunningDays.map((r, i) => ({
+          id: `ai-rt-${i}`,
+          day: r.day || '',
+          name: r.name || r.type || `Run ${i + 1}`,
+          desc: r.description || r.type || '',
+          color: RT_COLORS[i % RT_COLORS.length],
+          icon: 'directions_run',
+          iconKey: 'heart',
+          presetKey: null,
+        }));
+        patch.run_types = runTypes;
+
+        const defaultSessionFor = (r) => {
+          const parts = [];
+          if (r.distance) parts.push(r.distance);
+          if (r.pace)     parts.push(`@ ${r.pace}`);
+          return parts.join(' ') || (r.description || '30 min run');
+        };
+
+        const weeksCount = Math.max(1, Number(answers.weeks_count) || 8);
+        const aiWeeks    = Array.isArray(aiPlan.weeks) ? aiPlan.weeks : [];
+
+        const runWeeks = Array.from({ length: weeksCount }, (_, wi) => {
+          const aiWeek = aiWeeks[wi];
+          const sessions = {};
+          runTypes.forEach((rt, i) => {
+            const srcDay = aiRunningDays[i];
+            const aiSession = aiWeek?.sessions?.[srcDay?.name] || aiWeek?.sessions?.[rt.name];
+            sessions[rt.id] = aiSession || defaultSessionFor(srcDay || {});
+          });
+          return { week: wi + 1, sessions };
+        });
+
+        patch.run_weeks     = runWeeks;
+        patch.run_week      = 0;
+        patch.run_completed = {};
+      } else if (isRunning) {
+        // Running/hybrid chosen but AI returned nothing — clear defaults so user isn't stuck on a generic template.
+        patch.run_types     = [];
+        patch.run_weeks     = [];
+        patch.run_week      = 0;
+        patch.run_completed = {};
+      }
+
+      // ── Running extras: goals + warmup ───────────────────
+      if (isRunning) {
+        const goalText = answers.specific_goals?.trim();
+        patch.run_goals = goalText
+          ? [{ id: `goal-${Date.now()}`, text: goalText }]
+          : [];
+
+        if (answers.include_warmup === 'yes') {
+          patch.run_warmup_exercises = [
+            { id: 'wu-def-1',  name: 'Easy Walk / Light Jog — 2 min' },
+            { id: 'wu-def-2',  name: 'Ankle Circles — 10 each direction per foot' },
+            { id: 'wu-def-3',  name: 'Leg Swings Front/Back — 10 each leg' },
+            { id: 'wu-def-4',  name: 'Leg Swings Side-to-Side — 10 each leg' },
+            { id: 'wu-def-5',  name: 'Walking Lunges — 8 each side' },
+            { id: 'wu-def-6',  name: 'Glute Bridges — 15 reps' },
+            { id: 'wu-def-7',  name: 'Bodyweight Squats — 15 reps' },
+            { id: 'wu-def-8',  name: 'High Knees — 20 sec' },
+            { id: 'wu-def-9',  name: 'Butt Kicks — 20 sec' },
+            { id: 'wu-def-10', name: 'Strides — 3 × 40-60m relaxed accelerations' },
+          ];
+        } else {
+          patch.run_warmup_exercises = [];
+        }
+      }
+
       updateConfig(patch, { immediate: true });
     } else if (mode === 'scratch') {
       // Clear out everything for a pure empty state

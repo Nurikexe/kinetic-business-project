@@ -67,6 +67,18 @@ const QUESTIONS = [
 ];
 
 function buildAIPrompt(answers) {
+  const extras = [];
+  if (answers.specific_goals?.trim()) {
+    extras.push(`- Specific goals: ${answers.specific_goals.trim()}`);
+  }
+  if (answers.plan_type === 'gym') {
+    extras.push(`- Include methodology progression rules: ${answers.include_methodology === 'yes' ? 'yes' : 'no'}`);
+  }
+  if (answers.plan_type === 'running' || answers.plan_type === 'hybrid') {
+    if (answers.weeks_count) extras.push(`- Weeks of progression: ${answers.weeks_count}`);
+    extras.push(`- Include warm-up exercises: ${answers.include_warmup === 'yes' ? 'yes' : 'no'}`);
+  }
+
   return [
     {
       role: 'system',
@@ -87,19 +99,24 @@ Schema:
       ]
     }
   ],
+  "methodology": ["Rule 1", "Rule 2"],
   "runningDays": [
     {
       "name": "Day Name",
+      "day": "Monday",
       "type": "Run type",
       "distance": "5km",
       "pace": "6:00/km",
       "description": "Session description"
     }
   ],
+  "weeks": [
+    { "week": 1, "sessions": { "<runDayName>": "session description" } }
+  ],
   "weeklySchedule": "Mon: Push, Tue: Run, etc."
 }
 
-Only include gymDays if the plan has gym. Only include runningDays if the plan has running.`,
+Only include gymDays if the plan has gym. Only include runningDays and weeks if the plan has running. Include methodology only if the user asked for methodology progression. The "weeks" array length MUST equal the user's requested number of weeks and each week's "sessions" keys must match the "name" of each runningDay.`,
     },
     {
       role: 'user',
@@ -108,7 +125,8 @@ Only include gymDays if the plan has gym. Only include runningDays if the plan h
 - Main goal: ${answers.main_goal}
 - Training days per week: ${answers.training_days}
 - Experience level: ${answers.experience}
-- Session duration: ${answers.session_duration} minutes`,
+- Session duration: ${answers.session_duration} minutes
+${extras.join('\n')}`,
     },
   ];
 }
@@ -188,12 +206,43 @@ function CommunityPlansView({ onSelect, onBack }) {
 // ── Main Onboarding Page ──────────────────────────────────────
 export default function OnboardingPage({ onComplete }) {
   const { user } = useAuth();
-  const [step, setStep]       = useState('choice'); // choice | ai_plantype | ai_quiz | ai_generating | ai_result | community | scratch
+  const [step, setStep]       = useState('choice'); // choice | ai_plantype | ai_quiz | ai_extras | ai_generating | ai_result | community | scratch
   const [answers, setAnswers] = useState({});
   const [qIndex, setQIndex]   = useState(0);
   const [aiText, setAiText]   = useState('');
   const [aiPlan, setAiPlan]   = useState(null);
   const [aiError, setAiError] = useState('');
+
+  // ── Extras form state (plan-type-specific follow-ups) ─────
+  const [specificGoals, setSpecificGoals]         = useState('');
+  const [includeMethodology, setIncludeMethodology] = useState(null); // 'yes' | 'no'
+  const [weeksCount, setWeeksCount]               = useState('8');
+  const [includeWarmup, setIncludeWarmup]         = useState(null);   // 'yes' | 'no'
+
+  const runGeneration = (finalAnswers) => {
+    setStep('ai_generating');
+    setAiText('');
+    setAiError('');
+    streamChat(buildAIPrompt(finalAnswers), (chunk) => {
+      setAiText(t => t + chunk);
+    })
+      .then((full) => {
+        try {
+          const jsonMatch = full.match(/\{[\s\S]*\}/);
+          if (!jsonMatch) throw new Error('No JSON found in response');
+          const parsed = JSON.parse(jsonMatch[0]);
+          setAiPlan(parsed);
+          setStep('ai_result');
+        } catch (e) {
+          setAiError('Could not parse AI response. Please try again.');
+          setStep('ai_generating');
+        }
+      })
+      .catch((e) => {
+        setAiError(e.message ?? 'AI generation failed.');
+        setStep('ai_generating');
+      });
+  };
 
   // ── Choice screen ─────────────────────────────────────────
   if (step === 'choice') {
@@ -330,30 +379,8 @@ export default function OnboardingPage({ onComplete }) {
       if (qIndex < QUESTIONS.length - 1) {
         setQIndex(i => i + 1);
       } else {
-        // All questions answered — generate
-        setStep('ai_generating');
-        setAiText('');
-        setAiError('');
-        streamChat(buildAIPrompt(newAnswers), (chunk) => {
-          setAiText(t => t + chunk);
-        })
-          .then((full) => {
-            try {
-              // Extract JSON from response
-              const jsonMatch = full.match(/\{[\s\S]*\}/);
-              if (!jsonMatch) throw new Error('No JSON found in response');
-              const parsed = JSON.parse(jsonMatch[0]);
-              setAiPlan(parsed);
-              setStep('ai_result');
-            } catch (e) {
-              setAiError('Could not parse AI response. Please try again.');
-              setStep('ai_generating');
-            }
-          })
-          .catch((e) => {
-            setAiError(e.message ?? 'AI generation failed.');
-            setStep('ai_generating');
-          });
+        // All base questions answered — collect plan-type-specific extras next
+        setStep('ai_extras');
       }
     };
 
@@ -404,6 +431,127 @@ export default function OnboardingPage({ onComplete }) {
     );
   }
 
+  // ── AI: plan-type-specific extras ─────────────────────────
+  if (step === 'ai_extras') {
+    const isGym     = answers.plan_type === 'gym';
+    const isRunning = answers.plan_type === 'running' || answers.plan_type === 'hybrid';
+
+    const canContinue = isGym
+      ? includeMethodology !== null
+      : (!!weeksCount && Number(weeksCount) > 0 && includeWarmup !== null);
+
+    const handleContinue = () => {
+      const extras = { specific_goals: specificGoals };
+      if (isGym) extras.include_methodology = includeMethodology;
+      if (isRunning) {
+        extras.weeks_count = Number(weeksCount) || 8;
+        extras.include_warmup = includeWarmup;
+      }
+      const finalAnswers = { ...answers, ...extras };
+      setAnswers(finalAnswers);
+      runGeneration(finalAnswers);
+    };
+
+    const YesNo = ({ value, onChange }) => (
+      <div className="grid grid-cols-2 gap-3">
+        {['yes', 'no'].map(v => (
+          <button
+            key={v}
+            type="button"
+            onClick={() => onChange(v)}
+            className={`py-4 rounded-lg font-headline font-bold uppercase tracking-tight transition-colors ${
+              value === v
+                ? 'bg-primary-container text-on-primary-fixed'
+                : 'bg-surface-container hover:bg-surface-container-high'
+            }`}
+          >
+            {v === 'yes' ? 'Yes' : 'No'}
+          </button>
+        ))}
+      </div>
+    );
+
+    return (
+      <motion.div {...SLIDE} className="min-h-screen bg-background flex flex-col">
+        <header className="flex items-center gap-3 px-6 py-4">
+          <button
+            onClick={() => { setStep('ai_quiz'); setQIndex(QUESTIONS.length - 1); }}
+            className="text-on-surface-variant hover:text-on-surface transition-colors"
+          >
+            <span className="material-symbols-outlined">arrow_back</span>
+          </button>
+          <span className="font-headline font-bold text-xl uppercase tracking-tight text-primary-fixed">Fine-Tuning</span>
+        </header>
+
+        <main className="flex-1 px-6 pt-2 pb-32 max-w-xl mx-auto w-full space-y-8">
+          {/* Specific goals — common to both paths */}
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-2">
+              {isGym ? 'Do you have any specific goals?' : 'What are your specific goals?'}
+            </label>
+            <p className="text-on-surface-variant/70 text-sm mb-3">Optional — leave blank to skip.</p>
+            <textarea
+              value={specificGoals}
+              onChange={(e) => setSpecificGoals(e.target.value)}
+              placeholder={isGym ? 'e.g. 100kg bench, +60kg pull-up…' : 'e.g. sub-50 10K, run a half marathon…'}
+              rows={3}
+              className="w-full bg-surface-container rounded-lg p-4 text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary-container resize-none"
+            />
+          </div>
+
+          {/* Gym: methodology yes/no */}
+          {isGym && (
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-3">
+                Would you like a Methodology Progression included?
+              </label>
+              <YesNo value={includeMethodology} onChange={setIncludeMethodology} />
+            </div>
+          )}
+
+          {/* Running/Hybrid: weeks count */}
+          {isRunning && (
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-2">
+                How many weeks of progression do you want generated?
+              </label>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={52}
+                value={weeksCount}
+                onChange={(e) => setWeeksCount(e.target.value)}
+                className="w-full bg-surface-container rounded-lg p-4 text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary-container"
+              />
+            </div>
+          )}
+
+          {/* Running/Hybrid: warmup yes/no */}
+          {isRunning && (
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-3">
+                Do you want to include warm-up exercises?
+              </label>
+              <YesNo value={includeWarmup} onChange={setIncludeWarmup} />
+            </div>
+          )}
+        </main>
+
+        <div className="fixed bottom-0 left-0 right-0 p-6 bg-background/95 backdrop-blur-xl border-t border-outline-variant/10">
+          <button
+            onClick={handleContinue}
+            disabled={!canContinue}
+            className="w-full py-4 rounded-full kinetic-gradient text-on-primary-fixed font-headline font-black uppercase tracking-tighter text-lg shadow-[0_8px_30px_rgba(212,251,0,0.2)] active:scale-95 transition-transform disabled:opacity-40 disabled:active:scale-100 flex items-center justify-center gap-2"
+          >
+            Generate Plan
+            <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
+          </button>
+        </div>
+      </motion.div>
+    );
+  }
+
   // ── AI: generating ────────────────────────────────────────
   if (step === 'ai_generating') {
     if (aiError) {
@@ -412,7 +560,7 @@ export default function OnboardingPage({ onComplete }) {
           <span className="material-symbols-outlined text-6xl text-error mb-4">error</span>
           <p className="text-on-surface-variant mb-8">{aiError}</p>
           <button
-            onClick={() => setStep('ai_quiz')}
+            onClick={() => runGeneration(answers)}
             className="px-8 py-4 rounded-full bg-primary-container text-on-primary-fixed font-headline font-bold uppercase"
           >
             Try Again
