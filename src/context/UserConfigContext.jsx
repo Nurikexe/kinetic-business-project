@@ -24,6 +24,8 @@ const DEFAULTS = {
   show_performance: true,
   show_methodology: true,
   liked_plans:   [],
+  sex:           'not_specified',
+  avatar_url:    null,
 };
 
 const DEFAULT_GYM_CONFIG = {

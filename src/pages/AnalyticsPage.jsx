@@ -883,14 +883,14 @@ export default function AnalyticsPage() {
         .order('date', { ascending: false })
         .limit(10),
       supabase.from('user_config')
-        .select('config')
+        .select('*')
         .eq('user_id', user.id)
         .maybeSingle(),
     ]);
 
     const workouts = wRes.data ?? [];
     const runs = rRes.data ?? [];
-    const cfg = cfgRes.data?.config ?? {};
+    const cfg = cfgRes.data ?? {};
 
     // Personal records from already-loaded allGymData
     const prs = personalRecords.slice(0, 5);
@@ -899,6 +899,7 @@ export default function AnalyticsPage() {
     const lines = [];
 
     // User profile / plan goals
+    if (cfg.sex && cfg.sex !== 'not_specified') lines.push(`User sex: ${cfg.sex}.`);
     if (cfg.athleteType) lines.push(`Athlete type: ${cfg.athleteType}.`);
     if (cfg.goals?.primary) lines.push(`Primary goal: ${cfg.goals.primary}.`);
     if (cfg.goals?.targetWeight) lines.push(`Target weight: ${cfg.goals.targetWeight} kg.`);

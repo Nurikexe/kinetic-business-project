@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useUserConfig } from '../context/UserConfigContext';
 import { supabase } from '../lib/supabase';
+import { DEFAULT_AVATARS } from '../data/avatars';
 
 /* ── Tiny stat pill ── */
 function StatPill({ label, value }) {
@@ -80,16 +81,67 @@ function SettingsRow({ icon, label, right, destructive = false, onClick }) {
   );
 }
 
+  );
+}
+
+/* ── Avatar Picker Modal ── */
+function AvatarPickerModal({ currentAvatar, onSelect, onClose }) {
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-6" onClick={onClose}>
+      <div className="bg-surface-container rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300" onClick={e => e.stopPropagation()}>
+        <div className="p-6 border-b border-outline-variant/10 flex justify-between items-center">
+          <h3 className="font-headline font-black text-xl uppercase tracking-tight">Choose Avatar</h3>
+          <button onClick={onClose} className="text-on-surface-variant hover:text-on-surface transition-colors">
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div className="p-6 grid grid-cols-4 gap-4 max-h-[60vh] overflow-y-auto">
+          {DEFAULT_AVATARS.map((url, i) => (
+            <button
+              key={i}
+              onClick={() => { onSelect(url); onClose(); }}
+              className={`relative rounded-xl overflow-hidden aspect-square border-2 transition-all ${
+                currentAvatar === url ? 'border-primary-fixed scale-95 shadow-[0_0_15px_rgba(212,251,0,0.5)]' : 'border-transparent hover:border-outline-variant'
+              }`}
+            >
+              <img src={url} alt={`Avatar ${i+1}`} className="w-full h-full object-cover" />
+              {currentAvatar === url && (
+                <div className="absolute inset-0 bg-primary-fixed/20 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-black font-black">check</span>
+                </div>
+              )}
+            </button>
+          ))}
+          {/* Option for no avatar */}
+          <button
+            onClick={() => { onSelect(null); onClose(); }}
+            className={`flex flex-col items-center justify-center rounded-xl aspect-square border-2 transition-all bg-surface-container-highest ${
+              currentAvatar === null ? 'border-primary-fixed scale-95' : 'border-transparent'
+            }`}
+          >
+            <span className="material-symbols-outlined text-on-surface-variant">person_off</span>
+            <span className="text-[8px] font-black uppercase mt-1">None</span>
+          </button>
+        </div>
+        <div className="p-4 bg-surface-container-low text-center">
+          <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">Select an identity</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Main Page ── */
 export default function CabinetPage({ setPage }) {
   const { user, displayName, logout } = useAuth();
-  const { config } = useUserConfig();
+  const { config, updateConfig } = useUserConfig();
 
   const [workoutCount, setWorkoutCount] = useState('—');
   const [runCount, setRunCount] = useState('—');
   const [bestDistance, setBestDistance] = useState(null);
   const [totalWeight, setTotalWeight] = useState(null);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -183,15 +235,25 @@ export default function CabinetPage({ setPage }) {
         {/* ── Profile Hero ── */}
         <section className="flex flex-col items-start gap-5">
           {/* Avatar */}
-          <div className="relative">
-            <div
-              className="w-20 h-20 rounded-2xl bg-primary-container flex items-center justify-center"
+          <div className="relative group">
+            <button
+              onClick={() => setShowAvatarPicker(true)}
+              className="w-24 h-24 rounded-3xl bg-primary-container flex items-center justify-center overflow-hidden relative transition-transform active:scale-95"
               style={{ boxShadow: '0 0 40px rgba(212,251,0,0.2)' }}
             >
-              <span className="font-headline font-black text-3xl text-on-primary-fixed">{initials}</span>
-            </div>
+              {config.avatar_url ? (
+                <img src={config.avatar_url} alt={displayName} className="w-full h-full object-cover" />
+              ) : (
+                <span className="font-headline font-black text-4xl text-on-primary-fixed">{initials}</span>
+              )}
+              {/* Overlay on hover */}
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center">
+                <span className="material-symbols-outlined text-white text-2xl">photo_camera</span>
+                <span className="text-[8px] text-white font-black uppercase tracking-tighter mt-1">Change</span>
+              </div>
+            </button>
             {/* Subtle glow ring */}
-            <div className="absolute -inset-1 rounded-2xl bg-primary-container/10 -z-10 blur-sm" />
+            <div className="absolute -inset-1 rounded-3xl bg-primary-container/10 -z-10 blur-md group-hover:bg-primary-container/20 transition-colors" />
           </div>
 
           {/* Name + email */}
@@ -216,6 +278,42 @@ export default function CabinetPage({ setPage }) {
                 <StatPill label="Days / Week" value={config.gym_day_count} />
               </>
             )}
+          </div>
+        </section>
+
+
+        {/* ── Sex Selection ── */}
+        <section>
+          <h3 className="font-label text-[9px] uppercase tracking-[0.2em] text-on-surface-variant font-black mb-3 px-1">
+            Personal Details
+          </h3>
+          <div className="bg-surface-container-low rounded-2xl p-5 space-y-4 border border-outline-variant/10">
+            <div>
+              <label className="text-on-surface-variant text-[10px] font-black uppercase tracking-widest block mb-3">Biological Sex</label>
+              <div className="flex gap-2">
+                {[
+                  { id: 'male', label: 'Male', icon: 'male' },
+                  { id: 'female', label: 'Female', icon: 'female' },
+                  { id: 'not_specified', label: 'Rather not say', icon: 'person' },
+                ].map(opt => (
+                  <button
+                    key={opt.id}
+                    onClick={() => updateConfig({ sex: opt.id })}
+                    className={`flex-1 py-3 px-2 rounded-xl border transition-all flex flex-col items-center gap-1.5 ${
+                      config.sex === opt.id
+                        ? 'bg-primary-container border-primary-fixed text-on-primary-fixed shadow-[0_4px_15px_rgba(212,251,0,0.15)]'
+                        : 'bg-surface-container border-transparent text-on-surface-variant hover:border-outline-variant'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-lg">{opt.icon}</span>
+                    <span className="text-[10px] font-black uppercase tracking-tighter">{opt.label}</span>
+                  </button>
+                ))}
+              </div>
+              <p className="text-[9px] text-on-surface-variant/60 mt-3 italic leading-relaxed">
+                * Used by KINETIC AI to personalize intensity, recovery metrics, and physiological advice.
+              </p>
+            </div>
           </div>
         </section>
 
@@ -326,6 +424,15 @@ export default function CabinetPage({ setPage }) {
         </div>
 
       </div>
+
+      {/* ── Avatar Picker ── */}
+      {showAvatarPicker && (
+        <AvatarPickerModal
+          currentAvatar={config.avatar_url}
+          onSelect={(url) => updateConfig({ avatar_url: url })}
+          onClose={() => setShowAvatarPicker(false)}
+        />
+      )}
     </div>
   );
 }
