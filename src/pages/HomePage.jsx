@@ -527,42 +527,45 @@ function CommunityPlanCard({ plan, onClick, isLiked, onLike, isOwn }) {
 
   return (
     <button onClick={() => onClick(plan)}
-      className="w-full bg-surface-container-low border border-outline-variant/10 p-4 rounded-2xl flex justify-between items-center group hover:bg-surface-container transition-colors text-left active:scale-[0.99] transition-transform">
+      className="w-full bg-surface-container-low border border-outline-variant/10 p-4 rounded-2xl flex justify-between items-center gap-3 group hover:bg-surface-container transition-colors text-left active:scale-[0.99] transition-transform">
       <div className="flex items-center gap-3 min-w-0 flex-1">
-        <div className={`w-11 h-11 rounded-full overflow-hidden shrink-0 border ${isRun ? 'border-primary-fixed/20' : 'border-secondary/20'}`}>
+        <div className={`w-12 h-12 rounded-xl overflow-hidden shrink-0 border ${isRun ? 'border-primary-fixed/20' : 'border-secondary/20'} shadow-sm`}>
           <img src={avatarSrc} alt={plan.title} className="w-full h-full object-cover" />
         </div>
-        <div className="min-w-0">
-          <h4 className={`font-headline font-extrabold text-sm leading-tight truncate ${accentHover} transition-colors`}>
+        <div className="min-w-0 flex-1">
+          <h4 className={`font-headline font-black text-sm leading-tight truncate mb-1 ${accentHover} transition-colors`}>
             {plan.title}
           </h4>
-          <div className="flex items-center gap-2 mt-0.5">
-            <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant">by {plan.plan_data?.author_name || 'Member'}</span>
-            <span className="w-1 h-1 rounded-full bg-outline-variant shrink-0" />
-            <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant">{plan.plan_type}</span>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 max-w-full">
+            <span className="text-[8px] font-black uppercase tracking-[0.1em] text-on-surface-variant flex items-center gap-1">
+              <span className="opacity-40">by</span>
+              <span className="text-on-surface truncate max-w-[80px]">{plan.plan_data?.author_name || 'Member'}</span>
+            </span>
+            <span className="w-0.5 h-0.5 rounded-full bg-outline-variant shrink-0" />
+            <span className="text-[8px] font-black uppercase tracking-[0.1em] text-on-surface-variant">{plan.plan_type}</span>
             {plan.difficulty && (
               <>
-                <span className="w-1 h-1 rounded-full bg-outline-variant shrink-0" />
-                <span className="text-[9px] uppercase text-on-surface-variant tracking-widest">{plan.difficulty}</span>
+                <span className="w-0.5 h-0.5 rounded-full bg-outline-variant shrink-0" />
+                <span className="text-[8px] font-black uppercase tracking-[0.1em] text-on-surface-variant">{plan.difficulty}</span>
               </>
             )}
           </div>
         </div>
       </div>
-      <div className="flex items-center gap-3 shrink-0 ml-3">
+      <div className="flex items-center gap-2 shrink-0 self-center">
         <span
           role="button"
           onClick={e => { e.stopPropagation(); if (!isOwn) onLike(plan.id); }}
           title={isOwn ? "You can't like your own plan" : undefined}
-          className={`flex items-center gap-1 transition-transform ${isOwn ? 'opacity-40 cursor-default' : 'active:scale-90'}`}
+          className={`flex items-center gap-1 p-1.5 rounded-lg transition-all ${isOwn ? 'opacity-30 cursor-default' : 'hover:bg-error/10 active:scale-90'}`}
         >
           <span
             className={`material-symbols-outlined text-base transition-colors ${isLiked ? 'text-error' : 'text-on-surface-variant'}`}
             style={{ fontVariationSettings: isLiked ? "'FILL' 1" : "'FILL' 0" }}
           >favorite</span>
-          <span className={`text-xs font-bold ${isLiked ? 'text-error' : 'text-on-surface-variant'}`}>{plan.likes ?? 0}</span>
+          <span className={`text-xs font-bold leading-none ${isLiked ? 'text-error' : 'text-on-surface-variant'}`}>{plan.likes ?? 0}</span>
         </span>
-        <span className="material-symbols-outlined text-outline text-lg">chevron_right</span>
+        <span className="material-symbols-outlined text-outline/40 text-lg">chevron_right</span>
       </div>
     </button>
   );
