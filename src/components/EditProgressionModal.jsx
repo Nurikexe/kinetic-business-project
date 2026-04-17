@@ -2,13 +2,28 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus, Trash2 } from 'lucide-react';
+import { EXERCISES, MUSCLE_GROUPS } from '../data/exercises';
 
 const SHEET = { type: 'spring', stiffness: 420, damping: 38, mass: 0.9 };
 
 const INPUT = 'px-3 py-2.5 bg-surface-container-highest border border-outline-variant/20 rounded-xl text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary-container/40 transition-colors';
 
 export default function EditProgressionModal({ lifts, onSave, onClose }) {
-  const [localLifts, setLocalLifts] = useState(() => lifts.map(l => ({ ...l })));
+  const [localLifts, setLocalLifts] = useState(() => lifts.map(l => {
+    let initGroup = '';
+    let initMode = 'manual';
+    if (l.name) {
+      for (const group of MUSCLE_GROUPS) {
+        if (EXERCISES[group.key].includes(l.name)) {
+          initGroup = group.key;
+          initMode = 'library';
+          break;
+        }
+      }
+    }
+    return { ...l, mode: initMode, group: initGroup };
+  }));
+  
   const firstInputRef = useRef(null);
   const scrollBodyRef = useRef(null);
 
@@ -51,13 +66,17 @@ export default function EditProgressionModal({ lifts, onSave, onClose }) {
     setLocalLifts(prev => prev.map((l, i) => i === idx ? { ...l, [field]: val } : l));
 
   const addLift = () => setLocalLifts(prev => [...prev, {
-    key: 'lift_' + Date.now(), name: '', current: 0, target: 100, unit: 'kg', prefix: '',
+    key: 'lift_' + Date.now(), name: '', current: 0, target: 100, unit: 'kg', prefix: '', mode: 'library', group: ''
   }]);
 
   const removeLift = (idx) => setLocalLifts(prev => prev.filter((_, i) => i !== idx));
 
   const handleSave = () => {
-    onSave({ lifts: localLifts.filter(l => l.name.trim()) });
+    // Strip out UI-only fields like 'mode' and 'group' before sending to parent
+    const cleanedLifts = localLifts
+      .filter(l => l.name.trim())
+      .map(({ key, name, current, target, unit, prefix }) => ({ key, name, current, target, unit, prefix }));
+    onSave({ lifts: cleanedLifts });
   };
 
   return createPortal(
@@ -121,21 +140,65 @@ export default function EditProgressionModal({ lifts, onSave, onClose }) {
                   className="bg-surface-container rounded-2xl p-4 border border-outline-variant/10 group"
                 >
                   {/* Name row */}
-                  <div className="flex items-center gap-2 mb-3">
-                    <input
-                      ref={idx === 0 ? firstInputRef : null}
-                      value={lift.name}
-                      onChange={e => updateLift(idx, 'name', e.target.value)}
-                      placeholder="Lift name (e.g. Bench Press)"
-                      className={`${INPUT} flex-1`}
-                    />
-                    <motion.button
-                      whileTap={{ scale: 0.88 }}
-                      onClick={() => removeLift(idx)}
-                      className="w-8 h-8 rounded-xl flex items-center justify-center text-on-surface-variant/40 hover:text-error hover:bg-error-container/15 transition-colors shrink-0"
-                    >
-                      <Trash2 size={14} />
-                    </motion.button>
+                  <div className="flex flex-col gap-2 mb-3">
+                    <div className="flex gap-0.5 bg-surface-container-high rounded-lg p-0.5 border border-outline-variant/10 w-fit">
+                      {['library', 'manual'].map(m => (
+                        <button
+                          key={m}
+                          onClick={() => updateLift(idx, 'mode', m)}
+                          className={`px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-md ${
+                            (lift.mode || 'manual') === m
+                              ? 'bg-primary-container/10 text-primary-fixed'
+                              : 'text-on-surface-variant hover:text-on-surface'
+                          }`}
+                        >
+                          {m === 'library' ? 'Library' : 'Manual'}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="flex items-start gap-2">
+                      {(lift.mode || 'manual') === 'library' ? (
+                        <div className="flex-1 flex gap-2">
+                          <select
+                            value={lift.group || ''}
+                            onChange={e => {
+                              updateLift(idx, 'group', e.target.value);
+                              updateLift(idx, 'name', '');
+                            }}
+                            className={`${INPUT} flex-1 appearance-none`}
+                          >
+                            <option value="">Muscle group...</option>
+                            {MUSCLE_GROUPS.map(g => <option key={g.key} value={g.key}>{g.label}</option>)}
+                          </select>
+                          <select
+                            value={lift.name}
+                            onChange={e => updateLift(idx, 'name', e.target.value)}
+                            disabled={!lift.group}
+                            className={`${INPUT} flex-1 appearance-none disabled:opacity-40`}
+                          >
+                            <option value="">Exercise...</option>
+                            {(lift.group ? (EXERCISES[lift.group] || []) : []).map(ex => <option key={ex} value={ex}>{ex}</option>)}
+                          </select>
+                        </div>
+                      ) : (
+                        <input
+                          ref={idx === 0 ? firstInputRef : null}
+                          value={lift.name}
+                          onChange={e => updateLift(idx, 'name', e.target.value)}
+                          placeholder="Lift name (e.g. Bench Press)"
+                          className={`${INPUT} flex-1`}
+                        />
+                      )}
+                      
+                      <motion.button
+                        whileTap={{ scale: 0.88 }}
+                        onClick={() => removeLift(idx)}
+                        className="w-10 h-10 rounded-xl flex items-center justify-center text-on-surface-variant/40 hover:text-error hover:bg-error-container/15 transition-colors shrink-0"
+                      >
+                        <Trash2 size={16} />
+                      </motion.button>
+                    </div>
                   </div>
 
                   {/* Fields grid */}
@@ -172,7 +235,7 @@ export default function EditProgressionModal({ lifts, onSave, onClose }) {
               className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-dashed border-outline-variant/25 text-on-surface-variant/50 hover:text-primary-fixed hover:border-primary-container/35 transition-colors text-sm font-bold"
             >
               <Plus size={14} />
-              Add Lift
+              Add Performance Target
             </motion.button>
 
             {/* Safe area spacer */}
@@ -202,3 +265,4 @@ export default function EditProgressionModal({ lifts, onSave, onClose }) {
     document.body
   );
 }
+
