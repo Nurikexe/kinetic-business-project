@@ -49,8 +49,8 @@ const UserConfigContext = createContext(null);
 const normalizeConfig = (data = {}) => ({
   ...DEFAULTS,
   ...data,
-  run_weeks: Array.isArray(data.run_weeks) && data.run_weeks.length > 0 ? data.run_weeks : DEFAULTS.run_weeks,
-  run_types: Array.isArray(data.run_types) && data.run_types.length > 0 ? data.run_types : DEFAULTS.run_types,
+  run_weeks: Array.isArray(data.run_weeks) ? data.run_weeks : DEFAULTS.run_weeks,
+  run_types: Array.isArray(data.run_types) ? data.run_types : DEFAULTS.run_types,
   liked_plans: Array.isArray(data.liked_plans) ? data.liked_plans : DEFAULTS.liked_plans,
 });
 

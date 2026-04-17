@@ -37,12 +37,8 @@ function AppContent({ page, setPage }) {
   useEffect(() => {
     if (hasConfigRow) {
       localStorage.setItem('ha_onboarding_done', '1');
-      if (forceOnboarding) {
-        sessionStorage.removeItem('ha_force_onboarding');
-        setForceOnboarding(false);
-      }
     }
-  }, [forceOnboarding, hasConfigRow]);
+  }, [hasConfigRow]);
 
   const handleOnboardingComplete = (mode, data) => {
     if (mode === 'ai' && data?.plan) {
@@ -71,8 +67,20 @@ function AppContent({ page, setPage }) {
       Object.keys(patch).forEach(k => patch[k] === undefined && delete patch[k]);
       updateConfig(patch, { immediate: true });
     } else if (mode === 'scratch') {
-      // Persist defaults so hasConfigRow becomes true on next visit
-      updateConfig({}, { immediate: true });
+      // Clear out everything for a pure empty state
+      updateConfig({
+        gym_days: [],
+        gym_day_count: 0,
+        completed: [],
+        gym_goals: '',
+        gym_rules: [],
+        run_weeks: [],
+        run_week: 0,
+        run_completed: {},
+        run_types: [],
+        run_goals: [],
+        run_warmup_exercises: []
+      }, { immediate: true });
     } else if (mode === 'community' && data?.plan) {
       // TODO: apply community plan data here
       updateConfig({}, { immediate: true });

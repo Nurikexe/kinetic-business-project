@@ -219,59 +219,6 @@ export default function CabinetPage({ setPage }) {
           </div>
         </section>
 
-        {/* ── Personal Records bento ── */}
-        {(bestDistance || totalWeight || goals || config.ten_k_target) && (
-          <section>
-            <div className="flex justify-between items-baseline mb-4">
-              <h3 className="font-headline font-bold text-lg uppercase tracking-tight">Records &amp; Goals</h3>
-              <span className="text-[9px] font-black uppercase tracking-widest text-secondary">Your Data</span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              {bestDistance && (
-                <RecordCard
-                  icon="directions_run"
-                  iconColor="text-on-primary-container"
-                  label="Best Run"
-                  value={bestDistance}
-                  unit="km"
-                  variant="lime"
-                  className="col-span-1"
-                />
-              )}
-
-              {totalWeight && (
-                <RecordCard
-                  icon="fitness_center"
-                  iconColor="text-secondary"
-                  label="Total Lifted"
-                  value={totalWeight}
-                  unit={totalWeight.includes('t') ? '' : 'kg'}
-                  variant="cyan"
-                  className="col-span-1"
-                />
-              )}
-
-              {goals && (
-                <div className="col-span-2 bg-surface-container rounded-2xl p-5">
-                  <p className="text-[9px] font-black uppercase tracking-[0.2em] text-primary-fixed mb-2">
-                    Strength Goals
-                  </p>
-                  <p className="text-on-surface-variant text-sm leading-relaxed">{goals}</p>
-                </div>
-              )}
-
-              {config.ten_k_target && (
-                <div className="col-span-2 bg-surface-container rounded-2xl p-5 border-l-4 border-secondary">
-                  <p className="text-[9px] font-black uppercase tracking-[0.2em] text-secondary mb-2">
-                    Running Target
-                  </p>
-                  <p className="text-on-surface-variant text-sm leading-relaxed">{config.ten_k_target}</p>
-                </div>
-              )}
-            </div>
-          </section>
-        )}
 
         {/* ── Settings ── */}
         <section>
