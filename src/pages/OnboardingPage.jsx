@@ -23,35 +23,14 @@ const PLAN_TYPE_Q = {
   ],
 };
 
-const QUESTIONS = [
+const GYM_QUESTIONS = [
   {
-    id: 'main_goal',
-    title: 'What is your main goal?',
-    options: [
-      { id: 'muscle_growth', label: 'Muscle Growth' },
-      { id: 'strength',      label: 'Strength' },
-      { id: 'fat_loss',      label: 'Fat Loss' },
-      { id: 'running_endurance', label: 'Running Endurance' },
-      { id: 'hybrid',        label: 'Hybrid Performance' },
-      { id: 'general_fitness', label: 'General Fitness' },
-    ],
-  },
-  {
-    id: 'training_days',
+    id: 'gym_days',
     title: 'How many days can you train per week?',
     options: [
       { id: '3', label: '3 Days' },
       { id: '4', label: '4 Days' },
       { id: '5+', label: '5+ Days' },
-    ],
-  },
-  {
-    id: 'experience',
-    title: 'What is your experience level?',
-    options: [
-      { id: 'beginner',     label: 'Beginner' },
-      { id: 'intermediate', label: 'Intermediate' },
-      { id: 'advanced',     label: 'Advanced' },
     ],
   },
   {
@@ -64,19 +43,110 @@ const QUESTIONS = [
       { id: '90', label: '90 min' },
     ],
   },
+  {
+    id: 'experience',
+    title: 'What is your experience level?',
+    options: [
+      { id: 'beginner',     label: 'Beginner' },
+      { id: 'intermediate', label: 'Intermediate' },
+      { id: 'advanced',     label: 'Advanced' },
+    ],
+  },
 ];
+
+const RUNNING_QUESTIONS = [
+  {
+    id: 'run_days',
+    title: 'How many days do you want to run?',
+    options: [
+      { id: '2', label: '2 Days' },
+      { id: '3', label: '3 Days' },
+      { id: '4', label: '4 Days' },
+      { id: '5+', label: '5+ Days' },
+    ],
+  },
+  {
+    id: 'session_duration',
+    title: 'Average run duration?',
+    options: [
+      { id: '30', label: '30 min' },
+      { id: '45', label: '45 min' },
+      { id: '60', label: '60 min' },
+      { id: '90+', label: '90+ min' },
+    ],
+  },
+  {
+    id: 'experience',
+    title: 'What is your experience level?',
+    options: [
+      { id: 'beginner',     label: 'Beginner' },
+      { id: 'intermediate', label: 'Intermediate' },
+      { id: 'advanced',     label: 'Advanced' },
+    ],
+  },
+];
+
+const HYBRID_QUESTIONS = [
+  {
+    id: 'gym_days',
+    title: 'How many days in the gym?',
+    options: [
+      { id: '2', label: '2 Days' },
+      { id: '3', label: '3 Days' },
+      { id: '4', label: '4 Days' },
+    ],
+  },
+  {
+    id: 'run_days',
+    title: 'How many days running?',
+    options: [
+      { id: '1', label: '1 Day' },
+      { id: '2', label: '2 Days' },
+      { id: '3+', label: '3+ Days' },
+    ],
+  },
+  {
+    id: 'session_duration',
+    title: 'Average session duration?',
+    options: [
+      { id: '45', label: '45 min' },
+      { id: '60', label: '60 min' },
+      { id: '90', label: '90 min' },
+    ],
+  },
+  {
+    id: 'experience',
+    title: 'What is your experience level?',
+    options: [
+      { id: 'beginner',     label: 'Beginner' },
+      { id: 'intermediate', label: 'Intermediate' },
+      { id: 'advanced',     label: 'Advanced' },
+    ],
+  },
+];
+
+function getQuestions(planType) {
+  if (planType === 'gym') return GYM_QUESTIONS;
+  if (planType === 'running') return RUNNING_QUESTIONS;
+  return HYBRID_QUESTIONS;
+}
 
 function buildAIPrompt(answers) {
   const extras = [];
-  if (answers.specific_goals?.trim()) {
-    extras.push(`- Specific goals: ${answers.specific_goals.trim()}`);
+  const isGym = answers.plan_type === 'gym' || answers.plan_type === 'hybrid';
+  const isRunning = answers.plan_type === 'running' || answers.plan_type === 'hybrid';
+
+  if (isGym) {
+    if (answers.gym_stats?.trim()) {
+      extras.push(`- Gym Goals & Current Stats: ${answers.gym_stats.trim()}`);
+    }
   }
-  if (answers.plan_type === 'gym') {
-    extras.push(`- Include methodology progression rules: ${answers.include_methodology === 'yes' ? 'yes' : 'no'}`);
-  }
-  if (answers.plan_type === 'running' || answers.plan_type === 'hybrid') {
+
+  if (isRunning) {
+    if (answers.run_stats?.trim()) {
+      extras.push(`- Running Goals & Current Stats: ${answers.run_stats.trim()}`);
+    }
     if (answers.weeks_count) extras.push(`- Weeks of progression: ${answers.weeks_count}`);
-    extras.push(`- Include warm-up exercises: ${answers.include_warmup === 'yes' ? 'yes' : 'no'}`);
   }
 
   return [
@@ -100,6 +170,7 @@ Schema:
     }
   ],
   "methodology": ["Rule 1", "Rule 2"],
+  "performanceTargets": ["Target 1"],
   "runningDays": [
     {
       "name": "Day Name",
@@ -116,15 +187,17 @@ Schema:
   "weeklySchedule": "Mon: Push, Tue: Run, etc."
 }
 
-Only include gymDays if the plan has gym. Only include runningDays and weeks if the plan has running. Include methodology only if the user asked for methodology progression. The "weeks" array length MUST equal the user's requested number of weeks and each week's "sessions" keys must match the "name" of each runningDay.`,
+Only include gymDays if the plan has gym. Only include runningDays and weeks if the plan has running. The "weeks" array length MUST equal the user's requested number of weeks and each week's "sessions" keys must match the "name" of each runningDay.
+${isGym ? (answers.gym_stats?.trim() ? '\\nA gym goal/stats was provided. You MUST generate 2 to 4 progression rules in the "methodology" array and set "performanceTargets" based on their input.' : '\\nNo valid gym goal/stats provided. You MUST leave "performanceTargets" and "methodology" arrays completely empty.') : ''}
+${isRunning ? (answers.run_stats?.trim() ? '\\nA running goal/stats was provided. You MUST generate the progression "weeks" based on the delta between their current and goal stats.' : '\\nNo valid running goal/stats provided or none asked. You MUST generate the progression "weeks" using default average distances and speeds.') : ''}`
     },
     {
       role: 'user',
       content: `Create a workout plan for someone with these preferences:
 - Plan type: ${answers.plan_type}
-- Main goal: ${answers.main_goal}
-- Training days per week: ${answers.training_days}
 - Experience level: ${answers.experience}
+- Gym training days: ${answers.gym_days || 'None'}
+- Running days: ${answers.run_days || 'None'}
 - Session duration: ${answers.session_duration} minutes
 ${extras.join('\n')}`,
     },
@@ -214,10 +287,9 @@ export default function OnboardingPage({ onComplete }) {
   const [aiError, setAiError] = useState('');
 
   // ── Extras form state (plan-type-specific follow-ups) ─────
-  const [specificGoals, setSpecificGoals]         = useState('');
-  const [includeMethodology, setIncludeMethodology] = useState(null); // 'yes' | 'no'
+  const [gymStats, setGymStats]                   = useState('');
+  const [runStats, setRunStats]                   = useState('');
   const [weeksCount, setWeeksCount]               = useState('8');
-  const [includeWarmup, setIncludeWarmup]         = useState(null);   // 'yes' | 'no'
 
   const runGeneration = (finalAnswers) => {
     setStep('ai_generating');
@@ -370,13 +442,14 @@ export default function OnboardingPage({ onComplete }) {
 
   // ── AI: quiz questions ────────────────────────────────────
   if (step === 'ai_quiz') {
-    const q = QUESTIONS[qIndex];
+    const currentQuestions = getQuestions(answers.plan_type || 'gym');
+    const q = currentQuestions[qIndex];
 
     const handleAnswer = (optId) => {
       const newAnswers = { ...answers, [q.id]: optId };
       setAnswers(newAnswers);
 
-      if (qIndex < QUESTIONS.length - 1) {
+      if (qIndex < currentQuestions.length - 1) {
         setQIndex(i => i + 1);
       } else {
         // All base questions answered — collect plan-type-specific extras next
@@ -399,7 +472,7 @@ export default function OnboardingPage({ onComplete }) {
 
           <div className="px-6 mb-2">
             <div className="flex gap-1.5">
-              {QUESTIONS.map((_, i) => (
+              {currentQuestions.map((_, i) => (
                 <div
                   key={i}
                   className={`h-1 flex-1 rounded-full transition-colors ${i <= qIndex ? 'bg-primary-container' : 'bg-surface-container-highest'}`}
@@ -436,46 +509,27 @@ export default function OnboardingPage({ onComplete }) {
     const isGym     = answers.plan_type === 'gym';
     const isRunning = answers.plan_type === 'running' || answers.plan_type === 'hybrid';
 
-    const canContinue = isGym
-      ? includeMethodology !== null
-      : (!!weeksCount && Number(weeksCount) > 0 && includeWarmup !== null);
+    const canContinue = isRunning
+      ? (!!weeksCount && Number(weeksCount) > 0)
+      : true;
 
     const handleContinue = () => {
-      const extras = { specific_goals: specificGoals };
-      if (isGym) extras.include_methodology = includeMethodology;
+      const extras = {};
+      if (isGym) extras.gym_stats = gymStats;
       if (isRunning) {
+        extras.run_stats = runStats;
         extras.weeks_count = Number(weeksCount) || 8;
-        extras.include_warmup = includeWarmup;
       }
       const finalAnswers = { ...answers, ...extras };
       setAnswers(finalAnswers);
       runGeneration(finalAnswers);
     };
 
-    const YesNo = ({ value, onChange }) => (
-      <div className="grid grid-cols-2 gap-3">
-        {['yes', 'no'].map(v => (
-          <button
-            key={v}
-            type="button"
-            onClick={() => onChange(v)}
-            className={`py-4 rounded-lg font-headline font-bold uppercase tracking-tight transition-colors ${
-              value === v
-                ? 'bg-primary-container text-on-primary-fixed'
-                : 'bg-surface-container hover:bg-surface-container-high'
-            }`}
-          >
-            {v === 'yes' ? 'Yes' : 'No'}
-          </button>
-        ))}
-      </div>
-    );
-
     return (
       <motion.div {...SLIDE} className="min-h-screen bg-background flex flex-col">
         <header className="flex items-center gap-3 px-6 py-4">
           <button
-            onClick={() => { setStep('ai_quiz'); setQIndex(QUESTIONS.length - 1); }}
+            onClick={() => { setStep('ai_quiz'); setQIndex(getQuestions(answers.plan_type || 'gym').length - 1); }}
             className="text-on-surface-variant hover:text-on-surface transition-colors"
           >
             <span className="material-symbols-outlined">arrow_back</span>
@@ -484,28 +538,37 @@ export default function OnboardingPage({ onComplete }) {
         </header>
 
         <main className="flex-1 px-6 pt-2 pb-32 max-w-xl mx-auto w-full space-y-8">
-          {/* Specific goals — common to both paths */}
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-2">
-              {isGym ? 'Do you have any specific goals?' : 'What are your specific goals?'}
-            </label>
-            <p className="text-on-surface-variant/70 text-sm mb-3">Optional — leave blank to skip.</p>
-            <textarea
-              value={specificGoals}
-              onChange={(e) => setSpecificGoals(e.target.value)}
-              placeholder={isGym ? 'e.g. 100kg bench, +60kg pull-up…' : 'e.g. sub-50 10K, run a half marathon…'}
-              rows={3}
-              className="w-full bg-surface-container rounded-lg p-4 text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary-container resize-none"
-            />
-          </div>
-
-          {/* Gym: methodology yes/no */}
+          {/* Gym Goals & Stats */}
           {isGym && (
             <div>
-              <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-3">
-                Would you like a Methodology Progression included?
+              <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-2">
+                Gym Goals & Current Stats
               </label>
-              <YesNo value={includeMethodology} onChange={setIncludeMethodology} />
+              <p className="text-on-surface-variant/70 text-sm mb-3">Optional — leave blank to skip.</p>
+              <textarea
+                value={gymStats}
+                onChange={(e) => setGymStats(e.target.value)}
+                placeholder="e.g. Goal: Bench press 100kg. Current: Bench press 40kg"
+                rows={3}
+                className="w-full bg-surface-container rounded-lg p-4 text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary-container resize-none"
+              />
+            </div>
+          )}
+
+          {/* Running Goals & Stats */}
+          {isRunning && (
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-2">
+                Running Goals & Current Stats
+              </label>
+              <p className="text-on-surface-variant/70 text-sm mb-3">Optional — leave blank to skip.</p>
+              <textarea
+                value={runStats}
+                onChange={(e) => setRunStats(e.target.value)}
+                placeholder="e.g. Current: 5km at 6:00 pace. Goal: 5km at 5:00 pace"
+                rows={3}
+                className="w-full bg-surface-container rounded-lg p-4 text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary-container resize-none"
+              />
             </div>
           )}
 
@@ -524,16 +587,6 @@ export default function OnboardingPage({ onComplete }) {
                 onChange={(e) => setWeeksCount(e.target.value)}
                 className="w-full bg-surface-container rounded-lg p-4 text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary-container"
               />
-            </div>
-          )}
-
-          {/* Running/Hybrid: warmup yes/no */}
-          {isRunning && (
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-3">
-                Do you want to include warm-up exercises?
-              </label>
-              <YesNo value={includeWarmup} onChange={setIncludeWarmup} />
             </div>
           )}
         </main>
