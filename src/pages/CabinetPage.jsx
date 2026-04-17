@@ -262,6 +262,59 @@ export default function CabinetPage({ setPage }) {
           </div>
         </section>
 
+        {/* ── Contact & Feedback ── */}
+        <section>
+          <h3 className="font-label text-[9px] uppercase tracking-[0.2em] text-on-surface-variant font-black mb-3 px-1">
+            Contact &amp; Feedback
+          </h3>
+          <p className="text-on-surface-variant text-xs px-1 mb-3">Have a question or suggestion? Reach out directly.</p>
+          <div className="flex flex-col gap-2">
+            {/* Instagram */}
+            <a
+              href="https://instagram.com/yaboinurik"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-4 bg-surface-container-low hover:bg-surface-container rounded-xl p-4 transition-colors group text-left"
+            >
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: 'linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)' }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-headline font-bold text-sm">Instagram</p>
+                <p className="text-on-surface-variant text-xs">@yaboinurik</p>
+              </div>
+              <span className="material-symbols-outlined text-outline text-sm group-hover:text-on-surface transition-colors">open_in_new</span>
+            </a>
+
+            {/* Telegram */}
+            <a
+              href="https://t.me/heavygrind"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-4 bg-surface-container-low hover:bg-surface-container rounded-xl p-4 transition-colors group text-left"
+            >
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: '#229ED9' }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                  <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.800-.945-.611-.332-1.143.317-1.823.217-.233 3.985-3.648 4.057-3.958.01-.041.01-.191-.074-.271s-.208-.053-.299-.031c-.127.031-2.152 1.365-6.075 4.004-.575.395-1.096.589-1.563.579-.515-.011-1.504-.291-2.24-.532-.901-.295-1.619-.451-1.556-.951.033-.261.379-.529 1.038-.802 4.064-1.770 6.773-2.937 8.128-3.501 3.871-1.609 4.674-1.888 5.196-1.898z"/>
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-headline font-bold text-sm">Telegram</p>
+                <p className="text-on-surface-variant text-xs">@heavygrind</p>
+              </div>
+              <span className="material-symbols-outlined text-outline text-sm group-hover:text-on-surface transition-colors">open_in_new</span>
+            </a>
+          </div>
+        </section>
+
         {/* ── Danger zone ── */}
         <div className="flex flex-col gap-1">
           <SettingsRow

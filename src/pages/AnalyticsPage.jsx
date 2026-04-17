@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { streamChat } from '../lib/openrouter';
@@ -148,8 +149,8 @@ function LineChart({ points, color = '#00e3fd' }) {
   );
 }
 
-// ── Activity row (compact) ────────────────────────────────────
-function ActivityRow({ session }) {
+// ── Activity row (clickable) ────────────────────────────────────
+function ActivityRow({ session, onClick }) {
   const isRun = session.session_type === 'run';
   const title = session.day_name || session.title || 'Workout';
   const dateStr = new Date(session.submitted_at || session.date).toLocaleDateString('en-US', {
@@ -157,7 +158,10 @@ function ActivityRow({ session }) {
   });
 
   return (
-    <div className="flex items-center gap-3 bg-surface-container rounded-xl px-4 py-3">
+    <button
+      onClick={() => onClick(session)}
+      className="w-full flex items-center gap-3 bg-surface-container hover:bg-surface-container-high active:scale-[0.99] rounded-xl px-4 py-3 transition-all text-left"
+    >
       <div className={`w-2 h-2 rounded-full shrink-0 ${isRun ? 'bg-primary-fixed' : 'bg-secondary'}`} />
       <div className="flex-1 min-w-0">
         <p className="font-headline font-bold text-sm truncate">{title}</p>
@@ -168,51 +172,209 @@ function ActivityRow({ session }) {
           {!isRun && session.exercises && ` · ${Array.isArray(session.exercises) ? session.exercises.length : '—'} exercises`}
         </p>
       </div>
-      <span className="text-on-surface-variant text-[10px] font-bold uppercase tracking-widest shrink-0">{dateStr}</span>
-    </div>
+      <div className="flex items-center gap-1 shrink-0">
+        <span className="text-on-surface-variant text-[10px] font-bold uppercase tracking-widest">{dateStr}</span>
+        <span className="material-symbols-outlined text-outline text-sm">chevron_right</span>
+      </div>
+    </button>
   );
 }
 
-// ── Download CSV helper ──────────────────────────────────────
-function downloadCSV(gymData, runData, from, to) {
+// ── Activity Detail Modal ─────────────────────────────────────
+function ActivityDetailModal({ session, onClose }) {
+  if (!session) return null;
+  const isRun = session.session_type === 'run';
+  const title = session.day_name || session.title || 'Workout';
+  const dateStr = new Date(session.submitted_at || session.date).toLocaleDateString('en-US', {
+    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
+  });
+  const timeStr = session.submitted_at
+    ? new Date(session.submitted_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    : null;
+  const exercises = Array.isArray(session.exercises) ? session.exercises : session.exercises?.items ?? [];
+
+  const exportPDF = () => {
+    const exRows = exercises.map(ex =>
+      `<tr><td>${ex.name || ''}</td><td>${ex.sets || ''}x${ex.reps || ''}</td><td>${ex.weight ? ex.weight + ' kg' : '—'}</td></tr>`
+    ).join('');
+    const body = isRun
+      ? `<table><tr><th>Stat</th><th>Value</th></tr>
+           <tr><td>Distance</td><td>${session.total_distance ?? '—'} km</td></tr>
+           <tr><td>Avg Pace</td><td>${session.avg_pace ?? '—'}/km</td></tr>
+           <tr><td>Duration</td><td>${session.duration ?? '—'}</td></tr></table>`
+      : exercises.length
+         ? `<table><thead><tr><th>Exercise</th><th>Sets×Reps</th><th>Weight</th></tr></thead><tbody>${exRows}</tbody></table>`
+         : '<p>No exercises recorded.</p>';
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>${title}</title>
+      <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Helvetica,sans-serif;color:#111;padding:32px;font-size:13px}
+      h1{font-size:22px;font-weight:900;text-transform:uppercase;margin-bottom:4px}.meta{color:#666;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:20px;border-bottom:2px solid #000;padding-bottom:12px}
+      table{width:100%;border-collapse:collapse;margin-top:16px}th{background:#111;color:#fff;padding:6px 10px;text-align:left;font-size:11px;text-transform:uppercase}
+      td{padding:6px 10px;border-bottom:1px solid #eee}@media print{body{padding:20px}}</style></head>
+      <body><div class="meta">${isRun ? 'RUNNING' : 'GYM'} · ${dateStr}${timeStr ? ' · ' + timeStr : ''} · KINETIC</div>
+      <h1>${title}</h1>${body}
+      ${session.notes ? `<p style="margin-top:16px;font-size:12px"><b>Notes:</b> ${session.notes}</p>` : ''}
+      </body></html>`;
+    const w = window.open('', '_blank');
+    w.document.write(html); w.document.close(); w.focus();
+    setTimeout(() => w.print(), 400);
+  };
+
+  const exportMD = () => {
+    const lines = [
+      `# ${title}`, ``,
+      `**Type:** ${isRun ? 'Running' : 'Gym Workout'}`,
+      `**Date:** ${dateStr}${timeStr ? ' · ' + timeStr : ''}`, ``,
+    ];
+    if (isRun) {
+      lines.push('## Stats', '', '| Stat | Value |', '|------|-------|');
+      lines.push(`| Distance | ${session.total_distance ?? '—'} km |`);
+      lines.push(`| Avg Pace | ${session.avg_pace ?? '—'}/km |`);
+      lines.push(`| Duration | ${session.duration ?? '—'} |`);
+    } else {
+      if (session.day_focus) lines.push(`**Focus:** ${session.day_focus}`, '');
+      if (exercises.length) {
+        lines.push('## Exercises', '', '| Exercise | Sets×Reps | Weight |', '|----------|-----------|--------|');
+        exercises.forEach(ex => lines.push(`| ${ex.name || ''} | ${ex.sets || ''}x${ex.reps || ''} | ${ex.weight ? ex.weight + ' kg' : '—'} |`));
+      }
+    }
+    if (session.notes) lines.push('', '## Notes', '', session.notes);
+    lines.push('', '---', '*Exported from KINETIC*');
+    const blob = new Blob([lines.join('\n')], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `kinetic_${title.replace(/\s+/g, '_').toLowerCase()}_${(session.date || 'session')}.md`;
+    a.click(); URL.revokeObjectURL(url);
+  };
+
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm sm:p-4" onClick={onClose}>
+      <div className="relative w-full h-[100dvh] sm:h-auto sm:max-h-[90dvh] max-w-xl bg-surface-container-low rounded-none sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col min-h-0" onClick={e => e.stopPropagation()}>
+        {/* Hero */}
+        <div className="relative h-44 shrink-0 overflow-hidden">
+          <img src={isRun ? '/run_activity.jpg' : '/gym_activity.jpg'} alt={title} className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-surface-container-low via-surface-container-low/40 to-transparent" />
+          <button onClick={onClose} className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/50 flex items-center justify-center text-white">
+            <span className="material-symbols-outlined text-xl">close</span>
+          </button>
+          <div className="absolute bottom-4 left-5">
+            <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-1 ${isRun ? 'text-primary-fixed' : 'text-secondary'}`}>{isRun ? 'Running' : 'Strength'}</p>
+            <h2 className="font-headline font-black text-2xl uppercase tracking-tight">{title}</h2>
+          </div>
+        </div>
+        {/* Scrollable body */}
+        <div className="p-5 space-y-5 overflow-y-auto flex-1 overscroll-contain">
+          <div className="flex items-center gap-2 text-on-surface-variant text-xs font-bold uppercase tracking-widest">
+            <span className="material-symbols-outlined text-sm">calendar_today</span>
+            {dateStr}{timeStr ? `, ${timeStr}` : ''}
+          </div>
+          {isRun ? (
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { label: 'Distance', value: session.total_distance != null ? `${Number(session.total_distance).toFixed(2)} km` : '—' },
+                { label: 'Avg Pace', value: session.avg_pace ? `${session.avg_pace}/km` : '—' },
+                { label: 'Duration', value: session.duration || '—' },
+              ].map(stat => (
+                <div key={stat.label} className="bg-surface-container rounded-xl p-4">
+                  <p className="text-on-surface-variant text-[9px] font-black uppercase tracking-widest mb-2">{stat.label}</p>
+                  <p className="font-headline font-bold text-base">{stat.value}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <>
+              {session.day_focus && (
+                <div className="bg-secondary-container/10 rounded-xl px-4 py-2 inline-flex items-center gap-2">
+                  <span className="material-symbols-outlined text-secondary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>bolt</span>
+                  <span className="text-secondary text-[10px] font-black uppercase tracking-widest">{session.day_focus}</span>
+                </div>
+              )}
+              {exercises.length > 0 ? (
+                <div className="space-y-2">
+                  <p className="text-on-surface-variant text-[10px] font-black uppercase tracking-widest">Exercises ({exercises.length})</p>
+                  {exercises.map((ex, i) => (
+                    <div key={i} className="flex items-center justify-between bg-surface-container rounded-xl px-4 py-3">
+                      <p className="font-headline font-bold text-sm">{ex.name}</p>
+                      <p className="text-on-surface-variant text-xs font-bold">
+                        {ex.sets && ex.reps ? `${ex.sets}×${ex.reps}` : ''}
+                        {ex.weight ? ` @ ${ex.weight}kg` : ''}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-on-surface-variant text-sm text-center py-4">No exercise details recorded.</p>
+              )}
+            </>
+          )}
+          {session.notes && (
+            <div className="bg-surface-container rounded-xl p-4">
+              <p className="text-on-surface-variant text-[10px] font-black uppercase tracking-widest mb-2">Notes</p>
+              <p className="text-sm text-on-surface leading-relaxed">{session.notes}</p>
+            </div>
+          )}
+        </div>
+        {/* Export bar */}
+        <div className="p-4 shrink-0 border-t border-outline-variant/10 bg-surface-container-low">
+          <p className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant mb-2">Export this session</p>
+          <div className="flex gap-2">
+            <button onClick={exportPDF} className="flex-1 py-2.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-headline font-bold uppercase text-[10px] tracking-wide active:scale-95 transition-all flex items-center justify-center gap-1.5">
+              <span className="material-symbols-outlined text-sm">picture_as_pdf</span> PDF
+            </button>
+            <button onClick={exportMD} className="flex-1 py-2.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-headline font-bold uppercase text-[10px] tracking-wide active:scale-95 transition-all flex items-center justify-center gap-1.5">
+              <span className="material-symbols-outlined text-sm">description</span> Markdown
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+// ── Bulk export helpers ───────────────────────────────────────
+function buildFilteredRows(gymData, runData, from, to) {
   const fromDate = new Date(from);
-  const toDate = new Date(to);
-  toDate.setHours(23, 59, 59);
-
-  const gymRows = gymData
-    .filter(w => {
-      const d = new Date(w.submitted_at || w.date);
-      return d >= fromDate && d <= toDate;
-    })
-    .map(w => {
-      const exercises = Array.isArray(w.exercises) ? w.exercises : (w.exercises?.items ?? []);
-      const vol = exercises.reduce((s, ex) => {
-        const reps = parseInt(String(ex.reps || '1').split('-')[0]) || 1;
-        return s + (parseFloat(ex.weight) || 0) * (parseInt(ex.sets) || 1) * reps;
-      }, 0);
-      return `${w.date},Gym,"${w.day_name || 'Workout'}",${exercises.length} exercises,${Math.round(vol)} kg volume`;
-    });
-
-  const runRows = runData
-    .filter(r => {
-      const d = new Date(r.submitted_at || r.date);
-      return d >= fromDate && d <= toDate;
-    })
-    .map(r => `${r.date},Running,"${r.title || 'Run'}",${r.total_distance ?? 0} km,${r.avg_pace ?? '—'}/km`);
-
-  const all = [...gymRows, ...runRows].sort();
-  const csv = [
-    'Date,Type,Name,Detail,Volume/Pace',
-    ...all,
-  ].join('\n');
-
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `kinetic_activities_${from}_to_${to}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
+  const toDate = new Date(to); toDate.setHours(23, 59, 59);
+  const gymRows = gymData.filter(w => {
+    const d = new Date(w.submitted_at || w.date); return d >= fromDate && d <= toDate;
+  }).map(w => {
+    const exs = Array.isArray(w.exercises) ? w.exercises : (w.exercises?.items ?? []);
+    const vol = exs.reduce((s, ex) => { const r = parseInt(String(ex.reps || '1').split('-')[0]) || 1; return s + (parseFloat(ex.weight) || 0) * (parseInt(ex.sets) || 1) * r; }, 0);
+    return { type: 'gym', date: w.date, name: w.day_name || 'Workout', detail: `${exs.length} exercises`, extra: `${Math.round(vol)} kg volume` };
+  });
+  const runRows = runData.filter(r => {
+    const d = new Date(r.submitted_at || r.date); return d >= fromDate && d <= toDate;
+  }).map(r => ({ type: 'run', date: r.date, name: r.title || 'Run', detail: `${r.total_distance ?? 0} km`, extra: `${r.avg_pace ?? '—'}/km` }));
+  return [...gymRows, ...runRows].sort((a, b) => a.date.localeCompare(b.date));
+}
+function downloadCSV(gymData, runData, from, to) {
+  const rows = buildFilteredRows(gymData, runData, from, to);
+  const csv = ['Date,Type,Name,Detail,Volume/Pace', ...rows.map(r => `${r.date},${r.type === 'gym' ? 'Gym' : 'Running'},"${r.name}",${r.detail},${r.extra}`)].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' }); const url = URL.createObjectURL(blob); const a = document.createElement('a');
+  a.href = url; a.download = `kinetic_activities_${from}_to_${to}.csv`; a.click(); URL.revokeObjectURL(url);
+}
+function downloadAllPDF(gymData, runData, from, to) {
+  const rows = buildFilteredRows(gymData, runData, from, to);
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>KINETIC Activity Log</title>
+    <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Helvetica,sans-serif;color:#111;padding:32px;font-size:12px}
+    h1{font-size:20px;font-weight:900;text-transform:uppercase;margin-bottom:4px}.meta{color:#666;font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;border-bottom:2px solid #000;padding-bottom:10px}
+    table{width:100%;border-collapse:collapse}th{background:#111;color:#fff;padding:6px 8px;text-align:left;font-size:10px;text-transform:uppercase}
+    td{padding:5px 8px;border-bottom:1px solid #eee;font-size:11px}</style></head><body>
+    <div class="meta">KINETIC · ${from} → ${to} · ${rows.length} activities</div><h1>Activity Log</h1>
+    <table><thead><tr><th>Date</th><th>Type</th><th>Name</th><th>Detail</th><th>Volume/Pace</th></tr></thead><tbody>
+    ${rows.map(r => `<tr><td>${r.date}</td><td>${r.type === 'gym' ? 'Gym' : 'Run'}</td><td>${r.name}</td><td>${r.detail}</td><td>${r.extra}</td></tr>`).join('')}
+    </tbody></table></body></html>`;
+  const w = window.open('', '_blank'); w.document.write(html); w.document.close(); w.focus(); setTimeout(() => w.print(), 400);
+}
+function downloadAllMD(gymData, runData, from, to) {
+  const rows = buildFilteredRows(gymData, runData, from, to);
+  const lines = ['# KINETIC Activity Log', '', `**Period:** ${from} → ${to}`, `**Total:** ${rows.length} activities`, '',
+    '| Date | Type | Name | Detail | Volume/Pace |', '|------|------|------|--------|-------------|',
+    ...rows.map(r => `| ${r.date} | ${r.type === 'gym' ? 'Gym' : 'Running'} | ${r.name} | ${r.detail} | ${r.extra} |`),
+    '', '---', '*Exported from KINETIC*'];
+  const blob = new Blob([lines.join('\n')], { type: 'text/markdown' }); const url = URL.createObjectURL(blob); const a = document.createElement('a');
+  a.href = url; a.download = `kinetic_activities_${from}_to_${to}.md`; a.click(); URL.revokeObjectURL(url);
 }
 
 // ── Main Page ────────────────────────────────────────────────
@@ -236,8 +398,25 @@ export default function AnalyticsPage() {
   });
   const [dlTo, setDlTo] = useState(() => new Date().toISOString().split('T')[0]);
 
-  // Activities section show-more
-  const [showAllActivities, setShowAllActivities] = useState(false);
+  // Activities: selection + pagination
+  const [selectedSession, setSelectedSession] = useState(null);
+  const PAGE_SIZE = 8;
+  const [activityPage, setActivityPage] = useState(0);
+
+  // Scroll-lock while modal is open
+  useEffect(() => {
+    if (!selectedSession) return;
+    const scrollY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
+    return () => {
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      window.scrollTo(0, scrollY);
+    };
+  }, [selectedSession]);
 
   useEffect(() => {
     if (!user) return;
@@ -267,7 +446,8 @@ export default function AnalyticsPage() {
     ...allRunData.map(s => ({ ...s, session_type: 'run' })),
   ].sort((a, b) => new Date(b.submitted_at || b.date) - new Date(a.submitted_at || a.date));
 
-  const visibleActivities = showAllActivities ? allActivities : allActivities.slice(0, 8);
+  const totalPages = Math.ceil(allActivities.length / PAGE_SIZE);
+  const pagedActivities = allActivities.slice(activityPage * PAGE_SIZE, (activityPage + 1) * PAGE_SIZE);
 
   // ── Gym metrics ─────────────────────────────────────────────
   // Weekly volume (last 7 weeks)
@@ -562,14 +742,31 @@ Give concise, actionable advice. Answer in 3-5 sentences. Be specific and encour
             </div>
           ) : (
             <div className="space-y-2">
-              {visibleActivities.map(s => <ActivityRow key={`${s.session_type}-${s.id}`} session={s} />)}
-              {allActivities.length > 8 && (
-                <button
-                  onClick={() => setShowAllActivities(v => !v)}
-                  className="w-full py-3 rounded-xl bg-surface-container text-on-surface-variant font-headline font-bold text-xs uppercase tracking-widest hover:bg-surface-container-high transition-colors"
-                >
-                  {showAllActivities ? 'Show Less' : `Show All ${allActivities.length} Activities`}
-                </button>
+              {pagedActivities.map(s => (
+                <ActivityRow key={`${s.session_type}-${s.id}`} session={s} onClick={setSelectedSession} />
+              ))}
+
+              {/* Pagination controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between pt-1">
+                  <button
+                    onClick={() => setActivityPage(p => Math.max(0, p - 1))}
+                    disabled={activityPage === 0}
+                    className="flex items-center gap-1 px-4 py-2 rounded-xl bg-surface-container text-on-surface-variant font-headline font-bold text-xs uppercase tracking-widest hover:bg-surface-container-high transition-colors disabled:opacity-30"
+                  >
+                    <span className="material-symbols-outlined text-sm">chevron_left</span> Prev
+                  </button>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+                    {activityPage + 1} / {totalPages} &nbsp;·&nbsp; {allActivities.length} total
+                  </span>
+                  <button
+                    onClick={() => setActivityPage(p => Math.min(totalPages - 1, p + 1))}
+                    disabled={activityPage === totalPages - 1}
+                    className="flex items-center gap-1 px-4 py-2 rounded-xl bg-surface-container text-on-surface-variant font-headline font-bold text-xs uppercase tracking-widest hover:bg-surface-container-high transition-colors disabled:opacity-30"
+                  >
+                    Next <span className="material-symbols-outlined text-sm">chevron_right</span>
+                  </button>
+                </div>
               )}
             </div>
           )}
@@ -578,9 +775,9 @@ Give concise, actionable advice. Answer in 3-5 sentences. Be specific and encour
           <div className="mt-4 bg-surface-container/60 border border-outline-variant/15 rounded-xl p-4 space-y-3">
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-primary-container text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>download</span>
-              <p className="font-headline font-bold text-sm uppercase tracking-tight">Download Activities</p>
+              <p className="font-headline font-bold text-sm uppercase tracking-tight">Export Activities</p>
             </div>
-            <p className="text-on-surface-variant text-xs">Export your activities as a CSV between two dates.</p>
+            <p className="text-on-surface-variant text-xs">Download your activities in your preferred format.</p>
             <div className="flex items-center gap-2">
               <div className="flex-1">
                 <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant block mb-1">From</label>
@@ -604,15 +801,31 @@ Give concise, actionable advice. Answer in 3-5 sentences. Be specific and encour
                 />
               </div>
             </div>
-            <button
-              onClick={() => downloadCSV(allGymData, allRunData, dlFrom, dlTo)}
-              className="w-full py-3 rounded-xl bg-primary-container text-on-primary-fixed font-headline font-bold uppercase text-xs tracking-wide hover:bg-primary-dim transition-colors active:scale-95 flex items-center justify-center gap-2"
-            >
-              <span className="material-symbols-outlined text-base">download</span>
-              Export CSV
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => downloadCSV(allGymData, allRunData, dlFrom, dlTo)}
+                className="flex-1 py-2.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-headline font-bold uppercase text-[10px] tracking-wide active:scale-95 transition-all flex items-center justify-center gap-1.5"
+              >
+                <span className="material-symbols-outlined text-sm">table_view</span> CSV
+              </button>
+              <button
+                onClick={() => downloadAllPDF(allGymData, allRunData, dlFrom, dlTo)}
+                className="flex-1 py-2.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-headline font-bold uppercase text-[10px] tracking-wide active:scale-95 transition-all flex items-center justify-center gap-1.5"
+              >
+                <span className="material-symbols-outlined text-sm">picture_as_pdf</span> PDF
+              </button>
+              <button
+                onClick={() => downloadAllMD(allGymData, allRunData, dlFrom, dlTo)}
+                className="flex-1 py-2.5 rounded-xl bg-primary-container text-on-primary-fixed font-headline font-bold uppercase text-[10px] tracking-wide active:scale-95 transition-all flex items-center justify-center gap-1.5"
+              >
+                <span className="material-symbols-outlined text-sm">description</span> .MD
+              </button>
+            </div>
           </div>
         </section>
+
+        {/* ── Modal ── */}
+        {selectedSession && <ActivityDetailModal session={selectedSession} onClose={() => setSelectedSession(null)} />}
 
         {/* ── Tab Toggle ── */}
         <div className="flex bg-surface-container-low p-1.5 rounded-full">
