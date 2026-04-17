@@ -65,9 +65,15 @@ function AppContent({ page, setPage }) {
       Object.keys(patch).forEach(k => patch[k] === undefined && delete patch[k]);
       updateConfig(patch, { immediate: true });
     } else if (mode === 'scratch') {
-      // Start with defaults — nothing to patch, just dismiss
+      // Persist defaults so hasConfigRow becomes true on next visit
+      updateConfig({}, { immediate: true });
+    } else if (mode === 'community' && data?.plan) {
+      // TODO: apply community plan data here
+      updateConfig({}, { immediate: true });
+    } else {
+      // Fallback — always ensure a config row exists
+      updateConfig({}, { immediate: true });
     }
-    // community mode: could apply community plan data here
     sessionStorage.removeItem('ha_force_onboarding');
     setForceOnboarding(false);
     setOnboardingDone(true);

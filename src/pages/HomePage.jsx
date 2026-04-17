@@ -37,8 +37,19 @@ function BentoStat({ label, value, unit, icon, variant = 'dark' }) {
   );
 }
 
+/* ── Body scroll lock hook ── */
+function useBodyScrollLock(active) {
+  useEffect(() => {
+    if (!active) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [active]);
+}
+
 /* ── Activity detail modal ── */
 function ActivityDetailModal({ session, onClose }) {
+  useBodyScrollLock(!!session);
   if (!session) return null;
   const isRun = session.session_type === 'run';
   const title = session.day_name || session.title || 'Workout';
@@ -66,7 +77,7 @@ function ActivityDetailModal({ session, onClose }) {
             <h2 className="font-headline font-black text-2xl uppercase tracking-tight">{title}</h2>
           </div>
         </div>
-        <div className="overflow-y-auto p-5 space-y-5">
+        <div className="overflow-y-auto flex-1 min-h-0 p-5 space-y-5" style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}>
           <div className="flex items-center gap-2 text-on-surface-variant text-xs font-bold uppercase tracking-widest">
             <span className="material-symbols-outlined text-sm">calendar_today</span>
             {dateStr}{timeStr ? `, ${timeStr}` : ''}
@@ -247,6 +258,7 @@ function downloadPlanAsPDF(plan) {
 
 /* ── Community plan modal ── */
 function CommunityPlanModal({ plan, onClose, onUsePlan, isLiked, onLike, isOwn }) {
+  useBodyScrollLock(!!plan);
   const [confirming, setConfirming] = useState(false);
   const [applied, setApplied] = useState(false);
   if (!plan) return null;
@@ -290,7 +302,7 @@ function CommunityPlanModal({ plan, onClose, onUsePlan, isLiked, onLike, isOwn }
         </div>
 
         {/* ── Scrollable body ── */}
-        <div className="overflow-y-auto flex-1 p-5 space-y-5">
+        <div className="overflow-y-auto flex-1 min-h-0 p-5 space-y-5" style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}>
 
           {/* Author + likes */}
           <div className="flex items-center justify-between">
@@ -486,8 +498,9 @@ function CommunityPlanCard({ plan, onClick, isLiked, onLike, isOwn }) {
   const accentHover = isRun ? 'group-hover:text-primary-fixed' : isHybrid ? 'group-hover:text-tertiary' : 'group-hover:text-secondary';
 
   return (
-    <div className="bg-surface-container-low border border-outline-variant/10 p-4 rounded-2xl flex justify-between items-center group hover:bg-surface-container transition-colors">
-      <button onClick={() => onClick(plan)} className="flex items-center gap-3 min-w-0 flex-1 text-left active:scale-[0.99] transition-transform">
+    <button onClick={() => onClick(plan)}
+      className="w-full bg-surface-container-low border border-outline-variant/10 p-4 rounded-2xl flex justify-between items-center group hover:bg-surface-container transition-colors text-left active:scale-[0.99] transition-transform">
+      <div className="flex items-center gap-3 min-w-0 flex-1">
         <div className={`w-11 h-11 rounded-full overflow-hidden shrink-0 border ${isRun ? 'border-primary-fixed/20' : 'border-secondary/20'}`}>
           <img src={avatarSrc} alt={plan.title} className="w-full h-full object-cover" />
         </div>
@@ -505,11 +518,11 @@ function CommunityPlanCard({ plan, onClick, isLiked, onLike, isOwn }) {
             )}
           </div>
         </div>
-      </button>
+      </div>
       <div className="flex items-center gap-3 shrink-0 ml-3">
-        <button
+        <span
+          role="button"
           onClick={e => { e.stopPropagation(); if (!isOwn) onLike(plan.id); }}
-          disabled={isOwn}
           title={isOwn ? "You can't like your own plan" : undefined}
           className={`flex items-center gap-1 transition-transform ${isOwn ? 'opacity-40 cursor-default' : 'active:scale-90'}`}
         >
@@ -518,10 +531,10 @@ function CommunityPlanCard({ plan, onClick, isLiked, onLike, isOwn }) {
             style={{ fontVariationSettings: isLiked ? "'FILL' 1" : "'FILL' 0" }}
           >favorite</span>
           <span className={`text-xs font-bold ${isLiked ? 'text-error' : 'text-on-surface-variant'}`}>{plan.likes ?? 0}</span>
-        </button>
+        </span>
         <span className="material-symbols-outlined text-outline text-lg">chevron_right</span>
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -537,6 +550,7 @@ export default function HomePage({ setPage }) {
   const [loading, setLoading] = useState(true);
   const [selectedSession, setSelectedSession] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState(null);
+  const [showAllCommunity, setShowAllCommunity] = useState(false);
 
   // Liked plan IDs — persisted in user_config so they survive across sessions
   const likedPlans = config.liked_plans ?? [];
@@ -554,7 +568,7 @@ export default function HomePage({ setPage }) {
     Promise.all([
       supabase.from('workouts').select('*').eq('user_id', user.id).gte('date', startDate).order('submitted_at', { ascending: false }),
       supabase.from('run_sessions').select('*').eq('user_id', user.id).gte('date', startDate).order('submitted_at', { ascending: false }),
-      supabase.from('community_plans').select('id, user_id, title, description, plan_type, difficulty, likes, plan_data').order('likes', { ascending: false }).limit(4),
+      supabase.from('community_plans').select('id, user_id, title, description, plan_type, difficulty, likes, plan_data, created_at').order('likes', { ascending: false }).order('created_at', { ascending: true }),
     ]).then(([gymRes, runRes, communityRes]) => {
       const gyms = gymRes.data ?? [];
       const runs = runRes.data ?? [];
@@ -594,23 +608,37 @@ export default function HomePage({ setPage }) {
       ? likedPlans.filter(id => id !== planId)
       : [...likedPlans, planId];
 
+    // Capture current DB value BEFORE optimistic update
+    const currentLikes = communityPlans.find(p => p.id === planId)?.likes ?? 0;
+    const newLikes = Math.max(0, currentLikes + delta);
+
     // Optimistic update — UI responds instantly
     setCommunityPlans(prev =>
-      prev.map(p => p.id === planId ? { ...p, likes: Math.max(0, (p.likes ?? 0) + delta) } : p)
+      prev.map(p => p.id === planId ? { ...p, likes: newLikes } : p)
     );
     setSelectedPlan(prev =>
-      prev?.id === planId ? { ...prev, likes: Math.max(0, (prev.likes ?? 0) + delta) } : prev
+      prev?.id === planId ? { ...prev, likes: newLikes } : prev
     );
 
     // Persist liked list in user_config
     updateConfig({ liked_plans: newLikedPlans }, { immediate: true });
 
     // Update counter in DB
-    const current = communityPlans.find(p => p.id === planId)?.likes ?? 0;
-    await supabase
+    const { error } = await supabase
       .from('community_plans')
-      .update({ likes: Math.max(0, current + delta) })
+      .update({ likes: newLikes })
       .eq('id', planId);
+
+    // Rollback optimistic update on failure
+    if (error) {
+      setCommunityPlans(prev =>
+        prev.map(p => p.id === planId ? { ...p, likes: currentLikes } : p)
+      );
+      setSelectedPlan(prev =>
+        prev?.id === planId ? { ...prev, likes: currentLikes } : prev
+      );
+      updateConfig({ liked_plans: likedPlans }, { immediate: true });
+    }
   };
 
   /* Apply a community plan to the user's config */
@@ -759,7 +787,14 @@ export default function HomePage({ setPage }) {
         <section>
           <div className="flex justify-between items-center mb-4">
             <h3 className="font-headline font-bold text-lg tracking-tight uppercase">Community Workouts</h3>
-            <button className="text-secondary text-[10px] font-black tracking-widest uppercase hover:underline">See Trends</button>
+            {communityPlans.length > 3 && (
+              <button
+                onClick={() => setShowAllCommunity(prev => !prev)}
+                className="text-secondary text-[10px] font-black tracking-widest uppercase hover:underline"
+              >
+                {showAllCommunity ? 'Show Top 3' : 'See Trends'}
+              </button>
+            )}
           </div>
 
           <button onClick={() => setPage('create')}
@@ -770,7 +805,7 @@ export default function HomePage({ setPage }) {
 
           {communityPlans.length > 0 ? (
             <div className="space-y-3">
-              {communityPlans.map(plan => (
+              {(showAllCommunity ? communityPlans : communityPlans.slice(0, 3)).map(plan => (
                 <CommunityPlanCard
                   key={plan.id}
                   plan={plan}
