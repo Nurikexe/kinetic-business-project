@@ -52,14 +52,13 @@ function ActivityDetailModal({ session, onClose }) {
   const exercises = Array.isArray(session.exercises) ? session.exercises : session.exercises?.items ?? [];
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm sm:p-4" onClick={onClose}>
-      <div className="flex min-h-full items-end sm:items-center justify-center p-0">
-        <div className="relative w-full max-w-xl bg-surface-container-low rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden mt-16 sm:mt-0 flex flex-col"
-          onClick={e => e.stopPropagation()}>
-          <div className="relative h-48 shrink-0 overflow-hidden">
-            <img src={isRun ? '/run_activity.jpg' : '/gym_activity.jpg'} alt={title} className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-surface-container-low via-surface-container-low/40 to-transparent" />
-            <button onClick={onClose} className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/50 flex items-center justify-center text-white">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm sm:p-4" style={{ height: '100dvh' }} onClick={onClose}>
+      <div className="relative w-full max-w-xl bg-surface-container-low rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[90dvh]"
+        onClick={e => e.stopPropagation()}>
+        <div className="relative h-48 shrink-0 overflow-hidden">
+          <img src={isRun ? '/run_activity.jpg' : '/gym_activity.jpg'} alt={title} className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-surface-container-low via-surface-container-low/40 to-transparent" />
+          <button onClick={onClose} className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/50 flex items-center justify-center text-white">
               <span className="material-symbols-outlined text-xl">close</span>
             </button>
             <div className="absolute bottom-4 left-5">
@@ -69,7 +68,7 @@ function ActivityDetailModal({ session, onClose }) {
               <h2 className="font-headline font-black text-2xl uppercase tracking-tight">{title}</h2>
             </div>
           </div>
-          <div className="p-5 space-y-5">
+          <div className="p-5 space-y-5 overflow-y-auto flex-1 overscroll-contain">
           <div className="flex items-center gap-2 text-on-surface-variant text-xs font-bold uppercase tracking-widest">
             <span className="material-symbols-outlined text-sm">calendar_today</span>
             {dateStr}{timeStr ? `, ${timeStr}` : ''}
@@ -121,7 +120,6 @@ function ActivityDetailModal({ session, onClose }) {
           )}
         </div>
       </div>
-    </div>
     </div>
   );
 }
@@ -275,10 +273,9 @@ function CommunityPlanModal({ plan, onClose, onUsePlan, isLiked, onLike, isOwn }
   };
 
   return (
-    <div className="fixed inset-0 z-[60] overflow-y-auto bg-black/70 backdrop-blur-md sm:p-4" onClick={onClose}>
-      <div className="flex min-h-full items-end sm:items-center justify-center p-0">
-        <div className="relative w-full max-w-xl bg-surface-container-low rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden mt-16 sm:mt-0 flex flex-col max-h-[85vh]"
-          onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-md sm:p-4" style={{ height: '100dvh' }} onClick={onClose}>
+      <div className="relative w-full max-w-xl bg-surface-container-low rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[90dvh]"
+        onClick={e => e.stopPropagation()}>
 
           {/* ── Hero ── */}
           <div className="relative h-44 shrink-0 overflow-hidden">
@@ -297,7 +294,7 @@ function CommunityPlanModal({ plan, onClose, onUsePlan, isLiked, onLike, isOwn }
           </div>
 
           {/* ── Scrollable body ── */}
-          <div className="p-5 space-y-5 overflow-y-auto flex-1">
+          <div className="p-5 space-y-5 overflow-y-auto flex-1 overscroll-contain">
 
           {/* Author + likes */}
           <div className="flex items-center justify-between">
@@ -866,17 +863,16 @@ export default function HomePage({ setPage }) {
         />
       )}
       {showAllCommunity && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-md sm:p-4" onClick={() => setShowAllCommunity(false)}>
-          <div className="flex min-h-full items-end sm:items-center justify-center p-0">
-            <div className="relative w-full max-w-2xl bg-surface-container-low rounded-t-3xl sm:rounded-3xl shadow-2xl mt-16 sm:mt-0 flex flex-col"
-              onClick={e => e.stopPropagation()}>
-              <div className="sticky top-0 z-10 flex items-center justify-between p-5 border-b border-outline-variant/10 bg-surface-container-low/90 backdrop-blur-xl rounded-t-3xl sm:rounded-t-3xl">
-                <h2 className="font-headline font-black text-xl tracking-tight uppercase">All Community Plans</h2>
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-md sm:p-4" style={{ height: '100dvh' }} onClick={() => setShowAllCommunity(false)}>
+          <div className="relative w-full max-w-2xl bg-surface-container-low rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden max-h-[92dvh] sm:max-h-[90dvh]"
+            onClick={e => e.stopPropagation()}>
+            <div className="shrink-0 z-10 flex items-center justify-between p-5 border-b border-outline-variant/10 bg-surface-container-low/90 backdrop-blur-xl">
+              <h2 className="font-headline font-black text-xl tracking-tight uppercase">All Community Plans</h2>
                 <button onClick={() => setShowAllCommunity(false)} className="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center text-on-surface hover:text-primary-fixed transition-colors">
                   <span className="material-symbols-outlined text-xl">close</span>
                 </button>
               </div>
-              <div className="p-5 space-y-3">
+              <div className="p-5 space-y-3 overflow-y-auto flex-1 overscroll-contain">
                 {communityPlans.map(plan => (
                   <CommunityPlanCard
                     key={plan.id}
@@ -888,7 +884,6 @@ export default function HomePage({ setPage }) {
                   />
                 ))}
               </div>
-            </div>
           </div>
         </div>
       )}
