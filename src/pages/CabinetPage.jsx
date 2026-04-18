@@ -421,36 +421,34 @@ export default function CabinetPage({ setPage, triggerOnboarding }) {
 
       {/* ── Delete Confirmation Modal ── */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/95 backdrop-blur-2xl" onClick={() => setShowDeleteConfirm(false)}>
-          <div className="bg-surface-container-lowest rounded-[2.5rem] w-full max-w-sm border border-error/30 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-500 relative" onClick={e => e.stopPropagation()}>
-             <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'repeating-linear-gradient(45deg, var(--error) 0, var(--error) 2px, transparent 0, transparent 12px)' }} />
-             <div className="p-8 text-center relative z-10">
-                <div className="w-24 h-24 bg-error/10 text-error rounded-3xl flex items-center justify-center mx-auto mb-8 rotate-3 shadow-xl group relative">
-                   <div className="absolute inset-0 bg-error/20 blur-2xl rounded-full animate-pulse" />
-                   <span className="material-symbols-outlined text-5xl font-black relative z-10 animate-bounce">warning</span>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/95 backdrop-blur-xl" onClick={() => setShowDeleteConfirm(false)}>
+          <div className="bg-surface-container-lowest rounded-[2.5rem] w-full max-w-sm border border-error/20 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-500" onClick={e => e.stopPropagation()}>
+             <div className="p-8 text-center">
+                <div className="w-20 h-20 bg-error/10 text-error rounded-3xl flex items-center justify-center mx-auto mb-8">
+                   <span className="material-symbols-outlined text-4xl font-black">warning</span>
                 </div>
                 <h3 className="font-headline font-black text-3xl uppercase italic tracking-tighter text-on-surface mb-3">Irreversible Action</h3>
-                <p className="text-on-surface-variant text-[11px] leading-relaxed mb-8 px-4 font-medium opacity-70 italic">
+                <p className="text-on-surface-variant text-[11px] leading-relaxed mb-8 px-4 font-medium opacity-60 italic">
                    "Warning: You are about to initiate a complete wipe of your athletic profile and history. This action cannot be undone."
                 </p>
                 <div className="space-y-6">
-                  <div className="text-left bg-surface-container-low p-5 rounded-2xl border border-outline-variant/10 shadow-inner">
-                    <label className="text-[9px] font-black uppercase tracking-[0.2em] text-error mb-3 block text-center">
+                  <div className="text-left bg-surface-container-low p-6 rounded-2xl border border-outline-variant/5">
+                    <label className="text-[9px] font-black uppercase tracking-[0.2em] text-error mb-4 block text-center">
                       Type <span className="underline decoration-2 underline-offset-4">DELETE</span> to authorize
                     </label>
                     <input
                       type="text"
-                      placeholder="CONFIRM"
+                      placeholder="DELETE"
                       value={deleteConfirmText}
                       onChange={(e) => setDeleteConfirmText(e.target.value.toUpperCase())}
-                      className="w-full bg-surface-container-highest border-2 border-outline-variant rounded-xl px-4 py-4 text-center font-headline font-black text-2xl tracking-[0.3em] text-on-surface focus:border-error focus:ring-4 focus:ring-error/10 outline-none transition-all placeholder:opacity-20"
+                      className="w-full bg-surface-container-highest border-2 border-outline-variant/10 rounded-xl px-4 py-4 text-center font-headline font-black text-2xl tracking-[0.3em] text-on-surface focus:border-error focus:outline-none transition-all placeholder:opacity-10"
                     />
                   </div>
                   <div className="flex flex-col gap-3">
                     <button 
                       onClick={handleDeleteAccount} 
                       disabled={deleteConfirmText !== 'DELETE' || isDeleting} 
-                      className="w-full bg-error text-on-error py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-[11px] disabled:opacity-25 transition-all hover:scale-[1.02] active:scale-95 shadow-[0_10px_20px_rgba(179,38,30,0.3)] flex items-center justify-center gap-3"
+                      className="w-full bg-error text-on-error py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-[11px] disabled:opacity-20 transition-all hover:bg-error/90 active:scale-95 flex items-center justify-center gap-3"
                     >
                       {isDeleting ? 'Purging Data...' : 'Permanently Wipe Profile'}
                     </button>
@@ -458,8 +456,8 @@ export default function CabinetPage({ setPage, triggerOnboarding }) {
                   </div>
                 </div>
              </div>
-             <div className="bg-error/5 py-3 border-t border-error/10 text-center">
-                <span className="text-[9px] text-error/40 font-black uppercase tracking-[0.4em]">Protocol: Security Wipe</span>
+             <div className="bg-error/5 py-4 border-t border-error/5 text-center">
+                <span className="text-[9px] text-error/30 font-black uppercase tracking-[0.4em]">Protocol: Security Wipe</span>
              </div>
           </div>
         </div>
