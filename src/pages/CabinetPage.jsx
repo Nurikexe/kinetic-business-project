@@ -406,6 +406,48 @@ export default function CabinetPage({ setPage, triggerOnboarding }) {
           </div>
         </section>
 
+        {/* ── Contact ── */}
+        <section>
+          <h3 className="font-label text-[9px] uppercase tracking-[0.2em] text-on-surface-variant font-black mb-3 px-1">Get in Touch</h3>
+          <div className="bg-surface-container-low rounded-2xl p-5 border border-outline-variant/10">
+            <p className="text-on-surface-variant text-xs font-medium leading-relaxed mb-4">
+              Have a suggestion or question? Feel free to reach out!
+            </p>
+            <div className="flex flex-col gap-2">
+              <a
+                href="https://instagram.com/yaboinurik"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-4 p-3 rounded-xl bg-surface-container hover:bg-surface-container-high transition-colors group"
+              >
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                  <span className="material-symbols-outlined text-white text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>photo_camera</span>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Instagram</p>
+                  <p className="text-sm font-bold text-on-surface group-hover:text-primary-fixed transition-colors">@yaboinurik</p>
+                </div>
+                <span className="material-symbols-outlined text-on-surface-variant text-sm ml-auto">open_in_new</span>
+              </a>
+              <a
+                href="https://t.me/heavygrind"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-4 p-3 rounded-xl bg-surface-container hover:bg-surface-container-high transition-colors group"
+              >
+                <div className="w-9 h-9 rounded-xl bg-[#229ED9] flex items-center justify-center flex-shrink-0">
+                  <span className="material-symbols-outlined text-white text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>send</span>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Telegram</p>
+                  <p className="text-sm font-bold text-on-surface group-hover:text-primary-fixed transition-colors">@heavygrind</p>
+                </div>
+                <span className="material-symbols-outlined text-on-surface-variant text-sm ml-auto">open_in_new</span>
+              </a>
+            </div>
+          </div>
+        </section>
+
         {/* ── Danger zone ── */}
         <div className="flex flex-col gap-1">
           <SettingsRow icon="logout" label={loggingOut ? 'Signing out…' : 'Sign Out'} onClick={handleLogout} />
