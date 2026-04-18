@@ -191,7 +191,7 @@ Schema:
 }
 
 Only include gymDays if the plan has gym. Only include runningDays and weeks if the plan has running. The "weeks" array length MUST equal the user's requested number of weeks and each week's "sessions" keys must match the "name" of each runningDay.
-${isGym ? (answers.gym_stats?.trim() ? '\nA gym goal/stats was provided. You MUST generate 2 to 4 progression rules in the "methodology" array and set "performanceTargets" based on their input. For "performanceTargets", provide an array of objects: { "name": string, "current": number, "target": number, "unit": string }. Make sure "current" and "target" are numbers.' : '\nNo valid gym goal/stats provided. You MUST leave "performanceTargets" and "methodology" arrays completely empty.') : ''}
+${isGym ? (answers.gym_stats?.trim() ? '\nA gym goal/stats was provided. You MUST generate 2 to 4 progression rules in the "methodology" array and set "performanceTargets" based on their input. For "performanceTargets", provide an array of objects: { "name": string, "current": number, "target": number, "unit": string }. IMPORTANT: ONLY include performance targets that the user specifically mentioned in their input. DO NOT add default or common exercises (like Squats, Deadlifts, etc.) unless the user explicitly asked for them. Make sure "current" and "target" are numbers.' : '\nNo valid gym goal/stats provided. You MUST leave "performanceTargets" and "methodology" arrays completely empty.') : ''}
 ${isRunning ? `
 CRITICAL RUNNING PROGRESSION RULES — THESE ARE MANDATORY, NOT OPTIONAL:
 1. EVERY session in the "weeks" array MUST show clear, measurable week-over-week progression. It is STRICTLY FORBIDDEN for any session to have the same distance AND same pace as the identical session in any previous week.
