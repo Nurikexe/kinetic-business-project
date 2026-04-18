@@ -39,6 +39,10 @@ export function AuthProvider({ children }) {
     return { success: true };
   }, []);
 
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut();
+  }, []);
+
   const updateUserMetadata = useCallback(async (metadata) => {
     const { data, error } = await supabase.auth.updateUser({
       data: metadata
