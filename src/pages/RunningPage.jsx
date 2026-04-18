@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useUserConfig } from '../context/UserConfigContext';
 import { useActiveSession } from '../context/ActiveSessionContext';
 import { supabase } from '../lib/supabase';
+import EditProgressionModal from '../components/EditProgressionModal';
 
 function paceToMinutes(str) {
   const [m, s] = (str || '').split(':').map(Number);
@@ -283,6 +284,7 @@ export default function RunningPage() {
   const { config, updateConfig, loaded } = useUserConfig();
   const { runSession, setRunSession }    = useActiveSession();
   const [toast, setToast]               = useState(null);
+  const [showProgressionEdit, setShowProgressionEdit] = useState(false);
 
   // Week session editing
   const [editingSession, setEditingSession]   = useState(null); // { weekIdx, rtId }
@@ -313,7 +315,18 @@ export default function RunningPage() {
     run_completed:         runCompleted    = {},
     run_goals:             runGoals        = [],
     run_warmup_exercises:  warmupExercises = [],
+    lifts            = [],
+    show_performance = true,
   } = config;
+
+  const isRunTarget = (l) => {
+    const u = (l.unit || '').toLowerCase();
+    const n = (l.name || '').toLowerCase();
+    return ['km', 'mile', 'miles', 'min/km', 'min/mile'].includes(u) || n.includes('run');
+  };
+
+  const runLifts = lifts.filter(l => isRunTarget(l));
+  const gymLifts = lifts.filter(l => !isRunTarget(l));
 
   const showToast = useCallback((msg) => {
     setToast(msg);
@@ -467,6 +480,17 @@ export default function RunningPage() {
     showToast('Exercise removed!');
   };
 
+  const saveLifts = useCallback(({ lifts: newRunLifts }) => {
+    updateConfig({ lifts: [...gymLifts, ...newRunLifts] });
+    setShowProgressionEdit(false);
+    showToast('Targets updated!');
+  }, [gymLifts, updateConfig, showToast]);
+
+  const updateLiftCurrent = useCallback((liftKey, val) => {
+    const newLifts = lifts.map(l => l.key === liftKey ? { ...l, current: val } : l);
+    updateConfig({ lifts: newLifts });
+  }, [lifts, updateConfig]);
+
   // ─────────────────────────────────────────────────────────────
   const currentWeekData = runWeeks[runWeek] || null;
   const enriched        = runTypes.map(rt => ({ color: '#00e3fd', ...rt }));
@@ -503,6 +527,148 @@ export default function RunningPage() {
         <section className="mb-8">
           <h2 className="font-headline font-extrabold text-3xl tracking-tighter uppercase mb-1">Running Plan</h2>
         </section>
+
+        {/* ── Performance Targets ──────────────────────── */}
+        {runLifts.length > 0 && (
+          <section className="mb-8">
+            <div className="flex items-end justify-between mb-4">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-on-surface-variant/40 mb-0.5">
+                  Performance
+                </p>
+                <h3 className="font-headline font-extrabold text-2xl uppercase tracking-tighter leading-none">
+                  Targets
+                </h3>
+              </div>
+              <div className="flex items-center gap-3 pb-0.5">
+                <button
+                  onClick={() => updateConfig({ show_performance: !show_performance })}
+                  className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors duration-200 ${
+                    show_performance ? 'bg-secondary' : 'bg-surface-container-highest'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-3.5 w-3.5 transform rounded-full transition-transform duration-200 ${
+                      show_performance ? 'translate-x-[18px] bg-on-secondary' : 'translate-x-[3px] bg-on-surface-variant/40'
+                    }`}
+                  />
+                </button>
+                <button
+                  onClick={() => setShowProgressionEdit(true)}
+                  className="flex items-center gap-1.5 text-[10px] text-on-surface-variant/60 hover:text-secondary uppercase font-black tracking-widest transition-colors"
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>edit</span>
+                  Edit
+                </button>
+              </div>
+            </div>
+            <AnimatePresence>
+              {show_performance && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+                  className="overflow-hidden"
+                >
+                  <div className="space-y-3">
+                    {runLifts.map((lift, i) => {
+                      // For running goals, maxVal might need to be different. 
+                      // If it's KM, maybe target * 1.5. If it's pace, it's weird.
+                      // For now, mirroring GymPage logic with slight adjustment for units.
+                      const maxVal  = lift.unit === 'km' 
+                        ? Math.ceil((lift.target * 1.5) / 5) * 5 
+                        : Math.ceil((lift.target * 1.25) / 5) * 5;
+                      const pct     = lift.target > 0 ? Math.min(100, Math.round((lift.current / lift.target) * 100)) : 0;
+                      const fillPct = maxVal > 0 ? Math.min(100, (lift.current / maxVal) * 100) : 0;
+                      const reached = pct >= 100;
+
+                      return (
+                        <motion.div
+                          key={lift.key}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: i * 0.07, duration: 0.3 }}
+                          className="rounded-2xl bg-surface-container overflow-hidden"
+                        >
+                          <div
+                            className="h-[2px] transition-all duration-500"
+                            style={{
+                              background: `linear-gradient(to right, #00e3fd ${fillPct}%, rgba(255,255,255,0.04) ${fillPct}%)`,
+                            }}
+                          />
+                          <div className="px-5 pt-4 pb-5">
+                            <div className="flex items-start justify-between mb-4">
+                              <div>
+                                <p className="text-[9px] font-black uppercase tracking-[0.18em] text-on-surface-variant/40 mb-0.5">
+                                  {lift.unit}{lift.prefix ? ` · ${lift.prefix}` : ''}
+                                </p>
+                                <h4 className="font-headline font-bold text-[15px] uppercase tracking-tight text-on-surface leading-tight">
+                                  {lift.name}
+                                </h4>
+                              </div>
+                              <div className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                                reached
+                                  ? 'bg-secondary text-on-secondary'
+                                  : 'bg-surface-container-highest text-on-surface-variant'
+                              }`}>
+                                {reached ? '✓ Done' : `${pct}%`}
+                              </div>
+                            </div>
+                            <div className="flex items-end justify-between mb-5">
+                              <div>
+                                <p className="text-[8px] font-black uppercase tracking-widest text-on-surface-variant/40 mb-1">
+                                  Current
+                                </p>
+                                <div className="flex items-baseline gap-1.5">
+                                  <span className="font-headline font-black text-[40px] leading-none tracking-tighter text-on-surface">
+                                    {lift.prefix || ''}{lift.current}
+                                  </span>
+                                  <span className="text-on-surface-variant/60 text-sm font-bold leading-none mb-1">
+                                    {lift.unit}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="text-right pb-1">
+                                <p className="text-[8px] font-black uppercase tracking-widest text-on-surface-variant/40 mb-1">
+                                  Target
+                                </p>
+                                <div className="flex items-baseline gap-1 justify-end">
+                                  <span className="font-headline font-bold text-2xl leading-none tracking-tighter text-on-surface-variant/50">
+                                    {lift.prefix || ''}{lift.target}
+                                  </span>
+                                  <span className="text-on-surface-variant/30 text-xs font-bold leading-none mb-0.5">
+                                    {lift.unit}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            <input
+                              type="range"
+                              className="kinetic-slider w-full running-slider"
+                              min={0}
+                              max={maxVal}
+                              step={lift.unit === 'km' ? 0.5 : 2.5}
+                              value={lift.current}
+                              onChange={e => updateLiftCurrent(lift.key, parseFloat(e.target.value))}
+                              style={{
+                                background: `linear-gradient(to right, #00e3fd ${fillPct}%, rgba(38,38,38,1) ${fillPct}%)`,
+                              }}
+                            />
+                            <div className="flex justify-between mt-2">
+                              <span className="text-[9px] font-bold text-on-surface-variant/25">0</span>
+                              <span className="text-[9px] font-bold text-on-surface-variant/25">{maxVal} {lift.unit}</span>
+                            </div>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </section>
+        )}
 
         {/* ── Week selector ───────────────────────────────── */}
         <div className="mb-8">
@@ -1029,6 +1195,14 @@ export default function RunningPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {showProgressionEdit && (
+        <EditProgressionModal
+          lifts={runLifts}
+          onSave={saveLifts}
+          onClose={() => setShowProgressionEdit(false)}
+        />
+      )}
     </div>
   );
 }

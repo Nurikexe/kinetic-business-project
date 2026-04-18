@@ -315,6 +315,15 @@ export default function GymPage() {
     show_methodology = true,
   } = config;
 
+  const isRunTarget = (l) => {
+    const u = (l.unit || '').toLowerCase();
+    const n = (l.name || '').toLowerCase();
+    return ['km', 'mile', 'miles', 'min/km', 'min/mile'].includes(u) || n.includes('run');
+  };
+
+  const gymLifts = lifts.filter(l => !isRunTarget(l));
+  const runLifts = lifts.filter(l => isRunTarget(l));
+
   const effectiveDays      = gymDays.slice(0, gymDayCount);
   const effectiveCompleted = Array.from({ length: gymDayCount }, (_, i) => completed[i] ?? false);
   const currentDayIdx      = effectiveCompleted.indexOf(false); // first incomplete day
@@ -389,11 +398,11 @@ export default function GymPage() {
   }, [gymDays, updateConfig, showToast]);
 
   // ── Targets (lifts) editing ──
-  const saveLifts = useCallback(({ lifts: newLifts }) => {
-    updateConfig({ lifts: newLifts });
+  const saveLifts = useCallback(({ lifts: newGymLifts }) => {
+    updateConfig({ lifts: [...runLifts, ...newGymLifts] });
     setShowProgressionEdit(false);
     showToast('Targets updated!');
-  }, [updateConfig, showToast]);
+  }, [runLifts, updateConfig, showToast]);
 
   // ── Rules editing ──
   const saveRules = useCallback(({ gym_rules }) => {
@@ -458,7 +467,7 @@ export default function GymPage() {
         </section>
 
         {/* ── Performance Targets ──────────────────────── */}
-        {lifts.length > 0 && (
+        {gymLifts.length > 0 && (
           <section className="mb-8">
             <div className="flex items-end justify-between mb-4">
               <div>
@@ -502,7 +511,7 @@ export default function GymPage() {
                 >
 
                   <div className="space-y-3">
-                    {lifts.map((lift, i) => {
+                    {gymLifts.map((lift, i) => {
                       const maxVal  = Math.ceil((lift.target * 1.25) / 5) * 5;
                       const pct     = lift.target > 0 ? Math.min(100, Math.round((lift.current / lift.target) * 100)) : 0;
                       const fillPct = maxVal > 0 ? Math.min(100, (lift.current / maxVal) * 100) : 0;
@@ -605,7 +614,7 @@ export default function GymPage() {
         )}
 
         {/* Fallback: legacy goal string */}
-        {lifts.length === 0 && gymGoals && (
+        {gymLifts.length === 0 && gymGoals && (
           <div className="bg-surface-container rounded-xl p-5 mb-8 flex items-center justify-between">
             <p className="text-on-surface-variant text-sm flex-1">{gymGoals}</p>
             <button
@@ -838,7 +847,7 @@ export default function GymPage() {
       {/* Edit Targets (lifts) sheet */}
       {showProgressionEdit && (
         <EditProgressionModal
-          lifts={lifts}
+          lifts={gymLifts}
           onSave={saveLifts}
           onClose={() => setShowProgressionEdit(false)}
         />
