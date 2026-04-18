@@ -1,16 +1,73 @@
-# React + Vite
+# ⚡️ KINETIC | HYBRID ATHLETE
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+![Hybrid Athlete Hero](./design/hero.png)
 
-Currently, two official plugins are available:
+## 🧬 Revolutionize Your Training
+**KINETIC** is a next-generation training platform designed for the modern hybrid athlete. Whether you're chasing a sub-20 minute 5K or a 200kg deadlift, KINETIC fuses strength and endurance training into a single, cohesive experience powered by cutting-edge AI.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+### ✨ Key Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **🤖 AI Blueprint Generation**: Instantly generate hyper-personalized multi-week training programs using the **Google Gemma 3** model. Our AI analyzes your experience, goals, and schedule to build a mathematically optimized progression.
+- **📊 Advanced Analytics**: Visualize your progress with glassmorphic charts. Track volume, distance, and pace deltas across weeks and months.
+- **🌍 The Elite Vault**: Access and clone battle-tested programs from the KINETIC community. Share your own blueprints and lead the pack.
+- **🏗️ Dynamic Workout Engine**: Real-time session tracking with a fluid, mobile-first interface designed for the gym floor and the open road.
+- **⚡️ Kinetic Gradient UI**: A premium, high-impact aesthetic built with modern design principles—neon accents, deep shadows, and smooth micro-animations.
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### 🛠️ Tech Stack
+
+KINETIC is built with a sleek, high-performance stack for speed and scalability:
+
+- **Frontend**: [React 19](https://react.dev/) + [Vite](https://vitejs.dev/)
+- **Styling**: [Tailwind CSS 4](https://tailwindcss.com/) + [Vanilla CSS](https://developer.mozilla.org/en-US/docs/Web/CSS)
+- **Animations**: [Framer Motion](https://www.framer.com/motion/)
+- **Icons**: [Lucide React](https://lucide.dev/) + [Material Symbols](https://fonts.google.com/icons)
+- **Backend / Database**: [Supabase](https://supabase.com/) (PostgreSQL + Realtime)
+- **Infrastructure**: [Vercel](https://vercel.com/)
+
+---
+
+### 🧠 Intelligence Layer
+
+KINETIC leverages high-performance LLMs to act as your digital head coach:
+
+- **Primary Model**: `Google Gemma 3 (4B-IT)` via [OpenRouter](https://openrouter.ai/)
+- **Capabilities**: 
+  - Personalized progression logic (10% weekly volume rules)
+  - Exercise-specific performance target calculation
+  - Context-aware recovery advice
+  - Natural language workout generation
+
+---
+
+### 🚀 Getting Started
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/hybrid-athlete.git
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Configure Environment Variables**
+   Create a `.env.local` file:
+   ```env
+   VITE_SUPABASE_URL=your_supabase_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_key
+   VITE_OPENROUTER_API_KEY=your_openrouter_key
+   ```
+
+4. **Launch Engine**
+   ```bash
+   npm run dev
+   ```
+
+---
+
+*Built for those who refuse to choose between strength and speed.*
