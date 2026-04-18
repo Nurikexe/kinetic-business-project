@@ -409,41 +409,65 @@ export default function CabinetPage({ setPage, triggerOnboarding }) {
         {/* ── Contact ── */}
         <section>
           <h3 className="font-label text-[9px] uppercase tracking-[0.2em] text-on-surface-variant font-black mb-3 px-1">Get in Touch</h3>
-          <div className="bg-surface-container-low rounded-2xl p-5 border border-outline-variant/10">
-            <p className="text-on-surface-variant text-xs font-medium leading-relaxed mb-4">
-              Have a suggestion or question? Feel free to reach out!
-            </p>
-            <div className="flex flex-col gap-2">
-              <a
-                href="https://instagram.com/yaboinurik"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-4 p-3 rounded-xl bg-surface-container hover:bg-surface-container-high transition-colors group"
-              >
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
-                  <span className="material-symbols-outlined text-white text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>photo_camera</span>
-                </div>
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Instagram</p>
-                  <p className="text-sm font-bold text-on-surface group-hover:text-primary-fixed transition-colors">@yaboinurik</p>
-                </div>
-                <span className="material-symbols-outlined text-on-surface-variant text-sm ml-auto">open_in_new</span>
-              </a>
-              <a
-                href="https://t.me/heavygrind"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-4 p-3 rounded-xl bg-surface-container hover:bg-surface-container-high transition-colors group"
-              >
-                <div className="w-9 h-9 rounded-xl bg-[#229ED9] flex items-center justify-center flex-shrink-0">
-                  <span className="material-symbols-outlined text-white text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>send</span>
-                </div>
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Telegram</p>
-                  <p className="text-sm font-bold text-on-surface group-hover:text-primary-fixed transition-colors">@heavygrind</p>
-                </div>
-                <span className="material-symbols-outlined text-on-surface-variant text-sm ml-auto">open_in_new</span>
-              </a>
+          <div
+            className="relative rounded-3xl overflow-hidden border border-white/5"
+            style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%)' }}
+          >
+            {/* subtle grid texture */}
+            <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '18px 18px' }} />
+            <div className="relative p-5 pb-4">
+              <p className="text-on-surface-variant/60 text-[11px] font-medium leading-relaxed tracking-wide mb-5 italic">
+                Have a suggestion or question? Feel free to reach out.
+              </p>
+              <div className="flex flex-col gap-3">
+                <a
+                  href="https://instagram.com/yaboinurik"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="relative flex items-center gap-4 p-4 rounded-2xl border border-white/5 bg-white/[0.03] hover:bg-white/[0.07] hover:border-white/10 active:scale-[0.98] transition-all duration-300 group overflow-hidden"
+                >
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ background: 'linear-gradient(120deg, rgba(168,85,247,0.06) 0%, rgba(236,72,153,0.06) 100%)' }} />
+                  <div
+                    className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg"
+                    style={{ background: 'linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045)' }}
+                  >
+                    <span className="material-symbols-outlined text-white text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>photo_camera</span>
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <p className="text-[9px] font-black uppercase tracking-[0.25em] text-on-surface-variant/50">Instagram</p>
+                    <p className="text-[15px] font-black tracking-tight text-on-surface group-hover:text-white transition-colors">@yaboinurik</p>
+                  </div>
+                  <div className="ml-auto flex items-center gap-1 text-on-surface-variant/30 group-hover:text-on-surface-variant/70 transition-colors">
+                    <span className="material-symbols-outlined text-base">arrow_outward</span>
+                  </div>
+                </a>
+
+                <a
+                  href="https://t.me/heavygrind"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="relative flex items-center gap-4 p-4 rounded-2xl border border-white/5 bg-white/[0.03] hover:bg-white/[0.07] hover:border-white/10 active:scale-[0.98] transition-all duration-300 group overflow-hidden"
+                >
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ background: 'linear-gradient(120deg, rgba(34,158,217,0.06) 0%, rgba(34,158,217,0.02) 100%)' }} />
+                  <div
+                    className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg"
+                    style={{ background: 'linear-gradient(135deg, #229ED9, #1a7ab5)' }}
+                  >
+                    <span className="material-symbols-outlined text-white text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>send</span>
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <p className="text-[9px] font-black uppercase tracking-[0.25em] text-on-surface-variant/50">Telegram</p>
+                    <p className="text-[15px] font-black tracking-tight text-on-surface group-hover:text-white transition-colors">@heavygrind</p>
+                  </div>
+                  <div className="ml-auto flex items-center gap-1 text-on-surface-variant/30 group-hover:text-on-surface-variant/70 transition-colors">
+                    <span className="material-symbols-outlined text-base">arrow_outward</span>
+                  </div>
+                </a>
+              </div>
+            </div>
+            {/* bottom strip */}
+            <div className="px-5 py-3 border-t border-white/[0.04] text-center">
+              <span className="text-[9px] text-on-surface-variant/25 font-black uppercase tracking-[0.3em]">Built by Nurasyl</span>
             </div>
           </div>
         </section>
