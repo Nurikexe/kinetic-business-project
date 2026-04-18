@@ -39,71 +39,153 @@ function fmtCountdown(ms) {
   return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-// ── Bar chart ───────────────────────────────────────────────
-// Uses pixel heights (not %) so bars render correctly regardless of flex context
-const BAR_H = 120; // px — height of the bar drawing area
-
+// ── SVG Bar chart ─────────────────────────────────────────────
 function BarChart({ data, maxValue, color = '#d4fb00', showValues = false }) {
   if (!data || data.length === 0) return null;
-  const max = maxValue || Math.max(...data.map(d => d.value), 1);
+
+  const CHART_W = 340;
+  const CHART_H = 140;
+  const PAD_LEFT = 8;
+  const PAD_RIGHT = 8;
+  const PAD_TOP = 24;
+  const PAD_BOTTOM = 28;
+  const DRAW_W = CHART_W - PAD_LEFT - PAD_RIGHT;
+  const DRAW_H = CHART_H - PAD_TOP - PAD_BOTTOM;
+
+  const raw = data.map(d => d.value);
+  const max = maxValue || Math.max(...raw, 1);
+  // Use a nice ceiling so bars never fill 100%, giving breathing room
+  const yMax = max * 1.2;
+
+  const n = data.length;
+  const GAP = Math.max(2, Math.round(DRAW_W / n * 0.18));
+  const barW = Math.max(6, (DRAW_W - GAP * (n - 1)) / n);
+
+  // Grid lines at 0%, 33%, 66%, 100% of yMax
+  const gridLines = [0, 0.33, 0.66, 1].map(f => ({
+    y: PAD_TOP + DRAW_H - f * DRAW_H,
+    val: Math.round(yMax * f),
+  }));
+
+  const gradId = `bar-grad-${color.replace('#', '')}`;
+  const glowId = `bar-glow-${color.replace('#', '')}`;
+
+  const fmtVal = (v) => {
+    if (v === 0) return '';
+    return v >= 1000 ? `${(v / 1000).toFixed(1)}k` : String(v);
+  };
 
   return (
-    <div>
-      {/* Bar drawing area — explicit pixel height so % heights resolve correctly */}
-      <div
-        className="flex items-end justify-between gap-1"
-        style={{ height: BAR_H }}
-      >
-        {data.map((d, i) => {
-          const barPx = Math.max((d.value / max) * BAR_H, 4);
-          return (
-            <div
-              key={i}
-              className="flex-1 flex flex-col items-center justify-end gap-1"
-              style={{ height: BAR_H }}
-            >
-              {showValues && (
-                <span
-                  className="text-[8px] font-bold leading-none"
-                  style={{
-                    color: d.highlight ? color : '#888',
-                    opacity: d.value > 0 ? 1 : 0,
-                  }}
-                >
-                  {d.value >= 1000 ? `${(d.value / 1000).toFixed(1)}k` : d.value}
-                </span>
-              )}
-              <div
-                className="w-full rounded-t-sm transition-all duration-500"
-                style={{
-                  height: barPx,
-                  background: d.highlight
-                    ? color
-                    : `${color}30`,
-                  boxShadow: d.highlight ? `0 0 8px ${color}55` : 'none',
-                }}
+    <svg
+      viewBox={`0 0 ${CHART_W} ${CHART_H}`}
+      className="w-full"
+      style={{ height: CHART_H, overflow: 'visible' }}
+    >
+      <defs>
+        <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="1" />
+          <stop offset="100%" stopColor={color} stopOpacity="0.35" />
+        </linearGradient>
+        <linearGradient id={`${gradId}-dim`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.25" />
+          <stop offset="100%" stopColor={color} stopOpacity="0.06" />
+        </linearGradient>
+        <filter id={glowId} x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="3" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+
+      {/* Grid lines */}
+      {gridLines.map(({ y, val }, gi) => (
+        <g key={gi}>
+          <line
+            x1={PAD_LEFT} y1={y} x2={CHART_W - PAD_RIGHT} y2={y}
+            stroke={`${color}15`}
+            strokeWidth={gi === 0 ? 1.5 : 0.75}
+            strokeDasharray={gi === 0 ? 'none' : '3 4'}
+          />
+        </g>
+      ))}
+
+      {/* Bars */}
+      {data.map((d, i) => {
+        const barH = Math.max(4, (d.value / yMax) * DRAW_H);
+        const x = PAD_LEFT + i * (barW + GAP);
+        const y = PAD_TOP + DRAW_H - barH;
+        const r = Math.min(4, barW / 2);
+        const isHighlight = d.highlight;
+        const fillId = isHighlight ? gradId : `${gradId}-dim`;
+
+        return (
+          <g key={i}>
+            {/* Glow bar behind (highlight only) */}
+            {isHighlight && (
+              <rect
+                x={x - 1} y={y - 1} width={barW + 2} height={barH + 1}
+                rx={r + 1}
+                fill={color}
+                opacity={0.18}
+                filter={`url(#${glowId})`}
               />
-            </div>
-          );
-        })}
-      </div>
-      {/* Labels row */}
-      <div className="flex justify-between gap-1 mt-2">
-        {data.map((d, i) => (
-          <span
-            key={i}
-            className="flex-1 text-center font-bold uppercase truncate"
-            style={{
-              fontSize: 9,
-              color: d.highlight ? color : '#666',
-              letterSpacing: '0.06em',
-            }}
-          >
-            {d.label}
-          </span>
-        ))}
-      </div>
-    </div>
+            )}
+            {/* Main bar */}
+            <rect
+              x={x} y={y} width={barW} height={barH}
+              rx={r}
+              fill={`url(#${fillId})`}
+            />
+            {/* Top cap highlight */}
+            {isHighlight && barH > 8 && (
+              <rect
+                x={x + 1} y={y + 1} width={barW - 2} height={2}
+                rx={1}
+                fill={color}
+                opacity={0.6}
+              />
+            )}
+            {/* Value label above bar */}
+            {showValues && d.value > 0 && (
+              <text
+                x={x + barW / 2}
+                y={y - 5}
+                textAnchor="middle"
+                fontSize={9}
+                fontWeight="800"
+                fontFamily="monospace"
+                fill={isHighlight ? color : `${color}80`}
+                letterSpacing="0.03em"
+              >
+                {fmtVal(d.value)}
+              </text>
+            )}
+            {/* X-axis label */}
+            <text
+              x={x + barW / 2}
+              y={CHART_H - 6}
+              textAnchor="middle"
+              fontSize={8.5}
+              fontWeight="700"
+              fill={isHighlight ? color : '#555'}
+              letterSpacing="0.07em"
+              style={{ textTransform: 'uppercase' }}
+            >
+              {d.label}
+            </text>
+          </g>
+        );
+      })}
+
+      {/* Baseline */}
+      <line
+        x1={PAD_LEFT} y1={PAD_TOP + DRAW_H}
+        x2={CHART_W - PAD_RIGHT} y2={PAD_TOP + DRAW_H}
+        stroke={`${color}30`} strokeWidth={1}
+      />
+    </svg>
   );
 }
 
@@ -1407,7 +1489,14 @@ ${context}
         ) : tab === 'strength' ? (
           <>
             {/* Weekly Volume */}
-            <div className="bg-surface-container rounded-lg p-6 space-y-5">
+            <div
+              className="rounded-2xl p-5 space-y-4"
+              style={{
+                background: 'linear-gradient(145deg, rgba(212,251,0,0.04) 0%, rgba(18,18,18,0.97) 60%)',
+                border: '1px solid rgba(212,251,0,0.12)',
+                boxShadow: 'inset 0 1px 0 rgba(212,251,0,0.08)',
+              }}
+            >
               <div className="flex justify-between items-start">
                 <div>
                   <p className="font-label text-xs font-black uppercase tracking-widest text-on-surface-variant mb-1">Weekly Volume</p>
@@ -1443,7 +1532,14 @@ ${context}
             </div>
 
             {/* Volume by Session */}
-            <div className="bg-surface-container rounded-lg p-6 space-y-5">
+            <div
+              className="rounded-2xl p-5 space-y-4"
+              style={{
+                background: 'linear-gradient(145deg, rgba(168,255,120,0.04) 0%, rgba(18,18,18,0.97) 60%)',
+                border: '1px solid rgba(168,255,120,0.12)',
+                boxShadow: 'inset 0 1px 0 rgba(168,255,120,0.08)',
+              }}
+            >
               <div>
                 <p className="font-label text-xs font-black uppercase tracking-widest text-on-surface-variant mb-1">Volume by Session</p>
                 <p className="text-on-surface-variant text-xs">Last 10 sessions</p>
@@ -1455,7 +1551,14 @@ ${context}
             </div>
 
             {/* Volume by Month */}
-            <div className="bg-surface-container rounded-lg p-6 space-y-5">
+            <div
+              className="rounded-2xl p-5 space-y-4"
+              style={{
+                background: 'linear-gradient(145deg, rgba(212,251,0,0.04) 0%, rgba(18,18,18,0.97) 60%)',
+                border: '1px solid rgba(212,251,0,0.12)',
+                boxShadow: 'inset 0 1px 0 rgba(212,251,0,0.08)',
+              }}
+            >
               <div>
                 <p className="font-label text-xs font-black uppercase tracking-widest text-on-surface-variant mb-1">Monthly Volume</p>
                 <p className="text-on-surface-variant text-xs">Last 6 months</p>
@@ -1468,7 +1571,14 @@ ${context}
 
             {/* Muscle Group Breakdown */}
             {muscleGroups.length > 0 && (
-              <div className="bg-surface-container rounded-lg p-6 space-y-4">
+              <div
+                className="rounded-2xl p-5 space-y-4"
+                style={{
+                  background: 'linear-gradient(145deg, rgba(100,100,100,0.05) 0%, rgba(18,18,18,0.97) 60%)',
+                  border: '1px solid rgba(255,255,255,0.07)',
+                  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)',
+                }}
+              >
                 <div>
                   <p className="font-label text-xs font-black uppercase tracking-widest text-on-surface-variant mb-1">Muscle Focus</p>
                   <p className="text-on-surface-variant text-xs">Volume split by muscle group · last 30 days</p>
@@ -1559,7 +1669,14 @@ ${context}
         ) : (
           <>
             {/* Avg Pace + trend */}
-            <div className="bg-surface-container-low rounded-lg p-6 space-y-4">
+            <div
+              className="rounded-2xl p-5 space-y-4"
+              style={{
+                background: 'linear-gradient(145deg, rgba(0,227,253,0.05) 0%, rgba(18,18,18,0.97) 60%)',
+                border: '1px solid rgba(0,227,253,0.14)',
+                boxShadow: 'inset 0 1px 0 rgba(0,227,253,0.08)',
+              }}
+            >
               <div className="flex justify-between items-start">
                 <div>
                   <p className="font-label text-xs font-black uppercase tracking-widest text-on-surface-variant mb-1">Average Pace</p>
@@ -1611,7 +1728,14 @@ ${context}
             </div>
 
             {/* Distance by Session */}
-            <div className="bg-surface-container rounded-lg p-6 space-y-5">
+            <div
+              className="rounded-2xl p-5 space-y-4"
+              style={{
+                background: 'linear-gradient(145deg, rgba(0,227,253,0.04) 0%, rgba(18,18,18,0.97) 60%)',
+                border: '1px solid rgba(0,227,253,0.12)',
+                boxShadow: 'inset 0 1px 0 rgba(0,227,253,0.08)',
+              }}
+            >
               <div>
                 <p className="font-label text-xs font-black uppercase tracking-widest text-on-surface-variant mb-1">Distance by Session</p>
                 <p className="text-on-surface-variant text-xs">Last 10 runs (km)</p>
@@ -1623,7 +1747,14 @@ ${context}
             </div>
 
             {/* Weekly Distance */}
-            <div className="bg-surface-container rounded-lg p-6 space-y-5">
+            <div
+              className="rounded-2xl p-5 space-y-4"
+              style={{
+                background: 'linear-gradient(145deg, rgba(0,227,253,0.04) 0%, rgba(18,18,18,0.97) 60%)',
+                border: '1px solid rgba(0,227,253,0.12)',
+                boxShadow: 'inset 0 1px 0 rgba(0,227,253,0.08)',
+              }}
+            >
               <div>
                 <p className="font-label text-xs font-black uppercase tracking-widest text-on-surface-variant mb-1">Weekly Distance</p>
                 <p className="text-on-surface-variant text-xs">Last 7 weeks (km)</p>
@@ -1635,7 +1766,14 @@ ${context}
             </div>
 
             {/* Monthly Distance */}
-            <div className="bg-surface-container rounded-lg p-6 space-y-5">
+            <div
+              className="rounded-2xl p-5 space-y-4"
+              style={{
+                background: 'linear-gradient(145deg, rgba(0,180,216,0.04) 0%, rgba(18,18,18,0.97) 60%)',
+                border: '1px solid rgba(0,180,216,0.12)',
+                boxShadow: 'inset 0 1px 0 rgba(0,180,216,0.08)',
+              }}
+            >
               <div>
                 <p className="font-label text-xs font-black uppercase tracking-widest text-on-surface-variant mb-1">Monthly Distance</p>
                 <p className="text-on-surface-variant text-xs">Last 6 months (km)</p>
