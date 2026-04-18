@@ -171,7 +171,9 @@ Schema:
     }
   ],
   "methodology": ["Rule 1", "Rule 2"],
-  "performanceTargets": ["Target 1"],
+  "performanceTargets": [
+    { "name": "Exercise", "current": 0, "target": 100, "unit": "kg" }
+  ],
   "runningDays": [
     {
       "name": "Day Name",
@@ -189,7 +191,7 @@ Schema:
 }
 
 Only include gymDays if the plan has gym. Only include runningDays and weeks if the plan has running. The "weeks" array length MUST equal the user's requested number of weeks and each week's "sessions" keys must match the "name" of each runningDay.
-${isGym ? (answers.gym_stats?.trim() ? '\nA gym goal/stats was provided. You MUST generate 2 to 4 progression rules in the "methodology" array and set "performanceTargets" based on their input.' : '\nNo valid gym goal/stats provided. You MUST leave "performanceTargets" and "methodology" arrays completely empty.') : ''}
+${isGym ? (answers.gym_stats?.trim() ? '\nA gym goal/stats was provided. You MUST generate 2 to 4 progression rules in the "methodology" array and set "performanceTargets" based on their input. For "performanceTargets", provide an array of objects: { "name": string, "current": number, "target": number, "unit": string }. Make sure "current" and "target" are numbers.' : '\nNo valid gym goal/stats provided. You MUST leave "performanceTargets" and "methodology" arrays completely empty.') : ''}
 ${isRunning ? `
 CRITICAL RUNNING PROGRESSION RULES — THESE ARE MANDATORY, NOT OPTIONAL:
 1. EVERY session in the "weeks" array MUST show clear, measurable week-over-week progression. It is STRICTLY FORBIDDEN for any session to have the same distance AND same pace as the identical session in any previous week.
@@ -781,7 +783,22 @@ export default function OnboardingPage({ onComplete, onCancel }) {
             <h2 className="text-4xl font-black font-headline uppercase tracking-tighter leading-none mb-3">
               {aiPlan.title}
             </h2>
-            <p className="text-on-surface-variant leading-relaxed">{aiPlan.description}</p>
+            <p className="text-on-surface-variant leading-relaxed mb-6">{aiPlan.description}</p>
+
+            {/* Performance Targets (if any) */}
+            {aiPlan.performanceTargets?.length > 0 && (
+              <div className="flex flex-wrap gap-3">
+                {aiPlan.performanceTargets.map((target, i) => (
+                  <div key={i} className="flex flex-col gap-1 px-4 py-3 rounded-2xl bg-surface-container-high border border-outline-variant/10">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{target.name}</span>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="font-headline font-black text-xl text-primary-fixed">{target.current} → {target.target}</span>
+                      <span className="text-[10px] font-bold text-on-surface-variant/60">{target.unit}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Weekly Schedule strip */}
