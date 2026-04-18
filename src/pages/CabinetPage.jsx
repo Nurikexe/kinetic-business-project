@@ -131,7 +131,7 @@ function AvatarPickerModal({ currentAvatar, onSelect, onClose }) {
 }
 
 /* ── Main Page ── */
-export default function CabinetPage({ setPage }) {
+export default function CabinetPage({ setPage, triggerOnboarding }) {
   const { user, displayName, logout } = useAuth();
   const { config, updateConfig } = useUserConfig();
 
@@ -360,7 +360,7 @@ export default function CabinetPage({ setPage }) {
               label="Onboarding &amp; Plan"
               onClick={() => {
                 sessionStorage.setItem('ha_force_onboarding', '1');
-                window.location.reload();
+                triggerOnboarding();
               }}
             />
           </div>

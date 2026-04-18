@@ -310,7 +310,7 @@ function CommunityPlansView({ onSelect, onBack }) {
 }
 
 // ── Main Onboarding Page ──────────────────────────────────────
-export default function OnboardingPage({ onComplete }) {
+export default function OnboardingPage({ onComplete, onCancel }) {
   const { user } = useAuth();
   const [step, setStep]       = useState('choice'); // choice | ai_plantype | ai_quiz | ai_extras | ai_generating | ai_result | community | scratch
   const [answers, setAnswers] = useState({});
@@ -353,8 +353,16 @@ export default function OnboardingPage({ onComplete }) {
   if (step === 'choice') {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <header className="px-6 py-6">
+        <header className="px-6 py-6 flex items-center justify-between">
           <span className="text-2xl font-black italic tracking-tighter text-primary-fixed font-headline uppercase">KINETIC</span>
+          {onCancel && (
+            <button
+              onClick={onCancel}
+              className="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-all active:scale-95"
+            >
+              <span className="material-symbols-outlined">close</span>
+            </button>
+          )}
         </header>
         <main className="flex-1 px-6 pt-4 pb-12 flex flex-col items-center justify-center max-w-2xl mx-auto w-full">
           <div className="text-center mb-12">

@@ -245,8 +245,19 @@ function AppContent({ page, setPage }) {
     setPage('home');
   };
 
+  const handleOnboardingCancel = () => {
+    sessionStorage.removeItem('ha_force_onboarding');
+    setForceOnboarding(false);
+    setPage('cabinet');
+  };
+
   if (showOnboarding) {
-    return <OnboardingPage onComplete={handleOnboardingComplete} />;
+    return (
+      <OnboardingPage
+        onComplete={handleOnboardingComplete}
+        onCancel={forceOnboarding ? handleOnboardingCancel : undefined}
+      />
+    );
   }
 
   const showNav = NAV_PAGES.includes(page) && !hasActive;
@@ -265,7 +276,15 @@ function AppContent({ page, setPage }) {
           {page === 'gym'       && <GymPage      setPage={setPage} />}
           {page === 'running'   && <RunningPage  setPage={setPage} />}
           {page === 'analytics' && <AnalyticsPage />}
-          {page === 'cabinet'   && <CabinetPage  setPage={setPage} />}
+          {page === 'cabinet'   && (
+            <CabinetPage
+              setPage={setPage}
+              triggerOnboarding={() => {
+                setOnboardingDone(false);
+                setForceOnboarding(true);
+              }}
+            />
+          )}
           {page === 'create'    && <CreateWorkoutPage setPage={setPage} />}
         </motion.div>
       </AnimatePresence>
