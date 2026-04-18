@@ -791,10 +791,10 @@ export default function AnalyticsPage() {
   const pagedActivities = allActivities.slice(activityPage * PAGE_SIZE, (activityPage + 1) * PAGE_SIZE);
 
   // ── Gym metrics ─────────────────────────────────────────────
-  // Weekly volume (last 7 weeks)
+  // Weekly volume (last 8 weeks)
   const weeklyVolume = (() => {
     const weeks = {};
-    gymData.forEach(w => {
+    allGymData.forEach(w => {
       const d = new Date(w.date);
       const weekStart = new Date(d);
       weekStart.setDate(d.getDate() - d.getDay());
@@ -806,12 +806,21 @@ export default function AnalyticsPage() {
         weeks[key] += (parseFloat(ex.weight) || 0) * (parseInt(ex.sets) || 1) * reps;
       });
     });
-    const sorted = Object.entries(weeks).sort(([a], [b]) => a.localeCompare(b)).slice(-7);
-    return sorted.map(([key, val], i) => ({
-      label: ['W1','W2','W3','W4','W5','W6','W7'][i] || `W${i+1}`,
-      value: Math.round(val),
-      highlight: i === sorted.length - 1,
-    }));
+
+    const result = [];
+    const today = new Date();
+    for (let i = 7; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - today.getDay() - (i * 7));
+      const key = d.toISOString().split('T')[0];
+      const val = weeks[key] || 0;
+      result.push({
+        label: i === 0 ? 'Now' : `${i}w`,
+        value: Math.round(val),
+        highlight: i === 0,
+      });
+    }
+    return result;
   })();
 
   // Volume by session (last 10 sessions)
@@ -842,15 +851,29 @@ export default function AnalyticsPage() {
       });
     });
     const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const sorted = Object.entries(months).sort(([a], [b]) => a.localeCompare(b)).slice(-6);
-    return sorted.map(([key, val], i) => ({
-      label: monthNames[parseInt(key.split('-')[1]) - 1],
-      value: Math.round(val),
-      highlight: i === sorted.length - 1,
-    }));
+    const result = [];
+    const today = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const val = months[key] || 0;
+      result.push({
+        label: monthNames[d.getMonth()],
+        value: Math.round(val),
+        highlight: i === 0,
+      });
+    }
+    return result;
   })();
 
-  const totalVolumeKg = weeklyVolume.reduce((s, w) => s + w.value, 0);
+  // Total volume (last 30 days)
+  const totalVolumeKg = gymData.reduce((s, w) => {
+    const exs = Array.isArray(w.exercises) ? w.exercises : (w.exercises?.items ?? []);
+    return s + exs.reduce((ss, ex) => {
+      const r = parseInt(String(ex.reps || '1').split('-')[0]) || 1;
+      return ss + (parseFloat(ex.weight) || 0) * (parseInt(ex.sets) || 1) * r;
+    }, 0);
+  }, 0);
 
   // ── Week-over-week volume delta ─────────────────────────────
   const wowDelta = (() => {
@@ -975,10 +998,10 @@ export default function AnalyticsPage() {
     return Math.round((first - last) * 60); // positive = faster (fewer secs/km)
   })();
 
-  // Distance by week (last 7 weeks)
+  // Distance by week (last 8 weeks)
   const weeklyDistance = (() => {
     const weeks = {};
-    runData.forEach(r => {
+    allRunData.forEach(r => {
       const d = new Date(r.date);
       const weekStart = new Date(d);
       weekStart.setDate(d.getDate() - d.getDay());
@@ -986,12 +1009,20 @@ export default function AnalyticsPage() {
       if (!weeks[key]) weeks[key] = 0;
       weeks[key] += parseFloat(r.total_distance) || 0;
     });
-    const sorted = Object.entries(weeks).sort(([a], [b]) => a.localeCompare(b)).slice(-7);
-    return sorted.map(([, val], i) => ({
-      label: ['W1','W2','W3','W4','W5','W6','W7'][i] || `W${i+1}`,
-      value: Math.round(val * 10) / 10,
-      highlight: i === sorted.length - 1,
-    }));
+    const result = [];
+    const today = new Date();
+    for (let i = 7; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - today.getDay() - (i * 7));
+      const key = d.toISOString().split('T')[0];
+      const val = weeks[key] || 0;
+      result.push({
+        label: i === 0 ? 'Now' : `${i}w`,
+        value: Math.round(val * 10) / 10,
+        highlight: i === 0,
+      });
+    }
+    return result;
   })();
 
   // Distance by month (last 6 months)
@@ -1004,12 +1035,19 @@ export default function AnalyticsPage() {
       months[key] += parseFloat(r.total_distance) || 0;
     });
     const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const sorted = Object.entries(months).sort(([a], [b]) => a.localeCompare(b)).slice(-6);
-    return sorted.map(([key, val], i) => ({
-      label: monthNames[parseInt(key.split('-')[1]) - 1],
-      value: Math.round(val * 10) / 10,
-      highlight: i === sorted.length - 1,
-    }));
+    const result = [];
+    const today = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const val = months[key] || 0;
+      result.push({
+        label: monthNames[d.getMonth()],
+        value: Math.round(val * 10) / 10,
+        highlight: i === 0,
+      });
+    }
+    return result;
   })();
 
   // ── AI insight ────────────────────────────────────────────
@@ -1499,11 +1537,12 @@ ${context}
             >
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="font-label text-xs font-black uppercase tracking-widest text-on-surface-variant mb-1">Weekly Volume</p>
+                  <p className="font-label text-xs font-black uppercase tracking-widest text-on-surface-variant mb-1">Total Volume</p>
                   <h3 className="font-headline text-4xl font-extrabold tracking-tighter">
                     {totalVolumeKg >= 1000 ? `${(totalVolumeKg/1000).toFixed(1)}t` : totalVolumeKg.toLocaleString()}
                     <span className="text-lg font-bold ml-1 text-on-surface-variant">KG</span>
                   </h3>
+                  <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">30 days</p>
                 </div>
                 <div className="flex flex-col items-end gap-1">
                   <div className="bg-surface-container-high text-on-surface-variant px-3 py-1 rounded-full text-xs font-bold">
