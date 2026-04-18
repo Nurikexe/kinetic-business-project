@@ -69,9 +69,24 @@ function AppContent({ page, setPage }) {
       }
 
       // ── Gym extras: specific goals + methodology ─────────
-      if (answers.plan_type === 'gym') {
-        patch.gym_goals = answers.specific_goals?.trim() || '';
-        if (answers.include_methodology === 'yes') {
+      if (answers.plan_type === 'gym' || answers.plan_type === 'hybrid') {
+        patch.gym_goals = answers.gym_stats?.trim() || '';
+        
+        // Handle AI-generated performance targets (lifts)
+        if (Array.isArray(aiPlan.performanceTargets) && aiPlan.performanceTargets.length > 0) {
+          patch.lifts = aiPlan.performanceTargets.map((t, i) => ({
+            key: `ai-lift-${i}-${Date.now()}`,
+            name: t.name || 'Target',
+            current: Number(t.current) || 0,
+            target: Number(t.target) || 0,
+            unit: t.unit || 'kg',
+          }));
+        } else {
+          // If using AI and no targets provided, clear existing defaults
+          patch.lifts = [];
+        }
+
+        if (answers.include_methodology === 'yes' || answers.plan_type === 'hybrid') {
           patch.gym_rules = Array.isArray(aiPlan.methodology) && aiPlan.methodology.length > 0
             ? aiPlan.methodology
             : [];
@@ -132,7 +147,7 @@ function AppContent({ page, setPage }) {
 
       // ── Running extras: goals + warmup ───────────────────
       if (isRunning) {
-        const goalText = answers.specific_goals?.trim();
+        const goalText = answers.run_stats?.trim();
         patch.run_goals = goalText
           ? [{ id: `goal-${Date.now()}`, text: goalText }]
           : [];
