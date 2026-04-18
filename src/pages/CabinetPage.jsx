@@ -224,17 +224,20 @@ export default function CabinetPage({ setPage, triggerOnboarding }) {
     if (deleteConfirmText !== 'DELETE') return;
     setIsDeleting(true);
     try {
-      // 1. Delete data from all tables
-      const tables = ['workouts', 'run_sessions', 'community_plans', 'user_config'];
+      // 1. Call the RPC to delete the user record from auth.users
+      // This will automatically trigger the ON DELETE CASCADE on all related tables
+      const { error } = await supabase.rpc('delete_user');
       
-      for (const table of tables) {
-        const { error } = await supabase.from(table).delete().eq('user_id', user.id);
-        if (error) {
-          console.error(`Error deleting from ${table}:`, error.message);
+      if (error) {
+        console.error('RPC deletion failed, falling back to manual purge:', error.message);
+        // Fallback: Delete application data manually if RPC hasn't been created yet
+        const tables = ['workouts', 'run_sessions', 'community_plans', 'user_config'];
+        for (const table of tables) {
+          await supabase.from(table).delete().eq('user_id', user.id);
         }
       }
 
-      // 2. Clear storage
+      // 2. Clear local data
       localStorage.clear();
       sessionStorage.clear();
 
@@ -242,7 +245,7 @@ export default function CabinetPage({ setPage, triggerOnboarding }) {
       await logout();
     } catch (err) {
       console.error('Critical deletion error:', err);
-      alert('An error occurred during account deletion. Please contact support if your data persists.');
+      alert('An error occurred during account deletion. Your data may still persist.');
     } finally {
       setIsDeleting(false);
       setShowDeleteConfirm(false);
