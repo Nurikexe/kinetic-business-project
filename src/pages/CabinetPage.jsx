@@ -224,17 +224,25 @@ export default function CabinetPage({ setPage, triggerOnboarding }) {
     if (deleteConfirmText !== 'DELETE') return;
     setIsDeleting(true);
     try {
-      // Delete all user related data. 
-      // schema.sql has ON DELETE CASCADE on user_id for most tables, 
-      // but we delete explicitly here to be sure and because we can't delete auth.user record from client.
+      // 1. Delete data from all tables
       const tables = ['workouts', 'run_sessions', 'community_plans', 'user_config'];
+      
       for (const table of tables) {
-        await supabase.from(table).delete().eq('user_id', user.id);
+        const { error } = await supabase.from(table).delete().eq('user_id', user.id);
+        if (error) {
+          console.error(`Error deleting from ${table}:`, error.message);
+        }
       }
+
+      // 2. Clear storage
+      localStorage.clear();
+      sessionStorage.clear();
+
+      // 3. Finally logout
       await logout();
     } catch (err) {
-      console.error('Deletion error:', err);
-      alert('An error occurred during account deletion.');
+      console.error('Critical deletion error:', err);
+      alert('An error occurred during account deletion. Please contact support if your data persists.');
     } finally {
       setIsDeleting(false);
       setShowDeleteConfirm(false);
@@ -245,14 +253,6 @@ export default function CabinetPage({ setPage, triggerOnboarding }) {
   const initials = displayName
     ? displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
     : email[0]?.toUpperCase() ?? '?';
-
-  const goals = config.gym_goals
-    ? typeof config.gym_goals === 'string'
-      ? config.gym_goals
-      : Array.isArray(config.gym_goals)
-      ? config.gym_goals.join(' · ')
-      : ''
-    : null;
 
   return (
     <div className="pb-32 min-h-dvh bg-background">
@@ -287,101 +287,75 @@ export default function CabinetPage({ setPage, triggerOnboarding }) {
                 boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
               }}
             >
-              {/* Inner wrapper for image/initials */}
               <div className="w-full h-full rounded-[1.6rem] bg-surface-container-highest overflow-hidden relative border border-white/5 flex items-center justify-center">
                 {config.avatar_url ? (
-                  <img
-                    src={config.avatar_url}
-                    alt={displayName}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  />
+                  <img src={config.avatar_url} alt={displayName} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-tr from-surface-container-highest via-primary-container/20 to-surface-container-highest flex items-center justify-center relative overflow-hidden transition-opacity duration-300 group-hover:opacity-20">
-                    {/* Decorative pattern for placeholder */}
                     <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, var(--primary-fixed) 1px, transparent 0)', backgroundSize: '12px 12px' }} />
                     <span className="font-headline font-black text-4xl text-primary-fixed drop-shadow-2xl relative z-10">{initials}</span>
                   </div>
                 )}
-
-                {/* Glassy overlay hint */}
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center backdrop-blur-[2px]">
                   <span className="material-symbols-outlined text-white text-2xl animate-bounce">photo_camera</span>
                   <span className="text-[9px] text-white font-black uppercase tracking-[0.2em] mt-1">Update</span>
                 </div>
               </div>
-
-              {/* Decorative rings */}
               <div className="absolute -inset-1 rounded-[2.2rem] border border-primary-fixed/20 -z-10 animate-pulse" />
-              <div className="absolute -inset-2 rounded-[2.4rem] border border-primary-fixed/5 -z-20" />
             </button>
-
-            {/* Change Hint Badge (Always visible on mobile/placeholder) */}
-            <div
-              className="absolute -bottom-1 -right-1 w-10 h-10 rounded-2xl bg-primary-fixed flex items-center justify-center shadow-lg border-4 border-background transform transition-transform group-hover:rotate-12 group-hover:scale-110"
-              style={{ boxShadow: '0 10px 25px rgba(212,251,0,0.4)' }}
-            >
+            <div className="absolute -bottom-1 -right-1 w-10 h-10 rounded-2xl bg-primary-fixed flex items-center justify-center shadow-lg border-4 border-background transform transition-transform group-hover:rotate-12 group-hover:scale-110">
               <span className="material-symbols-outlined text-black font-black text-xl">edit</span>
             </div>
-
-            {/* Profile Glow */}
-            <div className="absolute -inset-10 bg-primary-container/10 blur-[60px] -z-30 rounded-full" />
           </div>
 
           {/* Name + email */}
           <div className="w-full">
             {isEditingName ? (
-              <div className="flex flex-col gap-2">
-                <input
-                  autoFocus
-                  type="text"
-                  value={tempName}
-                  onChange={(e) => setTempName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleUpdateName();
-                    if (e.key === 'Escape') setIsEditingName(false);
-                  }}
-                  className="bg-surface-container-highest border-2 border-primary-fixed/50 rounded-2xl px-4 py-2 font-headline font-black text-3xl uppercase italic tracking-tighter text-on-surface focus:outline-none focus:border-primary-fixed w-full"
-                />
+              <div className="flex flex-col gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="relative">
+                  <input
+                    autoFocus
+                    type="text"
+                    value={tempName}
+                    placeholder="Enter your name"
+                    onChange={(e) => setTempName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleUpdateName();
+                      if (e.key === 'Escape') setIsEditingName(false);
+                    }}
+                    className="bg-surface-container-highest border-2 border-primary-fixed/30 rounded-2xl px-5 py-3 font-headline font-black text-3xl uppercase italic tracking-tighter text-on-surface focus:outline-none focus:border-primary-fixed transition-all w-full"
+                  />
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 flex gap-1">
+                     <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40">Press Enter to</span>
+                     <span className="text-[10px] font-black uppercase tracking-widest text-primary-fixed">Save</span>
+                  </div>
+                </div>
                 <div className="flex gap-2">
-                  <button
-                    onClick={handleUpdateName}
-                    disabled={updatingName}
-                    className="bg-primary-fixed text-black px-4 py-1.5 rounded-lg font-black uppercase text-[10px] tracking-widest disabled:opacity-50"
-                  >
-                    {updatingName ? 'Saving...' : 'Save Change'}
+                  <button onClick={handleUpdateName} disabled={updatingName} className="flex-1 bg-primary-fixed text-black py-3 rounded-xl font-black uppercase text-[11px] tracking-[0.2em] shadow-lg shadow-primary-fixed/20 active:scale-95 transition-all">
+                    {updatingName ? 'Applying...' : 'Confirm Identity'}
                   </button>
-                  <button
-                    onClick={() => setIsEditingName(false)}
-                    className="bg-surface-container-high text-on-surface-variant px-4 py-1.5 rounded-lg font-black uppercase text-[10px] tracking-widest"
-                  >
+                  <button onClick={() => setIsEditingName(false)} className="px-6 bg-surface-container-high text-on-surface-variant rounded-xl font-black uppercase text-[11px] tracking-[0.2em] active:scale-95 transition-all">
                     Cancel
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="flex items-center gap-3 group/name">
-                <h2
-                  className="font-headline font-black text-5xl tracking-tighter uppercase italic leading-none cursor-pointer"
-                  style={{ textShadow: '0 0 40px rgba(212,251,0,0.15)' }}
-                  onClick={() => {
-                    setTempName(displayName);
-                    setIsEditingName(true);
-                  }}
-                >
-                  {displayName || 'Athlete'}
-                </h2>
-                <button
-                  onClick={() => {
-                    setTempName(displayName);
-                    setIsEditingName(true);
-                  }}
-                  className="opacity-0 group-hover/name:opacity-100 transition-opacity p-2 rounded-full hover:bg-surface-container bg-surface-container-low border border-outline-variant/10 text-on-surface-variant"
-                >
-                  <span className="material-symbols-outlined text-lg">edit</span>
-                </button>
+              <div className="flex flex-col items-start gap-1 group/name cursor-pointer" onClick={() => { setTempName(displayName); setIsEditingName(true); }}>
+                <div className="flex items-center gap-3">
+                  <h2 className="font-headline font-black text-5xl tracking-tighter uppercase italic leading-none transition-all group-hover/name:text-primary-fixed" style={{ textShadow: '0 0 40px rgba(212,251,0,0.15)' }}>
+                    {displayName || 'Athlete'}
+                  </h2>
+                  <div className="w-8 h-8 rounded-full bg-surface-container-low border border-outline-variant/10 flex items-center justify-center text-on-surface-variant group-hover/name:bg-primary-fixed group-hover/name:text-black transition-all">
+                    <span className="material-symbols-outlined text-sm font-black">edit</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 opacity-40 group-hover/name:opacity-100 transition-opacity">
+                  <span className="material-symbols-outlined text-[10px]">touch_app</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em]">Tap to change name</span>
+                </div>
               </div>
             )}
-            <p className="text-on-surface-variant text-xs font-medium mt-2">{email}</p>
+            <p className="text-on-surface-variant text-xs font-medium mt-3 px-1">{email}</p>
           </div>
 
           {/* Stat pills */}
@@ -398,12 +372,9 @@ export default function CabinetPage({ setPage, triggerOnboarding }) {
           </div>
         </section>
 
-
         {/* ── Sex Selection ── */}
         <section>
-          <h3 className="font-label text-[9px] uppercase tracking-[0.2em] text-on-surface-variant font-black mb-3 px-1">
-            Personal Details
-          </h3>
+          <h3 className="font-label text-[9px] uppercase tracking-[0.2em] text-on-surface-variant font-black mb-3 px-1">Personal Details</h3>
           <div className="bg-surface-container-low rounded-2xl p-5 space-y-4 border border-outline-variant/10">
             <div>
               <label className="text-on-surface-variant text-[10px] font-black uppercase tracking-widest block mb-3">Biological Sex</label>
@@ -413,138 +384,30 @@ export default function CabinetPage({ setPage, triggerOnboarding }) {
                   { id: 'female', label: 'Female', icon: 'female' },
                   { id: 'not_specified', label: 'Rather not say', icon: 'person' },
                 ].map(opt => (
-                  <button
-                    key={opt.id}
-                    onClick={() => updateConfig({ sex: opt.id })}
-                    className={`flex-1 py-3 px-2 rounded-xl border transition-all flex flex-col items-center gap-1.5 ${
-                      config.sex === opt.id
-                        ? 'bg-primary-container border-primary-fixed text-on-primary-fixed shadow-[0_4px_15px_rgba(212,251,0,0.15)]'
-                        : 'bg-surface-container border-transparent text-on-surface-variant hover:border-outline-variant'
-                    }`}
-                  >
+                  <button key={opt.id} onClick={() => updateConfig({ sex: opt.id })} className={`flex-1 py-3 px-2 rounded-xl border transition-all flex flex-col items-center gap-1.5 ${config.sex === opt.id ? 'bg-primary-container border-primary-fixed text-on-primary-fixed' : 'bg-surface-container border-transparent text-on-surface-variant'}`}>
                     <span className="material-symbols-outlined text-lg">{opt.icon}</span>
                     <span className="text-[10px] font-black uppercase tracking-tighter">{opt.label}</span>
                   </button>
                 ))}
               </div>
-              <p className="text-[9px] text-on-surface-variant/60 mt-3 italic leading-relaxed">
-                * Used by KINETIC AI to personalize intensity, recovery metrics, and physiological advice.
-              </p>
             </div>
           </div>
         </section>
 
-
-        {/* ── Settings ── */}
+        {/* ── Settings Row Section ── */}
         <section>
-          <h3 className="font-label text-[9px] uppercase tracking-[0.2em] text-on-surface-variant font-black mb-3 px-1">
-            App Preferences
-          </h3>
+          <h3 className="font-label text-[9px] uppercase tracking-[0.2em] text-on-surface-variant font-black mb-3 px-1">App Preferences</h3>
           <div className="flex flex-col gap-1">
-            <SettingsRow
-              icon="straighten"
-              label="Measurement Units"
-              right="Metric (KG/KM)"
-            />
-            <SettingsRow
-              icon="bar_chart"
-              label="Onboarding &amp; Plan"
-              onClick={() => {
-                sessionStorage.setItem('ha_force_onboarding', '1');
-                triggerOnboarding();
-              }}
-            />
-          </div>
-        </section>
-
-        {/* ── About ── */}
-        <section>
-          <h3 className="font-label text-[9px] uppercase tracking-[0.2em] text-on-surface-variant font-black mb-3 px-1">
-            About
-          </h3>
-          <div className="bg-surface-container-low rounded-2xl p-5">
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between items-center">
-                <span className="text-on-surface-variant">App</span>
-                <span className="font-headline font-bold text-primary-fixed">KINETIC</span>
-              </div>
-              <div className="h-px bg-outline-variant/10" />
-              <div className="flex justify-between items-center">
-                <span className="text-on-surface-variant">Version</span>
-                <span className="font-bold text-on-surface">2.0.0</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ── Contact & Feedback ── */}
-        <section>
-          <h3 className="font-label text-[9px] uppercase tracking-[0.2em] text-on-surface-variant font-black mb-3 px-1">
-            Contact &amp; Feedback
-          </h3>
-          <p className="text-on-surface-variant text-xs px-1 mb-3">Have a question or suggestion? Reach out directly.</p>
-          <div className="flex flex-col gap-2">
-            {/* Instagram */}
-            <a
-              href="https://instagram.com/yaboinurik"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-4 bg-surface-container-low hover:bg-surface-container rounded-xl p-4 transition-colors group text-left"
-            >
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: 'linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)' }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
-                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                </svg>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-headline font-bold text-sm">Instagram</p>
-                <p className="text-on-surface-variant text-xs">@yaboinurik</p>
-              </div>
-              <span className="material-symbols-outlined text-outline text-sm group-hover:text-on-surface transition-colors">open_in_new</span>
-            </a>
-
-            {/* Telegram */}
-            <a
-              href="https://t.me/heavygrind"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-4 bg-surface-container-low hover:bg-surface-container rounded-xl p-4 transition-colors group text-left"
-            >
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: '#229ED9' }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
-                  <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.800-.945-.611-.332-1.143.317-1.823.217-.233 3.985-3.648 4.057-3.958.01-.041.01-.191-.074-.271s-.208-.053-.299-.031c-.127.031-2.152 1.365-6.075 4.004-.575.395-1.096.589-1.563.579-.515-.011-1.504-.291-2.24-.532-.901-.295-1.619-.451-1.556-.951.033-.261.379-.529 1.038-.802 4.064-1.770 6.773-2.937 8.128-3.501 3.871-1.609 4.674-1.888 5.196-1.898z"/>
-                </svg>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-headline font-bold text-sm">Telegram</p>
-                <p className="text-on-surface-variant text-xs">@heavygrind</p>
-              </div>
-              <span className="material-symbols-outlined text-outline text-sm group-hover:text-on-surface transition-colors">open_in_new</span>
-            </a>
+            <SettingsRow icon="straighten" label="Measurement Units" right="Metric (KG/KM)" />
+            <SettingsRow icon="bar_chart" label="Onboarding & Plan" onClick={() => { sessionStorage.setItem('ha_force_onboarding', '1'); triggerOnboarding(); }} />
           </div>
         </section>
 
         {/* ── Danger zone ── */}
         <div className="flex flex-col gap-1">
-          <SettingsRow
-            icon="logout"
-            label={loggingOut ? 'Signing out…' : 'Sign Out'}
-            onClick={handleLogout}
-          />
-          <SettingsRow
-            icon="delete_forever"
-            label="Delete Account & Data"
-            destructive
-            onClick={() => setShowDeleteConfirm(true)}
-          />
+          <SettingsRow icon="logout" label={loggingOut ? 'Signing out…' : 'Sign Out'} onClick={handleLogout} />
+          <SettingsRow icon="delete_forever" label="Delete Account & Data" destructive onClick={() => setShowDeleteConfirm(true)} />
         </div>
-
       </div>
 
       {/* ── Avatar Picker ── */}
@@ -558,56 +421,46 @@ export default function CabinetPage({ setPage, triggerOnboarding }) {
 
       {/* ── Delete Confirmation Modal ── */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-xl p-6 overflow-y-auto" onClick={() => setShowDeleteConfirm(false)}>
-          <div className="bg-surface-container-lowest rounded-3xl w-full max-w-sm border border-error/20 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300" onClick={e => e.stopPropagation()}>
-            <div className="p-8 text-center">
-              <div className="w-20 h-20 bg-error/10 text-error rounded-full flex items-center justify-center mx-auto mb-6">
-                <span className="material-symbols-outlined text-4xl">warning</span>
-              </div>
-              <h3 className="font-headline font-black text-2xl uppercase tracking-tight text-on-surface mb-2">Delete Account?</h3>
-              <p className="text-on-surface-variant text-sm leading-relaxed mb-6">
-                This action is <strong className="text-error uppercase">permanent</strong>. All your workouts, run history, and settings will be deleted forever.
-              </p>
-
-              <div className="space-y-4">
-                <div className="text-left">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2 block">
-                    Type "DELETE" to confirm
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="DELETE"
-                    value={deleteConfirmText}
-                    onChange={(e) => setDeleteConfirmText(e.target.value.toUpperCase())}
-                    className="w-full bg-surface-container border-2 border-outline-variant rounded-xl px-4 py-3 text-center font-black tracking-widest text-on-surface focus:border-error outline-none transition-colors"
-                  />
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/95 backdrop-blur-2xl" onClick={() => setShowDeleteConfirm(false)}>
+          <div className="bg-surface-container-lowest rounded-[2.5rem] w-full max-w-sm border border-error/30 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-500 relative" onClick={e => e.stopPropagation()}>
+             <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'repeating-linear-gradient(45deg, var(--error) 0, var(--error) 2px, transparent 0, transparent 12px)' }} />
+             <div className="p-8 text-center relative z-10">
+                <div className="w-24 h-24 bg-error/10 text-error rounded-3xl flex items-center justify-center mx-auto mb-8 rotate-3 shadow-xl group relative">
+                   <div className="absolute inset-0 bg-error/20 blur-2xl rounded-full animate-pulse" />
+                   <span className="material-symbols-outlined text-5xl font-black relative z-10 animate-bounce">warning</span>
                 </div>
-
-                <button
-                  onClick={handleDeleteAccount}
-                  disabled={deleteConfirmText !== 'DELETE' || isDeleting}
-                  className="w-full bg-error text-on-error py-4 rounded-xl font-black uppercase tracking-widest disabled:opacity-30 disabled:grayscale transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
-                >
-                  {isDeleting ? (
-                    <>
-                      <span className="animate-spin material-symbols-outlined text-sm">refresh</span>
-                      Deleting...
-                    </>
-                  ) : (
-                    'Permanently Delete'
-                  )}
-                </button>
-                <button
-                  onClick={() => setShowDeleteConfirm(false)}
-                  className="w-full py-3 text-on-surface-variant font-bold text-sm"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-            <div className="bg-error/5 py-4 text-center">
-              <span className="text-[10px] text-error/60 font-black uppercase tracking-widest">Danger Zone</span>
-            </div>
+                <h3 className="font-headline font-black text-3xl uppercase italic tracking-tighter text-on-surface mb-3">Irreversible Action</h3>
+                <p className="text-on-surface-variant text-[11px] leading-relaxed mb-8 px-4 font-medium opacity-70 italic">
+                   "Warning: You are about to initiate a complete wipe of your athletic profile and history. This action cannot be undone."
+                </p>
+                <div className="space-y-6">
+                  <div className="text-left bg-surface-container-low p-5 rounded-2xl border border-outline-variant/10 shadow-inner">
+                    <label className="text-[9px] font-black uppercase tracking-[0.2em] text-error mb-3 block text-center">
+                      Type <span className="underline decoration-2 underline-offset-4">DELETE</span> to authorize
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="CONFIRM"
+                      value={deleteConfirmText}
+                      onChange={(e) => setDeleteConfirmText(e.target.value.toUpperCase())}
+                      className="w-full bg-surface-container-highest border-2 border-outline-variant rounded-xl px-4 py-4 text-center font-headline font-black text-2xl tracking-[0.3em] text-on-surface focus:border-error focus:ring-4 focus:ring-error/10 outline-none transition-all placeholder:opacity-20"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    <button 
+                      onClick={handleDeleteAccount} 
+                      disabled={deleteConfirmText !== 'DELETE' || isDeleting} 
+                      className="w-full bg-error text-on-error py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-[11px] disabled:opacity-25 transition-all hover:scale-[1.02] active:scale-95 shadow-[0_10px_20px_rgba(179,38,30,0.3)] flex items-center justify-center gap-3"
+                    >
+                      {isDeleting ? 'Purging Data...' : 'Permanently Wipe Profile'}
+                    </button>
+                    <button onClick={() => setShowDeleteConfirm(false)} className="w-full py-4 text-on-surface-variant font-black uppercase tracking-[0.2em] text-[10px] hover:text-on-surface transition-colors">Hold on, Cancel</button>
+                  </div>
+                </div>
+             </div>
+             <div className="bg-error/5 py-3 border-t border-error/10 text-center">
+                <span className="text-[9px] text-error/40 font-black uppercase tracking-[0.4em]">Protocol: Security Wipe</span>
+             </div>
           </div>
         </div>
       )}
