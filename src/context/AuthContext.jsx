@@ -39,8 +39,13 @@ export function AuthProvider({ children }) {
     return { success: true };
   }, []);
 
-  const logout = useCallback(async () => {
-    await supabase.auth.signOut();
+  const updateUserMetadata = useCallback(async (metadata) => {
+    const { data, error } = await supabase.auth.updateUser({
+      data: metadata
+    });
+    if (error) return { error: error.message };
+    setUser(data.user);
+    return { success: true };
   }, []);
 
   const displayName = user?.user_metadata?.display_name
@@ -48,7 +53,7 @@ export function AuthProvider({ children }) {
     ?? '';
 
   return (
-    <AuthContext.Provider value={{ user, displayName, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, displayName, loading, login, register, logout, updateUserMetadata }}>
       {children}
     </AuthContext.Provider>
   );

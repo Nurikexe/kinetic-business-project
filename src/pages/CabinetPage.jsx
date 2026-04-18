@@ -132,7 +132,7 @@ function AvatarPickerModal({ currentAvatar, onSelect, onClose }) {
 
 /* ── Main Page ── */
 export default function CabinetPage({ setPage, triggerOnboarding }) {
-  const { user, displayName, logout } = useAuth();
+  const { user, displayName, logout, updateUserMetadata } = useAuth();
   const { config, updateConfig } = useUserConfig();
 
   const [workoutCount, setWorkoutCount] = useState('—');
@@ -141,6 +141,16 @@ export default function CabinetPage({ setPage, triggerOnboarding }) {
   const [totalWeight, setTotalWeight] = useState(null);
   const [loggingOut, setLoggingOut] = useState(false);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+
+  // Name change
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [tempName, setTempName] = useState(displayName);
+  const [updatingName, setUpdatingName] = useState(false);
+
+  // Account deletion
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -194,6 +204,41 @@ export default function CabinetPage({ setPage, triggerOnboarding }) {
   const handleLogout = async () => {
     setLoggingOut(true);
     await logout();
+  };
+
+  const handleUpdateName = async () => {
+    if (!tempName.trim() || tempName === displayName) {
+      setIsEditingName(false);
+      return;
+    }
+    setUpdatingName(true);
+    const { error } = await updateUserMetadata({ display_name: tempName.trim() });
+    if (error) {
+      alert('Failed to update name: ' + error);
+    }
+    setUpdatingName(false);
+    setIsEditingName(false);
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== 'DELETE') return;
+    setIsDeleting(true);
+    try {
+      // Delete all user related data. 
+      // schema.sql has ON DELETE CASCADE on user_id for most tables, 
+      // but we delete explicitly here to be sure and because we can't delete auth.user record from client.
+      const tables = ['workouts', 'run_sessions', 'community_plans', 'user_config'];
+      for (const table of tables) {
+        await supabase.from(table).delete().eq('user_id', user.id);
+      }
+      await logout();
+    } catch (err) {
+      console.error('Deletion error:', err);
+      alert('An error occurred during account deletion.');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+    }
   };
 
   const email = user?.email ?? '';
@@ -283,13 +328,59 @@ export default function CabinetPage({ setPage, triggerOnboarding }) {
           </div>
 
           {/* Name + email */}
-          <div>
-            <h2
-              className="font-headline font-black text-5xl tracking-tighter uppercase italic leading-none"
-              style={{ textShadow: '0 0 40px rgba(212,251,0,0.15)' }}
-            >
-              {displayName || 'Athlete'}
-            </h2>
+          <div className="w-full">
+            {isEditingName ? (
+              <div className="flex flex-col gap-2">
+                <input
+                  autoFocus
+                  type="text"
+                  value={tempName}
+                  onChange={(e) => setTempName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleUpdateName();
+                    if (e.key === 'Escape') setIsEditingName(false);
+                  }}
+                  className="bg-surface-container-highest border-2 border-primary-fixed/50 rounded-2xl px-4 py-2 font-headline font-black text-3xl uppercase italic tracking-tighter text-on-surface focus:outline-none focus:border-primary-fixed w-full"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleUpdateName}
+                    disabled={updatingName}
+                    className="bg-primary-fixed text-black px-4 py-1.5 rounded-lg font-black uppercase text-[10px] tracking-widest disabled:opacity-50"
+                  >
+                    {updatingName ? 'Saving...' : 'Save Change'}
+                  </button>
+                  <button
+                    onClick={() => setIsEditingName(false)}
+                    className="bg-surface-container-high text-on-surface-variant px-4 py-1.5 rounded-lg font-black uppercase text-[10px] tracking-widest"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3 group/name">
+                <h2
+                  className="font-headline font-black text-5xl tracking-tighter uppercase italic leading-none cursor-pointer"
+                  style={{ textShadow: '0 0 40px rgba(212,251,0,0.15)' }}
+                  onClick={() => {
+                    setTempName(displayName);
+                    setIsEditingName(true);
+                  }}
+                >
+                  {displayName || 'Athlete'}
+                </h2>
+                <button
+                  onClick={() => {
+                    setTempName(displayName);
+                    setIsEditingName(true);
+                  }}
+                  className="opacity-0 group-hover/name:opacity-100 transition-opacity p-2 rounded-full hover:bg-surface-container bg-surface-container-low border border-outline-variant/10 text-on-surface-variant"
+                >
+                  <span className="material-symbols-outlined text-lg">edit</span>
+                </button>
+              </div>
+            )}
             <p className="text-on-surface-variant text-xs font-medium mt-2">{email}</p>
           </div>
 
@@ -444,8 +535,13 @@ export default function CabinetPage({ setPage, triggerOnboarding }) {
           <SettingsRow
             icon="logout"
             label={loggingOut ? 'Signing out…' : 'Sign Out'}
-            destructive
             onClick={handleLogout}
+          />
+          <SettingsRow
+            icon="delete_forever"
+            label="Delete Account & Data"
+            destructive
+            onClick={() => setShowDeleteConfirm(true)}
           />
         </div>
 
@@ -458,6 +554,62 @@ export default function CabinetPage({ setPage, triggerOnboarding }) {
           onSelect={(url) => updateConfig({ avatar_url: url })}
           onClose={() => setShowAvatarPicker(false)}
         />
+      )}
+
+      {/* ── Delete Confirmation Modal ── */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-xl p-6 overflow-y-auto" onClick={() => setShowDeleteConfirm(false)}>
+          <div className="bg-surface-container-lowest rounded-3xl w-full max-w-sm border border-error/20 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300" onClick={e => e.stopPropagation()}>
+            <div className="p-8 text-center">
+              <div className="w-20 h-20 bg-error/10 text-error rounded-full flex items-center justify-center mx-auto mb-6">
+                <span className="material-symbols-outlined text-4xl">warning</span>
+              </div>
+              <h3 className="font-headline font-black text-2xl uppercase tracking-tight text-on-surface mb-2">Delete Account?</h3>
+              <p className="text-on-surface-variant text-sm leading-relaxed mb-6">
+                This action is <strong className="text-error uppercase">permanent</strong>. All your workouts, run history, and settings will be deleted forever.
+              </p>
+
+              <div className="space-y-4">
+                <div className="text-left">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2 block">
+                    Type "DELETE" to confirm
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="DELETE"
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value.toUpperCase())}
+                    className="w-full bg-surface-container border-2 border-outline-variant rounded-xl px-4 py-3 text-center font-black tracking-widest text-on-surface focus:border-error outline-none transition-colors"
+                  />
+                </div>
+
+                <button
+                  onClick={handleDeleteAccount}
+                  disabled={deleteConfirmText !== 'DELETE' || isDeleting}
+                  className="w-full bg-error text-on-error py-4 rounded-xl font-black uppercase tracking-widest disabled:opacity-30 disabled:grayscale transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
+                >
+                  {isDeleting ? (
+                    <>
+                      <span className="animate-spin material-symbols-outlined text-sm">refresh</span>
+                      Deleting...
+                    </>
+                  ) : (
+                    'Permanently Delete'
+                  )}
+                </button>
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="w-full py-3 text-on-surface-variant font-bold text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+            <div className="bg-error/5 py-4 text-center">
+              <span className="text-[10px] text-error/60 font-black uppercase tracking-widest">Danger Zone</span>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
