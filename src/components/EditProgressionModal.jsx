@@ -214,10 +214,11 @@ export default function EditProgressionModal({ lifts, onSave, onClose }) {
                           {label}
                         </p>
                         <input
-                          type={type}
+                          type={type === 'number' ? 'text' : type}
+                          inputMode={type === 'number' ? 'decimal' : undefined}
                           value={lift[field] ?? ''}
                           onChange={e =>
-                            updateLift(idx, field, type === 'number' ? (parseFloat(e.target.value) || 0) : e.target.value)
+                            updateLift(idx, field, type === 'number' ? (e.target.value) : e.target.value)
                           }
                           placeholder={placeholder}
                           className="w-full px-2 py-2.5 bg-surface-container-highest border border-outline-variant/20 rounded-xl text-xs text-center text-on-surface font-mono outline-none focus:ring-2 focus:ring-primary-container/40 transition-colors"

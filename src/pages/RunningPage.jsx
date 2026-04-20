@@ -204,13 +204,13 @@ function ActiveRunSession({ onFinish, onCancel }) {
             {segments.map((seg) => (
               <div key={seg.id} className="grid grid-cols-[1fr_1fr_2.5rem] gap-3 items-center">
                 <input
-                  type="number" inputMode="decimal" step="0.1" value={seg.distance}
+                  type="text" inputMode="decimal" value={seg.distance}
                   onChange={e => updateSeg(seg.id, 'distance', e.target.value)}
                   placeholder="5.0"
                   className="w-full bg-surface-container-highest border border-outline-variant/20 rounded-xl px-3 py-3 text-center font-headline font-bold focus:outline-none focus:ring-2 focus:ring-secondary/40 transition-all"
                 />
                 <input
-                  type="text" inputMode="numeric" value={seg.pace}
+                  type="text" inputMode="text" value={seg.pace}
                   onChange={e => updateSeg(seg.id, 'pace', e.target.value)}
                   placeholder="6:00"
                   className="w-full bg-surface-container-highest border border-outline-variant/20 rounded-xl px-3 py-3 text-center font-headline font-bold focus:outline-none focus:ring-2 focus:ring-secondary/40 transition-all"
@@ -582,14 +582,18 @@ export default function RunningPage() {
                 >
                   <div className="space-y-3">
                     {runLifts.map((lift, i) => {
-                      // For running goals, maxVal might need to be different. 
-                      // If it's KM, maybe target * 1.5. If it's pace, it's weird.
-                      // For now, mirroring GymPage logic with slight adjustment for units.
+                      const parseVal = (v) => {
+                        if (typeof v === 'string' && v.includes(':')) return paceToMinutes(v);
+                        return parseFloat(v) || 0;
+                      };
+                      const curVal = parseVal(lift.current);
+                      const trgVal = parseVal(lift.target);
+                      
                       const maxVal  = lift.unit === 'km' 
-                        ? Math.ceil((lift.target * 1.5) / 5) * 5 
-                        : Math.ceil((lift.target * 1.25) / 5) * 5;
-                      const pct     = lift.target > 0 ? Math.min(100, Math.round((lift.current / lift.target) * 100)) : 0;
-                      const fillPct = maxVal > 0 ? Math.min(100, (lift.current / maxVal) * 100) : 0;
+                        ? Math.ceil((trgVal * 1.5) / 5) * 5 
+                        : Math.ceil((trgVal * 1.25) / 5) * 5;
+                      const pct     = trgVal > 0 ? Math.min(100, Math.round((curVal / trgVal) * 100)) : 0;
+                      const fillPct = maxVal > 0 ? Math.min(100, (curVal / maxVal) * 100) : 0;
                       const reached = pct >= 100;
 
                       return (
