@@ -307,6 +307,7 @@ export default function RunningPage() {
   const [newWarmupName, setNewWarmupName]     = useState('');
   const [editingWarmupId, setEditingWarmupId] = useState(null);
   const [editWarmupValue, setEditWarmupValue] = useState('');
+  const [viewingRunType, setViewingRunType] = useState(null);
 
   const {
     run_types:             runTypes        = [],
@@ -788,25 +789,35 @@ export default function RunningPage() {
                         )}
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
+                        {!isEditing && (
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => setViewingRunType({ ...rt, sessionText, weekIdx: runWeek, rtId })}
+                              className="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant/40 hover:text-secondary hover:bg-secondary/10 transition-all touch-manipulation"
+                            >
+                              <span className="material-symbols-outlined text-base">visibility</span>
+                            </button>
+                            {!done && (
+                              <button
+                                onClick={() => startEditSession(runWeek, rtId, sessionText)}
+                                className="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant/40 hover:text-secondary hover:bg-secondary/10 transition-all touch-manipulation"
+                              >
+                                <span className="material-symbols-outlined text-base">edit</span>
+                              </button>
+                            )}
+                          </div>
+                        )}
+                        {done && !isEditing && (
+                          <span className="material-symbols-outlined text-primary-fixed text-2xl mx-2" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                        )}
                         {!done && !isEditing && (
                           <button
-                            onClick={() => startEditSession(runWeek, rtId, sessionText)}
-                            className="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant/40 hover:text-secondary hover:bg-secondary/10 transition-all touch-manipulation"
+                            onClick={() => startWeekRun(runWeek, rtId, rt.name)}
+                            className="px-4 py-2.5 min-h-[40px] rounded-full bg-secondary/10 text-secondary font-bold text-xs uppercase tracking-wide hover:bg-secondary/20 active:scale-95 transition-all touch-manipulation"
                           >
-                            <span className="material-symbols-outlined text-base">edit</span>
+                            Start
                           </button>
                         )}
-                        {done
-                          ? <span className="material-symbols-outlined text-primary-fixed text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                          : !isEditing && (
-                            <button
-                              onClick={() => startWeekRun(runWeek, rtId, rt.name)}
-                              className="px-4 py-2.5 min-h-[40px] rounded-full bg-secondary/10 text-secondary font-bold text-xs uppercase tracking-wide hover:bg-secondary/20 active:scale-95 transition-all touch-manipulation"
-                            >
-                              Start
-                            </button>
-                          )
-                        }
                       </div>
                     </div>
                   </div>
@@ -1022,9 +1033,17 @@ export default function RunningPage() {
                       placeholder="e.g. Run 10K in 55 min"
                       className="flex-1 bg-surface-container-highest border border-outline-variant/20 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-secondary/40 transition-all"
                     />
-                    <button onClick={addGoal} className="px-4 py-2 rounded-lg bg-secondary text-on-secondary font-bold text-xs uppercase tracking-wide transition-colors active:scale-95 shrink-0">
-                      Save
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button onClick={addGoal} className="px-4 py-2 rounded-lg bg-secondary text-on-secondary font-bold text-xs uppercase tracking-wide transition-colors active:scale-95">
+                        Save
+                      </button>
+                      <button 
+                        onClick={() => { setShowAddGoal(false); setNewGoalText(''); }}
+                        className="w-9 h-9 rounded-lg border border-outline-variant/20 text-on-surface-variant flex items-center justify-center hover:bg-surface-container-highest transition-colors active:scale-95"
+                      >
+                        <span className="material-symbols-outlined text-lg">close</span>
+                      </button>
+                    </div>
                   </div>
                 </motion.div>
               )}
@@ -1051,7 +1070,7 @@ export default function RunningPage() {
               return (
                 <div key={rtKey} className="w-full bg-surface-container rounded-lg overflow-hidden flex items-stretch border border-outline-variant/10">
                   <button
-                    onClick={() => startRun(rt)}
+                    onClick={() => setViewingRunType(rt)}
                     className="flex-1 min-w-0 p-4 flex items-center gap-4 hover:bg-surface-container-high transition-colors active:scale-[0.98] text-left overflow-hidden"
                   >
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${rt.color}20`, color: rt.color }}>
@@ -1203,6 +1222,99 @@ export default function RunningPage() {
           onClose={() => setShowProgressionEdit(false)}
         />
       )}
+
+      {/* ── Run Type Detail Modal ───────────────────────── */}
+      <AnimatePresence>
+        {viewingRunType && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-end justify-center bg-background/80 backdrop-blur-sm px-4 pb-10"
+            onClick={() => setViewingRunType(null)}
+          >
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="w-full max-w-xl bg-surface-container rounded-[2.5rem] overflow-hidden shadow-2xl border border-outline-variant/10"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-10">
+                <div className="flex items-center gap-6 mb-8">
+                  <div
+                    className="w-20 h-20 rounded-3xl flex items-center justify-center shrink-0 shadow-lg"
+                    style={{ background: `${viewingRunType.color || '#00e3fd'}20`, color: viewingRunType.color || '#00e3fd' }}
+                  >
+                    <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>
+                      {viewingRunType.icon || 'directions_run'}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.2em] mb-1" style={{ color: viewingRunType.color || '#00e3fd' }}>
+                      Run Type Detail
+                    </p>
+                    <h2 className="font-headline font-black text-4xl uppercase tracking-tighter leading-none text-on-surface">
+                      {viewingRunType.name}
+                    </h2>
+                  </div>
+                </div>
+
+                <div className="space-y-8">
+                  {viewingRunType.sessionText && (
+                    <div className="bg-secondary/5 rounded-2xl p-6 border border-secondary/10">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-secondary mb-3">
+                        Today's session
+                      </p>
+                      <p className="text-on-surface text-2xl font-black uppercase tracking-tight leading-loose">
+                        {viewingRunType.sessionText}
+                      </p>
+                    </div>
+                  )}
+
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40 mb-4">
+                      Description & Focus
+                    </p>
+                    <p className="text-on-surface text-xl leading-relaxed font-medium italic">
+                      {viewingRunType.desc || 'No description provided for this session type.'}
+                    </p>
+                  </div>
+
+                  {viewingRunType.presetKey && (
+                    <div className="bg-surface-container-highest/30 rounded-2xl p-4 border border-outline-variant/5">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="material-symbols-outlined text-sm text-secondary">info</span>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60">Training Note</p>
+                      </div>
+                      <p className="text-xs text-on-surface-variant/80 italic">
+                        This is a preset training type designed to build specific physiological adaptations.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-12 flex flex-col gap-4">
+                  <button
+                    onClick={() => { startRun(viewingRunType); setViewingRunType(null); }}
+                    className="w-full py-6 rounded-2xl bg-secondary text-on-secondary font-headline font-black uppercase tracking-tighter text-2xl shadow-[0_20px_50px_rgba(0,227,253,0.3)] active:scale-[0.98] transition-all flex items-center justify-center gap-4 group"
+                  >
+                    <span>Start Session</span>
+                    <span className="material-symbols-outlined text-2xl group-hover:translate-x-1 transition-transform" style={{ fontVariationSettings: "'FILL' 1" }}>play_arrow</span>
+                  </button>
+                  <button
+                    onClick={() => setViewingRunType(null)}
+                    className="w-full py-4 rounded-xl text-on-surface-variant font-black text-xs uppercase tracking-[0.2em] hover:bg-surface-container-highest transition-colors active:scale-95"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
