@@ -1230,7 +1230,7 @@ export default function RunningPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-end justify-center bg-background/80 backdrop-blur-sm px-4 pb-10"
+            className="fixed inset-0 z-[100] flex items-end justify-center bg-background/80 backdrop-blur-sm px-4 pb-32"
             onClick={() => setViewingRunType(null)}
           >
             <motion.div
@@ -1238,11 +1238,19 @@ export default function RunningPage() {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="w-full max-w-xl bg-surface-container rounded-[2.5rem] overflow-hidden shadow-2xl border border-outline-variant/10"
+              className="w-full max-w-xl bg-surface-container rounded-[2.5rem] overflow-hidden shadow-2xl border border-outline-variant/10 relative"
               onClick={(e) => e.stopPropagation()}
             >
+              {/* Top Close Button for convenience */}
+              <button 
+                onClick={() => setViewingRunType(null)}
+                className="absolute top-6 right-6 w-10 h-10 rounded-xl bg-on-surface/5 flex items-center justify-center text-on-surface-variant hover:bg-on-surface/10 transition-colors z-10"
+              >
+                <span className="material-symbols-outlined text-xl">close</span>
+              </button>
+
               <div className="p-10">
-                <div className="flex items-center gap-6 mb-8">
+                <div className="flex items-center gap-6 mb-8 pr-12"> {/* pr-12 to avoid overlap with close button */}
                   <div
                     className="w-20 h-20 rounded-3xl flex items-center justify-center shrink-0 shadow-lg"
                     style={{ background: `${viewingRunType.color || '#00e3fd'}20`, color: viewingRunType.color || '#00e3fd' }}
