@@ -19,7 +19,8 @@ function ActiveGymSession({ onFinish, onCancel }) {
   const [notes, setNotes]       = useState(savedNotes);
   const [elapsed, setElapsed]   = useState(savedElapsed);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError]       = useState('');
+  const [success, setSuccess]     = useState(false);
+  const [error, setError]         = useState('');
 
   // Keep context in sync so navigating away and back restores state
   useEffect(() => {
@@ -28,9 +29,10 @@ function ActiveGymSession({ onFinish, onCancel }) {
 
   // Timer
   useEffect(() => {
+    if (success) return;
     const id = setInterval(() => setElapsed(e => e + 1), 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [success]);
 
   const formatTime = (s) =>
     `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
@@ -74,11 +76,35 @@ function ActiveGymSession({ onFinish, onCancel }) {
     });
     setSubmitting(false);
     if (dbErr) { setError(dbErr.message); return; }
-    setGymSession(null);
-    onFinish();
+
+    setSuccess(true);
+    setTimeout(() => {
+      setGymSession(null);
+      onFinish();
+    }, 1500);
   };
 
   const totalSets = sets.reduce((acc, ex) => acc + ex.entries.length, 0);
+
+  if (success) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.94 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="min-h-screen bg-background flex flex-col items-center justify-center gap-6 px-6"
+      >
+        <div className="w-28 h-28 rounded-full bg-primary-container/20 flex items-center justify-center">
+          <span className="material-symbols-outlined text-6xl text-primary-fixed" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+        </div>
+        <div className="text-center space-y-2">
+          <h2 className="font-headline font-black text-4xl uppercase tracking-tighter text-on-surface">Workout Saved!</h2>
+          <p className="text-on-surface-variant text-sm font-bold">
+            <span className="text-primary-fixed">{sets.length} exercises</span> · <span className="text-primary-fixed">{totalSets} sets</span> logged
+          </p>
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
@@ -343,10 +369,8 @@ export default function GymPage() {
     const allDone = newCompleted.every(Boolean);
     if (allDone) {
       updateConfig({ completed: Array(gymDayCount).fill(false) });
-      showToast('Week complete! Starting fresh.');
     } else {
       updateConfig({ completed: newCompleted });
-      showToast('Workout submitted!');
     }
   }, [effectiveCompleted, gymDayCount, updateConfig, showToast]);
 
