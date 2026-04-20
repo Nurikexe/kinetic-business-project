@@ -1230,94 +1230,89 @@ export default function RunningPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-end justify-center bg-background/80 backdrop-blur-sm px-4 pb-32"
+            style={{ position: 'fixed', inset: 0, zIndex: 9999 }}
+            className="flex items-center justify-center bg-background/95 backdrop-blur-xl px-6"
             onClick={() => setViewingRunType(null)}
           >
             <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="w-full max-w-xl bg-surface-container rounded-[2.5rem] overflow-hidden shadow-2xl border border-outline-variant/10 relative"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", damping: 28, stiffness: 400 }}
+              className="w-full max-w-sm bg-surface-container rounded-[2.5rem] shadow-[0_0_80px_rgba(0,0,0,0.5)] border border-outline-variant/10 relative flex flex-col max-h-[80svh] overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Top Close Button for convenience */}
-              <button 
-                onClick={() => setViewingRunType(null)}
-                className="absolute top-6 right-6 w-10 h-10 rounded-xl bg-on-surface/5 flex items-center justify-center text-on-surface-variant hover:bg-on-surface/10 transition-colors z-10"
-              >
-                <span className="material-symbols-outlined text-xl">close</span>
-              </button>
+              {/* Internal Scrollable Content */}
+              <div className="flex-1 overflow-y-auto no-scrollbar p-8">
+                {/* Top Close Button - Stick to top of card */}
+                <button 
+                  onClick={() => setViewingRunType(null)}
+                  className="absolute top-4 right-4 w-10 h-10 rounded-full bg-on-surface/5 flex items-center justify-center text-on-surface-variant hover:bg-on-surface/10 transition-colors z-20"
+                >
+                  <span className="material-symbols-outlined text-xl">close</span>
+                </button>
 
-              <div className="p-10">
-                <div className="flex items-center gap-6 mb-8 pr-12"> {/* pr-12 to avoid overlap with close button */}
+                <div className="flex flex-col items-center text-center gap-4 mb-8">
                   <div
-                    className="w-20 h-20 rounded-3xl flex items-center justify-center shrink-0 shadow-lg"
+                    className="w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 shadow-lg"
                     style={{ background: `${viewingRunType.color || '#00e3fd'}20`, color: viewingRunType.color || '#00e3fd' }}
                   >
-                    <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>
+                    <span className="material-symbols-outlined text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>
                       {viewingRunType.icon || 'directions_run'}
                     </span>
                   </div>
-                  <div>
-                    <p className="text-xs font-black uppercase tracking-[0.2em] mb-1" style={{ color: viewingRunType.color || '#00e3fd' }}>
-                      Run Type Detail
+                  <div className="px-4">
+                    <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-1 opacity-60" style={{ color: viewingRunType.color || '#00e3fd' }}>
+                      {viewingRunType.weekIdx !== undefined ? 'Target Session' : 'Run Profile'}
                     </p>
-                    <h2 className="font-headline font-black text-4xl uppercase tracking-tighter leading-none text-on-surface">
+                    <h2 className="font-headline font-black text-2xl uppercase tracking-tighter leading-tight text-on-surface">
                       {viewingRunType.name}
                     </h2>
                   </div>
                 </div>
 
-                <div className="space-y-8">
+                <div className="space-y-6">
                   {viewingRunType.sessionText && (
-                    <div className="bg-secondary/5 rounded-2xl p-6 border border-secondary/10">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-secondary mb-3">
-                        Today's session
+                    <div className="bg-secondary/10 rounded-xl p-5 border border-secondary/20">
+                      <p className="text-[9px] font-black uppercase tracking-widest text-secondary mb-2 text-center opacity-80">
+                        Workout Instruction
                       </p>
-                      <p className="text-on-surface text-2xl font-black uppercase tracking-tight leading-loose">
-                        {viewingRunType.sessionText}
+                      <p className="text-on-surface text-lg font-black uppercase tracking-tight leading-snug text-center italic">
+                        "{viewingRunType.sessionText}"
                       </p>
                     </div>
                   )}
 
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40 mb-4">
-                      Description & Focus
-                    </p>
-                    <p className="text-on-surface text-xl leading-relaxed font-medium italic">
-                      {viewingRunType.desc || 'No description provided for this session type.'}
+                  <div className="px-2">
+                    <p className="text-on-surface-variant text-sm leading-relaxed text-center italic font-medium">
+                      {viewingRunType.desc || 'Training details and focus points are listed for this session type.'}
                     </p>
                   </div>
 
                   {viewingRunType.presetKey && (
-                    <div className="bg-surface-container-highest/30 rounded-2xl p-4 border border-outline-variant/5">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="material-symbols-outlined text-sm text-secondary">info</span>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60">Training Note</p>
-                      </div>
-                      <p className="text-xs text-on-surface-variant/80 italic">
-                        This is a preset training type designed to build specific physiological adaptations.
+                    <div className="bg-surface-container-highest/40 rounded-xl p-3 border border-outline-variant/10">
+                      <p className="text-[9px] text-on-surface-variant/60 italic text-center leading-relaxed">
+                        This is a standardized preset for physiological adaptation.
                       </p>
                     </div>
                   )}
                 </div>
 
-                <div className="mt-12 flex flex-col gap-4">
+                <div className="mt-8 flex flex-col gap-3">
                   {viewingRunType.weekIdx !== undefined && (
                     <button
                       onClick={() => { startRun(viewingRunType); setViewingRunType(null); }}
-                      className="w-full py-6 rounded-2xl bg-secondary text-on-secondary font-headline font-black uppercase tracking-tighter text-2xl shadow-[0_20px_50px_rgba(0,227,253,0.3)] active:scale-[0.98] transition-all flex items-center justify-center gap-4 group"
+                      className="w-full py-4 rounded-xl bg-secondary text-on-secondary font-headline font-black uppercase tracking-tighter text-lg shadow-[0_10px_30px_rgba(0,227,253,0.2)] active:scale-[0.98] transition-all flex items-center justify-center gap-2 group"
                     >
-                      <span>Start Session</span>
-                      <span className="material-symbols-outlined text-2xl group-hover:translate-x-1 transition-transform" style={{ fontVariationSettings: "'FILL' 1" }}>play_arrow</span>
+                      <span>Start Run</span>
+                      <span className="material-symbols-outlined text-xl group-hover:translate-x-1" style={{ fontVariationSettings: "'FILL' 1" }}>play_arrow</span>
                     </button>
                   )}
                   <button
                     onClick={() => setViewingRunType(null)}
-                    className="w-full py-4 rounded-xl text-on-surface-variant font-black text-xs uppercase tracking-[0.2em] hover:bg-surface-container-highest transition-colors active:scale-95"
+                    className="w-full py-3 rounded-lg text-on-surface-variant/60 font-black text-[9px] uppercase tracking-[0.2em] hover:text-on-surface transition-colors"
                   >
-                    {viewingRunType.weekIdx !== undefined ? 'Dismiss' : 'Close Detail'}
+                    Close Window
                   </button>
                 </div>
               </div>
