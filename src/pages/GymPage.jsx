@@ -648,14 +648,14 @@ export default function GymPage() {
                   onClick={() => !done && toggleExpand(idx)}
                   disabled={done}
                 >
-                  <div>
-                    <p className={`text-[10px] font-black uppercase tracking-widest mb-0.5 ${isCurrent && !done ? 'text-primary-fixed' : 'text-on-surface-variant'}`}>
+                  <div className="min-w-0 flex-1 mr-4">
+                    <p className={`text-[10px] font-black uppercase tracking-widest mb-0.5 truncate ${isCurrent && !done ? 'text-primary-fixed' : 'text-on-surface-variant'}`}>
                       {day.schedule || day.num}{isCurrent && !done ? ' · Next Up' : ''}
                     </p>
-                    <h3 className="font-headline font-bold text-xl uppercase tracking-tight">{day.name}</h3>
-                    {day.sub && <p className="text-on-surface-variant text-xs">{day.sub}</p>}
+                    <h3 className="font-headline font-bold text-xl uppercase tracking-tight truncate">{day.name}</h3>
+                    {day.sub && <p className="text-on-surface-variant text-xs truncate">{day.sub}</p>}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 shrink-0">
                     {/* Edit button */}
                     {!done && (
                       <button
@@ -685,9 +685,9 @@ export default function GymPage() {
                       <div className="px-5 pb-5 border-t border-outline-variant/10">
                         <div className="space-y-2 mt-3 mb-4">
                           {(day.exercises || []).map(ex => (
-                            <div key={ex.id} className="flex justify-between items-center text-sm">
-                              <span className="text-on-surface-variant">{ex.name}</span>
-                              <span className="font-bold text-primary-fixed">{ex.sets}×{ex.reps}</span>
+                            <div key={ex.id} className="flex justify-between items-center text-sm gap-4">
+                              <span className="text-on-surface-variant truncate min-w-0">{ex.name}</span>
+                              <span className="font-bold text-primary-fixed shrink-0">{ex.sets}×{ex.reps}</span>
                             </div>
                           ))}
                           {(day.exercises || []).length === 0 && (

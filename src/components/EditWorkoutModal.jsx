@@ -151,6 +151,7 @@ export default function EditWorkoutModal({ day, onSave, onClose, onDelete }) {
                     ref={ref}
                     value={value}
                     onChange={e => set(e.target.value)}
+                    maxLength={label === 'Name' ? 32 : 48}
                     className="w-full rounded-xl border border-outline-variant/20 bg-surface-container-highest px-3 py-2.5 text-sm text-on-surface outline-none transition-colors focus:ring-2 focus:ring-primary-container/40"
                   />
                 </div>
