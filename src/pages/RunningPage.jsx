@@ -207,8 +207,7 @@ function ActiveRunSession({ onFinish, onCancel }) {
             {segments.map((seg) => {
               const [min = '', sec = ''] = (seg.pace || '').split(':');
               const updatePace = (m, s) => {
-                const combined = `${m || '0'}:${String(s || '00').padStart(2, '0')}`;
-                updateSeg(seg.id, 'pace', combined);
+                updateSeg(seg.id, 'pace', `${m}:${s}`);
               };
 
               return (
