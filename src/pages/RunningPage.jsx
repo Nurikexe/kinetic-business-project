@@ -1304,18 +1304,20 @@ export default function RunningPage() {
                 </div>
 
                 <div className="mt-12 flex flex-col gap-4">
-                  <button
-                    onClick={() => { startRun(viewingRunType); setViewingRunType(null); }}
-                    className="w-full py-6 rounded-2xl bg-secondary text-on-secondary font-headline font-black uppercase tracking-tighter text-2xl shadow-[0_20px_50px_rgba(0,227,253,0.3)] active:scale-[0.98] transition-all flex items-center justify-center gap-4 group"
-                  >
-                    <span>Start Session</span>
-                    <span className="material-symbols-outlined text-2xl group-hover:translate-x-1 transition-transform" style={{ fontVariationSettings: "'FILL' 1" }}>play_arrow</span>
-                  </button>
+                  {viewingRunType.weekIdx !== undefined && (
+                    <button
+                      onClick={() => { startRun(viewingRunType); setViewingRunType(null); }}
+                      className="w-full py-6 rounded-2xl bg-secondary text-on-secondary font-headline font-black uppercase tracking-tighter text-2xl shadow-[0_20px_50px_rgba(0,227,253,0.3)] active:scale-[0.98] transition-all flex items-center justify-center gap-4 group"
+                    >
+                      <span>Start Session</span>
+                      <span className="material-symbols-outlined text-2xl group-hover:translate-x-1 transition-transform" style={{ fontVariationSettings: "'FILL' 1" }}>play_arrow</span>
+                    </button>
+                  )}
                   <button
                     onClick={() => setViewingRunType(null)}
                     className="w-full py-4 rounded-xl text-on-surface-variant font-black text-xs uppercase tracking-[0.2em] hover:bg-surface-container-highest transition-colors active:scale-95"
                   >
-                    Dismiss
+                    {viewingRunType.weekIdx !== undefined ? 'Dismiss' : 'Close Detail'}
                   </button>
                 </div>
               </div>
