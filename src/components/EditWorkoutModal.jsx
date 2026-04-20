@@ -64,7 +64,7 @@ export default function EditWorkoutModal({ day, onSave, onClose, onDelete }) {
 
   const updateExercise = (idx, field, value) => {
     setExercises(prev => prev.map((e, i) =>
-      i === idx ? { ...e, [field]: field === 'sets' ? parseInt(value) || 0 : value } : e
+      i === idx ? { ...e, [field]: field === 'sets' ? (value === '' ? '' : parseInt(value) || 0) : value } : e
     ));
   };
 
@@ -193,7 +193,8 @@ export default function EditWorkoutModal({ day, onSave, onClose, onDelete }) {
                       className="min-w-0 flex-1 bg-transparent px-2 py-1.5 text-sm text-on-surface outline-none placeholder:text-on-surface-variant/40"
                     />
                     <input
-                      type="number"
+                      type="text"
+                      inputMode="numeric"
                       value={ex.sets}
                       onChange={e => updateExercise(idx, 'sets', e.target.value)}
                       className="w-10 rounded border border-outline-variant/20 bg-surface-container-highest px-1 py-1.5 text-center font-mono text-xs text-on-surface outline-none focus:ring-2 focus:ring-primary-container/40"

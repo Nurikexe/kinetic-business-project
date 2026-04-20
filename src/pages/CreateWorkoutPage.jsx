@@ -169,7 +169,7 @@ function InlineExercisePicker({ onAdd }) {
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="text-[9px] font-mono text-on-surface-variant tracking-widest uppercase block mb-1">Sets</label>
-                <input type="number" min="1" value={manualSets} onChange={e => setManualSets(e.target.value)}
+                <input type="text" inputMode="numeric" min="1" value={manualSets} onChange={e => setManualSets(e.target.value)}
                   className="w-full px-3 py-2.5 bg-surface-container border border-outline-variant/20 rounded-xl text-sm text-center text-on-surface font-mono outline-none focus:ring-2 focus:ring-primary-container/40 transition-colors" />
               </div>
               <div>
@@ -828,7 +828,9 @@ export default function CreateWorkoutPage({ setPage }) {
                               <div className="flex items-center gap-1">
                                 <span className="text-[9px] text-on-surface-variant font-bold uppercase">Sets</span>
                                 <input
-                                  type="number" value={ex.sets}
+                                  type="text"
+                                  inputMode="numeric"
+                                  value={ex.sets}
                                   onChange={e => updateExercise(day.id, ex.id, 'sets', e.target.value)}
                                   className="w-10 bg-surface-container rounded px-1 py-0.5 text-xs font-bold text-center focus:outline-none focus:ring-1 focus:ring-primary-container"
                                 />

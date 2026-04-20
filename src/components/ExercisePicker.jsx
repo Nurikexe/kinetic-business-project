@@ -165,7 +165,8 @@ export default function ExercisePicker({ onAdd }) {
               <div>
                 <label className="text-[9px] font-mono text-on-surface-variant tracking-widest uppercase block mb-1">Sets</label>
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   min="1"
                   value={manualSets}
                   onChange={e => setManualSets(e.target.value)}
