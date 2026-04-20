@@ -214,23 +214,23 @@ function ActiveRunSession({ onFinish, onCancel }) {
                 <div key={seg.id} className="grid grid-cols-[1fr_1.2fr_2.5rem] gap-3 items-center">
                   <input
                     type="text" inputMode="decimal" value={seg.distance}
-                    onChange={e => updateSeg(seg.id, 'distance', e.target.value)}
+                    onChange={e => updateSeg(seg.id, 'distance', e.target.value.replace(/[^0-9.,]/g, ''))}
                     placeholder="5,0"
                     className="w-full bg-surface-container-highest border border-outline-variant/20 rounded-xl px-3 py-3 text-center font-headline font-bold focus:outline-none focus:ring-2 focus:ring-secondary/40 transition-all text-sm"
                   />
                   <div className="flex items-center justify-center gap-1 bg-surface-container-highest border border-outline-variant/20 rounded-xl px-2 py-3 transition-all focus-within:ring-2 focus-within:ring-secondary/40">
                     <input
-                      type="number" min="0" value={min}
-                      onChange={e => updatePace(e.target.value, sec)}
+                      type="text" inputMode="numeric" value={min}
+                      onChange={e => updatePace(e.target.value.replace(/\D/g, ''), sec)}
                       placeholder="min"
-                      className="w-full bg-transparent text-center font-headline font-bold focus:outline-none text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      className="w-full bg-transparent text-center font-headline font-bold focus:outline-none text-sm"
                     />
                     <span className="font-bold text-on-surface-variant/40">:</span>
                     <input
-                      type="number" min="0" max="59" value={sec}
-                      onChange={e => updatePace(min, e.target.value)}
+                      type="text" inputMode="numeric" value={sec}
+                      onChange={e => updatePace(min, e.target.value.replace(/\D/g, ''))}
                       placeholder="sec"
-                      className="w-full bg-transparent text-center font-headline font-bold focus:outline-none text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      className="w-full bg-transparent text-center font-headline font-bold focus:outline-none text-sm"
                     />
                   </div>
                   <button onClick={() => removeSeg(seg.id)} className="text-outline/40 hover:text-error transition-colors flex items-center justify-center">
