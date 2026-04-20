@@ -341,6 +341,14 @@ export default function RunningPage() {
     updateConfig({ run_completed: { ...runCompleted, [weekKey]: { ...current, [rtId]: true } } });
   }, [runCompleted, updateConfig]);
 
+  const resetWeekRuns = () => {
+    const weekKey = String(runWeek);
+    const updatedCompleted = { ...runCompleted };
+    delete updatedCompleted[weekKey];
+    updateConfig({ run_completed: updatedCompleted });
+    showToast('Week progress reset!');
+  };
+
   // ── Week management ──────────────────────────────────────────
   const addWeek = () => {
     const newWeekNum = runWeeks.length + 1;
@@ -732,9 +740,20 @@ export default function RunningPage() {
         {/* ── Week sessions ───────────────────────────────── */}
         {currentWeekData && (
           <div className="mb-8 space-y-3">
-            <h3 className="font-headline font-bold text-lg uppercase tracking-tight">
-              Week {currentWeekData.week} Sessions
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="font-headline font-bold text-lg uppercase tracking-tight">
+                Week {currentWeekData.week} Sessions
+              </h3>
+              {Object.keys(runCompleted[String(runWeek)] || {}).length > 0 && (
+                <button
+                  onClick={resetWeekRuns}
+                  className="flex items-center gap-1.5 text-[10px] text-on-surface-variant/40 hover:text-error uppercase font-black tracking-widest transition-colors"
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>restart_alt</span>
+                  Reset Progress
+                </button>
+              )}
+            </div>
             {enriched.length === 0 ? (
               <div className="bg-surface-container rounded-xl px-5 py-8 text-center border border-outline-variant/10">
                 <span className="material-symbols-outlined text-3xl text-on-surface-variant/30 block mb-2">directions_run</span>
@@ -826,6 +845,13 @@ export default function RunningPage() {
             )}
           </div>
         )}
+
+        <button
+          onClick={() => startRun({ name: 'Free Run', key: 'free', id: 'free' })}
+          className="w-full py-4 mb-8 rounded-full border border-secondary/30 text-secondary font-headline font-bold uppercase tracking-tighter hover:bg-secondary/10 transition-colors active:scale-95"
+        >
+          Start Free Run
+        </button>
 
         {/* ── Warm-up Exercises ───────────────────────────── */}
         <section className="mb-8">
@@ -1192,13 +1218,6 @@ export default function RunningPage() {
           )}
         </section>
 
-        {/* ── Free Run ─────────────────────────────────────── */}
-        <button
-          onClick={() => startRun({ name: 'Free Run', key: 'free', id: 'free' })}
-          className="w-full py-4 rounded-full border border-secondary/30 text-secondary font-headline font-bold uppercase tracking-tighter hover:bg-secondary/10 transition-colors active:scale-95"
-        >
-          Start Free Run
-        </button>
       </div>
 
       {/* ── Toast ─────────────────────────────────────────── */}
