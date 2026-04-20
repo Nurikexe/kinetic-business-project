@@ -92,7 +92,7 @@ function ActiveRunSession({ onFinish, onCancel }) {
   const totals = (() => {
     let totalDist = 0, weightedPace = 0;
     segments.forEach(seg => {
-      const dist = parseFloat(seg.distance) || 0;
+      const dist = parseFloat(String(seg.distance || '').replace(',', '.')) || 0;
       const pace = paceToMinutes(seg.pace);
       totalDist    += dist;
       weightedPace += pace * dist;
@@ -110,7 +110,10 @@ function ActiveRunSession({ onFinish, onCancel }) {
       date:            new Date().toISOString().split('T')[0],
       title:           runType?.name || 'Run',
       run_type:        runType?.key || runType?.type || 'run',
-      segments:        segments.filter(s => s.distance),
+      segments:        segments.filter(s => s.distance).map(s => ({
+        ...s,
+        distance: String(s.distance).replace(',', '.')
+      })),
       total_distance:  totals.totalDistance,
       avg_pace:        totals.avgPace,
       notes,
@@ -201,25 +204,42 @@ function ActiveRunSession({ onFinish, onCancel }) {
               <span className="text-[10px] text-on-surface-variant font-black uppercase text-center tracking-tighter">Pace (min/km)</span>
               <span />
             </div>
-            {segments.map((seg) => (
-              <div key={seg.id} className="grid grid-cols-[1fr_1fr_2.5rem] gap-3 items-center">
-                <input
-                  type="text" inputMode="decimal" value={seg.distance}
-                  onChange={e => updateSeg(seg.id, 'distance', e.target.value)}
-                  placeholder="5.0"
-                  className="w-full bg-surface-container-highest border border-outline-variant/20 rounded-xl px-3 py-3 text-center font-headline font-bold focus:outline-none focus:ring-2 focus:ring-secondary/40 transition-all"
-                />
-                <input
-                  type="text" inputMode="text" value={seg.pace}
-                  onChange={e => updateSeg(seg.id, 'pace', e.target.value)}
-                  placeholder="6:00"
-                  className="w-full bg-surface-container-highest border border-outline-variant/20 rounded-xl px-3 py-3 text-center font-headline font-bold focus:outline-none focus:ring-2 focus:ring-secondary/40 transition-all"
-                />
-                <button onClick={() => removeSeg(seg.id)} className="text-outline/40 hover:text-error transition-colors flex items-center justify-center">
-                  <span className="material-symbols-outlined text-xl">remove_circle</span>
-                </button>
-              </div>
-            ))}
+            {segments.map((seg) => {
+              const [min = '', sec = ''] = (seg.pace || '').split(':');
+              const updatePace = (m, s) => {
+                const combined = `${m || '0'}:${String(s || '00').padStart(2, '0')}`;
+                updateSeg(seg.id, 'pace', combined);
+              };
+
+              return (
+                <div key={seg.id} className="grid grid-cols-[1fr_1.2fr_2.5rem] gap-3 items-center">
+                  <input
+                    type="text" inputMode="decimal" value={seg.distance}
+                    onChange={e => updateSeg(seg.id, 'distance', e.target.value)}
+                    placeholder="5,0"
+                    className="w-full bg-surface-container-highest border border-outline-variant/20 rounded-xl px-3 py-3 text-center font-headline font-bold focus:outline-none focus:ring-2 focus:ring-secondary/40 transition-all text-sm"
+                  />
+                  <div className="flex items-center justify-center gap-1 bg-surface-container-highest border border-outline-variant/20 rounded-xl px-2 py-3 transition-all focus-within:ring-2 focus-within:ring-secondary/40">
+                    <input
+                      type="number" min="0" value={min}
+                      onChange={e => updatePace(e.target.value, sec)}
+                      placeholder="min"
+                      className="w-full bg-transparent text-center font-headline font-bold focus:outline-none text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                    <span className="font-bold text-on-surface-variant/40">:</span>
+                    <input
+                      type="number" min="0" max="59" value={sec}
+                      onChange={e => updatePace(min, e.target.value)}
+                      placeholder="sec"
+                      className="w-full bg-transparent text-center font-headline font-bold focus:outline-none text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                  </div>
+                  <button onClick={() => removeSeg(seg.id)} className="text-outline/40 hover:text-error transition-colors flex items-center justify-center">
+                    <span className="material-symbols-outlined text-xl">remove_circle</span>
+                  </button>
+                </div>
+              );
+            })}
             <button
               onClick={addSegment}
               className="w-full mt-2 py-3 rounded-xl border-2 border-dashed border-outline-variant/30 flex items-center justify-center gap-2 text-on-surface-variant text-xs font-black uppercase tracking-widest hover:border-secondary/50 hover:text-secondary transition-all"
@@ -584,7 +604,8 @@ export default function RunningPage() {
                     {runLifts.map((lift, i) => {
                       const parseVal = (v) => {
                         if (typeof v === 'string' && v.includes(':')) return paceToMinutes(v);
-                        return parseFloat(v) || 0;
+                        const clean = String(v || '').replace(',', '.');
+                        return parseFloat(clean) || 0;
                       };
                       const curVal = parseVal(lift.current);
                       const trgVal = parseVal(lift.target);
