@@ -381,9 +381,36 @@ export default function RunningPage() {
   };
 
   const removeWeek = (idx) => {
-    const updatedWeeks = runWeeks.filter((_, i) => i !== idx);
-    const newCurrent = runWeek >= updatedWeeks.length ? Math.max(0, updatedWeeks.length - 1) : runWeek;
-    updateConfig({ run_weeks: updatedWeeks, run_week: newCurrent });
+    // 1. Filter out the deleted week and re-index the 'week' property for the rest
+    const updatedWeeks = runWeeks
+      .filter((_, i) => i !== idx)
+      .map((w, i) => ({ ...w, week: i + 1 }));
+
+    // 2. Shift the run_completed keys to match the new indexes
+    const newCompleted = {};
+    Object.keys(runCompleted || {}).forEach(key => {
+      const kInt = parseInt(key);
+      if (kInt < idx) {
+        newCompleted[key] = runCompleted[key];
+      } else if (kInt > idx) {
+        newCompleted[String(kInt - 1)] = runCompleted[key];
+      }
+      // kInt === idx is skipped (deleted)
+    });
+
+    // 3. Adjust the current active week index (run_week)
+    let newCurrent = runWeek;
+    if (runWeek > idx) {
+      newCurrent = runWeek - 1;
+    } else if (runWeek === idx && runWeek >= updatedWeeks.length) {
+      newCurrent = Math.max(0, updatedWeeks.length - 1);
+    }
+
+    updateConfig({ 
+      run_weeks: updatedWeeks, 
+      run_week: newCurrent,
+      run_completed: newCompleted 
+    });
     showToast('Week removed!');
   };
 
