@@ -342,9 +342,21 @@ function ActivityDetailModal({ session, onClose, onDelete }) {
         <div style="font-size:13px;line-height:1.6;color:#444">${sessionNotes}</div>
       </div>` : ''}
       </body></html>`;
-    const w = window.open('', '_blank');
-    w.document.write(html); w.document.close(); w.focus();
-    setTimeout(() => w.print(), 400);
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
+    iframe.contentDocument.write(html);
+    iframe.contentDocument.close();
+    iframe.contentWindow.focus();
+    iframe.contentWindow.print();
+    setTimeout(() => {
+      document.body.removeChild(iframe);
+    }, 1000);
   };
 
   const exportMD = () => {
@@ -640,7 +652,21 @@ function downloadAllPDF(gymData, runData, from, to) {
     <h1>Activity Log</h1>
     ${sessionBlocks}
     </body></html>`;
-  const w = window.open('', '_blank'); w.document.write(html); w.document.close(); w.focus(); setTimeout(() => w.print(), 400);
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = '0';
+  document.body.appendChild(iframe);
+  iframe.contentDocument.write(html);
+  iframe.contentDocument.close();
+  iframe.contentWindow.focus();
+  iframe.contentWindow.print();
+  setTimeout(() => {
+    document.body.removeChild(iframe);
+  }, 1000);
 }
 
 function downloadAllMD(gymData, runData, from, to) {
