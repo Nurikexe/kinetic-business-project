@@ -445,15 +445,15 @@ function ActivityDetailModal({ session, onClose, onDelete }) {
             {dateStr}{timeStr ? `, ${timeStr}` : ''}
           </div>
           {isRun ? (
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2">
               {[
                 { label: 'Distance', value: session.total_distance != null ? `${Number(session.total_distance).toFixed(2)} km` : '—' },
                 { label: 'Avg Pace', value: session.avg_pace ? `${session.avg_pace}/km` : '—' },
                 { label: 'Duration', value: session.duration || '—' },
               ].map(stat => (
-                <div key={stat.label} className="bg-surface-container rounded-xl p-4">
-                  <p className="text-on-surface-variant text-[9px] font-black uppercase tracking-widest mb-2">{stat.label}</p>
-                  <p className="font-headline font-bold text-base">{stat.value}</p>
+                <div key={stat.label} className="bg-surface-container rounded-xl p-3">
+                  <p className="text-on-surface-variant text-[9px] font-black uppercase tracking-widest mb-1.5 truncate">{stat.label}</p>
+                  <p className="font-headline font-bold text-sm leading-tight">{stat.value}</p>
                 </div>
               ))}
             </div>
@@ -1194,7 +1194,7 @@ ${context}
         </div>
       </header>
 
-      <div className="px-6 pt-6 max-w-xl mx-auto space-y-8">
+      <div className="px-5 pt-6 max-w-xl mx-auto space-y-8">
         {/* Title */}
         <section>
           <h2 className="font-headline text-3xl font-extrabold tracking-tight uppercase">
@@ -1846,20 +1846,20 @@ ${context}
             </div>
 
             {/* Stats summary row */}
-            <div className="grid grid-cols-3 gap-3">
-              <div className="bg-surface-container rounded-lg p-4 text-center">
+            <div className="grid grid-cols-3 gap-2">
+              <div className="bg-surface-container rounded-lg p-3 text-center">
                 <p className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant mb-1">Distance</p>
-                <p className="font-headline text-xl font-extrabold">{totalDistance.toFixed(1)}<span className="text-xs text-on-surface-variant ml-0.5">km</span></p>
+                <p className="font-headline text-lg font-extrabold leading-tight">{totalDistance.toFixed(1)}<span className="text-xs text-on-surface-variant ml-0.5">km</span></p>
                 <p className="text-[9px] text-on-surface-variant">30 days</p>
               </div>
-              <div className="bg-surface-container rounded-lg p-4 text-center">
+              <div className="bg-surface-container rounded-lg p-3 text-center">
                 <p className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant mb-1">Sessions</p>
-                <p className="font-headline text-xl font-extrabold">{runData.length}</p>
+                <p className="font-headline text-lg font-extrabold leading-tight">{runData.length}</p>
                 <p className="text-[9px] text-on-surface-variant">30 days</p>
               </div>
-              <div className="bg-surface-container rounded-lg p-4 text-center">
+              <div className="bg-surface-container rounded-lg p-3 text-center">
                 <p className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant mb-1">Avg/Run</p>
-                <p className="font-headline text-xl font-extrabold">
+                <p className="font-headline text-lg font-extrabold leading-tight">
                   {runData.length > 0 ? (totalDistance / runData.length).toFixed(1) : '—'}
                   <span className="text-xs text-on-surface-variant ml-0.5">km</span>
                 </p>

@@ -9,7 +9,7 @@ import { CommunityPlanCard, CommunityPlanModal, downloadPlanAsPDF } from '../com
 
 /* ── Bento stat card ── */
 function BentoStat({ label, value, unit, icon, variant = 'dark' }) {
-  const base = 'rounded-2xl p-5 flex flex-col justify-between min-h-[160px] relative overflow-hidden';
+  const base = 'rounded-2xl p-5 flex flex-col justify-between min-h-[130px] relative overflow-hidden';
   const styles = {
     lime: `${base} bg-primary-container text-on-primary-fixed`,
     dark: `${base} bg-surface-container-low text-on-surface`,
@@ -28,7 +28,7 @@ function BentoStat({ label, value, unit, icon, variant = 'dark' }) {
         {label}
       </span>
       <div>
-        <div className={`font-headline font-black tracking-tighter leading-none ${String(value).length > 5 ? 'text-4xl' : 'text-6xl'}`}>
+        <div className={`font-headline font-black tracking-tighter leading-none ${String(value).length > 4 ? 'text-4xl' : 'text-5xl'}`}>
           {value}
         </div>
         {unit && (
@@ -76,15 +76,15 @@ function ActivityDetailModal({ session, onClose }) {
             {dateStr}{timeStr ? `, ${timeStr}` : ''}
           </div>
           {isRun ? (
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2">
               {[
                 { label: 'Distance', value: session.total_distance != null ? `${Number(session.total_distance).toFixed(2)} km` : '—' },
                 { label: 'Avg Pace', value: session.avg_pace ? `${session.avg_pace}/km` : '—' },
                 { label: 'Duration', value: session.duration || '—' },
               ].map(stat => (
-                <div key={stat.label} className="bg-surface-container rounded-xl p-4">
-                  <p className="text-on-surface-variant text-[9px] font-black uppercase tracking-widest mb-2">{stat.label}</p>
-                  <p className="font-headline font-bold text-base">{stat.value}</p>
+                <div key={stat.label} className="bg-surface-container rounded-xl p-3">
+                  <p className="text-on-surface-variant text-[9px] font-black uppercase tracking-widest mb-1.5 truncate">{stat.label}</p>
+                  <p className="font-headline font-bold text-sm leading-tight">{stat.value}</p>
                 </div>
               ))}
             </div>
@@ -447,7 +447,7 @@ export default function HomePage({ setPage }) {
               <div className="w-6 h-6 rounded-full border-2 border-primary-container/30 border-t-primary-container animate-spin" />
             </div>
           ) : recent.length === 0 ? (
-            <div className="bg-surface-container rounded-2xl p-8 text-center">
+            <div className="bg-surface-container rounded-2xl p-6 text-center">
               <span className="material-symbols-outlined text-4xl text-outline mb-3 block" style={{ fontVariationSettings: "'FILL' 1" }}>fitness_center</span>
               <p className="text-on-surface-variant font-medium text-sm">No sessions yet this {period}.</p>
               <p className="text-on-surface-variant/50 text-xs mt-1">Start a workout to see it here!</p>
@@ -516,7 +516,7 @@ export default function HomePage({ setPage }) {
               ))}
             </div>
           ) : (
-            <div className="bg-surface-container rounded-2xl p-8 text-center">
+            <div className="bg-surface-container rounded-2xl p-6 text-center">
               <span className="material-symbols-outlined text-4xl text-outline mb-3 block" style={{ fontVariationSettings: "'FILL' 1" }}>groups</span>
               <p className="text-on-surface-variant font-medium text-sm">No community plans yet.</p>
               <p className="text-on-surface-variant/50 text-xs mt-1">Be the first to share a workout plan!</p>

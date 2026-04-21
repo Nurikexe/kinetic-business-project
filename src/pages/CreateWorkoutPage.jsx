@@ -374,10 +374,10 @@ export default function CreateWorkoutPage({ setPage }) {
         <span className="text-xl font-black font-headline uppercase tracking-tighter text-primary-fixed">Create Plan</span>
       </header>
 
-      <div className="px-6 pt-8 pb-10 max-w-2xl mx-auto">
+      <div className="px-5 pt-5 pb-10 max-w-xl mx-auto">
         {/* Hero heading */}
-        <section className="mb-10">
-          <h1 className="font-headline font-black text-5xl tracking-tighter uppercase leading-none mb-3">
+        <section className="mb-6">
+          <h1 className="font-headline font-black text-4xl tracking-tighter uppercase leading-none mb-3">
             Forge <br /><span className="text-primary-container">Greatness.</span>
           </h1>
           <p className="text-on-surface-variant max-w-sm">Design your custom performance blueprint and share it with the community.</p>

@@ -92,7 +92,7 @@ function AvatarPickerModal({ currentAvatar, onSelect, onClose }) {
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>
-        <div className="p-6 grid grid-cols-4 gap-4 max-h-[60vh] overflow-y-auto">
+        <div className="p-4 grid grid-cols-3 sm:grid-cols-4 gap-3 max-h-[60vh] overflow-y-auto">
           {DEFAULT_AVATARS.map((url, i) => (
             <button
               key={i}
