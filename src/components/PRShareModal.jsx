@@ -134,7 +134,87 @@ function drawPRCard(canvas, { name, weight, date, selectedSets }) {
   ctx.font = 'bold 10px system-ui,-apple-system,sans-serif';
   ctx.textAlign = 'right';
   ctx.fillText('KINETIC', W - 20, H - 14);
+
+  // ── Fun Fact (AI-style stats) ──────────────────────────────
+  const fact = getFunFact(name, weight);
+  ctx.save();
+  // Move to left edge, rotate for a vertical "Did you know" label
+  ctx.translate(12, 110);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillStyle = ACCENT;
+  ctx.font = 'black 8px system-ui,-apple-system,sans-serif';
+  ctx.globalAlpha = 0.5;
+  ctx.textAlign = 'left';
+  ctx.fillText('STRENGTH STATS', 0, 0);
+  ctx.restore();
+
+  // Draw the actual fact text in the background/left area
+  ctx.fillStyle = 'rgba(255,255,255,0.25)';
+  ctx.font = 'italic 11px system-ui,-apple-system,sans-serif';
+  ctx.textAlign = 'left';
+  const factLines = wrapText(ctx, fact, 140); 
+  let fy = 110;
+  factLines.forEach(line => {
+    ctx.fillText(line, 22, fy);
+    fy += 14;
+  });
 }
+
+function getFunFact(name, weight) {
+  const ex = (name || '').toLowerCase();
+  const w = parseFloat(weight) || 0;
+  
+  if (ex.includes('bench')) {
+    if (w >= 140) return "Elite: Only 0.1% of the population can bench press 3 plates (140kg).";
+    if (w >= 100) return "Legendary: Only 1.2% of people worldwide can bench press 100kg.";
+    if (w >= 60) return "Impressive: This is roughly the weight of a professional MMA fighter.";
+    return "Progress is power. Every kg added puts you ahead of 90% of the population.";
+  }
+  if (ex.includes('pull-up') || ex.includes('lat pull')) {
+    if (w >= 100) return "Incredible: This pull strength is common among world-class climbers.";
+    if (w >= 50) return "Top Tier: You have more pulling power than 95% of gym-goers.";
+    return "Vertical pulling strength is the best indicator of overall upper body health.";
+  }
+  if (ex.includes('squat')) {
+    if (w >= 180) return "Superhuman: 180kg+ squats put you in the top 0.5% of all athletes.";
+    if (w >= 140) return "Elite: 140kg is a common benchmark for professional rugby players.";
+    return "Regular squatting increases natural growth hormone and bone density.";
+  }
+  if (ex.includes('deadlift')) {
+    if (w >= 220) return "Titan: 220kg is equivalent to lifting a full-grown Siberian Tiger.";
+    if (w >= 180) return "Beast: You are now stronger than 98% of the adult male population.";
+    return "The deadlift is the purest test of total human strength.";
+  }
+  if (ex.includes('curl')) {
+    if (w >= 60) return "Giant: Curling 60kg for reps is a feat of strength few will ever see.";
+    return "Bicep strength is crucial for elbow stability in heavy compound lifts.";
+  }
+  
+  // Generic fallback
+  if (w >= 100) return `Lifting ${w}kg puts you in an elite tier of physical preparedness.`;
+  if (w >= 50) return `${w}kg is more than the average person can lift in a lifetime.`;
+  return "Consistency beats intensity. This PR is proof of your dedication.";
+}
+
+function wrapText(ctx, text, maxWidth) {
+  const words = text.split(' ');
+  const lines = [];
+  let currentLine = words[0];
+
+  for (let i = 1; i < words.length; i++) {
+    const word = words[i];
+    const width = ctx.measureText(currentLine + " " + word).width;
+    if (width < maxWidth) {
+      currentLine += " " + word;
+    } else {
+      lines.push(currentLine);
+      currentLine = word;
+    }
+  }
+  lines.push(currentLine);
+  return lines;
+}
+
 
 export default function PRShareModal({ pr, onClose }) {
   const canvasRef = useRef(null);
