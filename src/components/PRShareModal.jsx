@@ -12,10 +12,9 @@ function drawPRCard(canvas, { name, weight, date, selectedSets }) {
   const setCount = selectedSets.length;
   const H = setCount > 0 ? 320 + setCount * 40 : 280;
 
+  // Only set the pixel buffer — CSS on the element controls display size
   canvas.width = W * DPR;
   canvas.height = H * DPR;
-  canvas.style.width = W + 'px';
-  canvas.style.height = H + 'px';
 
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -238,31 +237,29 @@ export default function PRShareModal({ pr, onClose }) {
           </div>
 
           {/* Header */}
-          <div className="flex items-center justify-between px-5 py-3 shrink-0">
-            <div>
+          <div className="flex items-center gap-3 px-5 py-3 shrink-0">
+            <div className="flex-1 min-w-0">
               <p className="font-label text-xs font-black uppercase tracking-widest text-on-surface-variant">Share PR</p>
-              <h3 className="font-headline font-black text-xl tracking-tight text-on-surface truncate" style={{ maxWidth: 260 }}>
+              <h3 className="font-headline font-black text-xl tracking-tight text-on-surface truncate">
                 {pr.name}
               </h3>
             </div>
             <button
               onClick={onClose}
-              className="w-9 h-9 flex items-center justify-center rounded-full bg-surface-container-highest text-on-surface-variant"
+              className="w-9 h-9 flex items-center justify-center rounded-full bg-surface-container-highest text-on-surface-variant shrink-0"
             >
               <span className="material-symbols-outlined text-xl">close</span>
             </button>
           </div>
 
           {/* Scrollable body */}
-          <div className="overflow-y-auto flex-1 px-5 pb-6 space-y-5">
-            {/* Canvas preview */}
-            <div className="flex justify-center">
-              <div className="overflow-hidden rounded-2xl" style={{ maxWidth: '100%' }}>
-                <canvas
-                  ref={canvasRef}
-                  style={{ display: 'block', width: '100%', height: 'auto', maxWidth: 560 }}
-                />
-              </div>
+          <div className="overflow-y-auto flex-1 px-4 pb-6 space-y-4">
+            {/* Canvas preview — scales to container width, never exceeds card logical size */}
+            <div className="w-full overflow-hidden rounded-2xl">
+              <canvas
+                ref={canvasRef}
+                style={{ display: 'block', width: '100%', height: 'auto' }}
+              />
             </div>
 
             {/* Set checkboxes */}
