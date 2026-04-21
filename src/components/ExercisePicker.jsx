@@ -19,7 +19,7 @@ export default function ExercisePicker({ onAdd }) {
   const [exercise, setExercise] = useState('');
   const [scheme, setScheme]     = useState('');
   const [manualName, setManualName] = useState('');
-  const [manualSets, setManualSets] = useState('3');
+  const [manualSets, setManualSets] = useState('1');
   const [manualReps, setManualReps] = useState('10');
 
   const exerciseList   = group ? EXERCISES[group] || [] : [];
@@ -28,19 +28,28 @@ export default function ExercisePicker({ onAdd }) {
     schemes: REP_SCHEMES.filter(s => s.category === cat),
   }));
 
-  const canAddLibrary = group && exercise && scheme;
+  const canAddLibrary = group && exercise;
   const canAddManual  = manualName.trim().length > 0;
+
+  const handleSchemeChange = (val) => {
+    setScheme(val);
+    const s = REP_SCHEMES.find(r => r.label === val);
+    if (s) {
+      setManualSets(String(s.sets));
+      setManualReps(s.reps);
+    }
+  };
 
   const handleAdd = () => {
     if (mode === 'library') {
       if (!canAddLibrary) return;
-      const s = REP_SCHEMES.find(r => r.label === scheme);
-      onAdd({ name: exercise, sets: s.sets, reps: s.reps });
+      onAdd({ name: exercise, sets: parseInt(manualSets) || 1, reps: manualReps || '10' });
       setGroup(''); setExercise(''); setScheme('');
+      setManualSets('1'); setManualReps('10');
     } else {
       if (!canAddManual) return;
-      onAdd({ name: manualName.trim(), sets: parseInt(manualSets) || 3, reps: manualReps || '10' });
-      setManualName(''); setManualSets('3'); setManualReps('10');
+      onAdd({ name: manualName.trim(), sets: parseInt(manualSets) || 1, reps: manualReps || '10' });
+      setManualName(''); setManualSets('1'); setManualReps('10');
     }
   };
 
@@ -122,11 +131,11 @@ export default function ExercisePicker({ onAdd }) {
 
             <div>
               <label className="text-[9px] font-mono text-on-surface-variant tracking-widest uppercase block mb-1">
-                3 · Sets × Reps
+                3 · Quick Scheme (Optional)
               </label>
               <select
                 value={scheme}
-                onChange={e => setScheme(e.target.value)}
+                onChange={e => handleSchemeChange(e.target.value)}
                 disabled={!exercise}
                 className={SELECT_CLS + ' disabled:opacity-40 disabled:cursor-not-allowed'}
               >
@@ -140,6 +149,36 @@ export default function ExercisePicker({ onAdd }) {
                 ))}
               </select>
             </div>
+            
+            <AnimatePresence>
+              {exercise && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  className="grid grid-cols-2 gap-2 pt-1 overflow-hidden"
+                >
+                  <div>
+                    <label className="text-[9px] font-mono text-on-surface-variant tracking-widest uppercase block mb-1">Sets</label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={manualSets}
+                      onChange={e => setManualSets(e.target.value)}
+                      className="w-full px-3 py-2.5 bg-surface-container-highest border border-outline-variant/20 rounded-xl text-sm text-center text-on-surface font-mono outline-none focus:ring-2 focus:ring-primary-container/40 transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[9px] font-mono text-on-surface-variant tracking-widest uppercase block mb-1">Reps</label>
+                    <input
+                      value={manualReps}
+                      onChange={e => setManualReps(e.target.value)}
+                      placeholder="8-12"
+                      className="w-full px-3 py-2.5 bg-surface-container-highest border border-outline-variant/20 rounded-xl text-sm text-center text-on-surface font-mono outline-none focus:ring-2 focus:ring-primary-container/40 transition-colors placeholder:text-on-surface-variant/30"
+                    />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         ) : (
           <motion.div
