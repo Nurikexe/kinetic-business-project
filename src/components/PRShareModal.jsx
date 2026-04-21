@@ -199,7 +199,7 @@ export default function PRShareModal({ pr, onClose }) {
   return createPortal(
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-50 flex flex-col justify-end"
+        className="fixed inset-0 z-50 flex flex-col justify-end sm:items-center sm:justify-center sm:p-4"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -208,11 +208,11 @@ export default function PRShareModal({ pr, onClose }) {
         <motion.div className="absolute inset-0 bg-black/75" onClick={onClose} />
 
         <motion.div
-          className="relative bg-surface-container rounded-t-3xl flex flex-col overflow-hidden"
+          className="relative w-full sm:max-w-md bg-surface-container rounded-t-3xl sm:rounded-3xl flex flex-col overflow-hidden"
           style={{ maxHeight: '92dvh' }}
-          initial={{ y: '100%' }}
-          animate={{ y: 0 }}
-          exit={{ y: '100%' }}
+          initial={{ y: '100%', opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: '100%', opacity: 0 }}
           transition={SHEET}
         >
           {/* Handle */}

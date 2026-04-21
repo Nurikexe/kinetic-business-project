@@ -424,7 +424,7 @@ function ActivityDetailModal({ session, onClose, onDelete }) {
 
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm sm:p-4" onClick={onClose}>
-      <div className="relative w-full h-[100dvh] sm:h-auto sm:max-h-[90dvh] max-w-xl bg-surface-container-low rounded-none sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col min-h-0" onClick={e => e.stopPropagation()}>
+      <div className="relative w-full h-[100dvh] sm:h-auto sm:max-h-[90dvh] max-w-md bg-surface-container-low rounded-none sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col min-h-0" onClick={e => e.stopPropagation()}>
         {/* Hero */}
         <div className="relative h-44 shrink-0 overflow-hidden">
           <img src={isRun ? '/run_activity.jpg' : '/gym_activity.jpg'} alt={title} className="w-full h-full object-cover" />
@@ -1537,9 +1537,9 @@ ${context}
 
         {/* All PRs popup */}
         {showAllPrs && createPortal(
-          <div className="fixed inset-0 z-50 flex flex-col justify-end">
-            <div className="absolute inset-0 bg-black/70" onClick={() => setShowAllPrs(false)} />
-            <div className="relative bg-surface-container rounded-t-3xl flex flex-col" style={{ maxHeight: '88dvh' }}>
+          <div className="fixed inset-0 z-50 flex flex-col justify-end sm:items-center sm:justify-center sm:p-4">
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowAllPrs(false)} />
+            <div className="relative w-full sm:max-w-md bg-surface-container rounded-t-3xl sm:rounded-3xl flex flex-col overflow-hidden" style={{ maxHeight: '88dvh' }}>
               {/* Handle */}
               <div className="flex justify-center pt-3 pb-1 shrink-0">
                 <div className="w-10 h-1 rounded-full bg-outline-variant/40" />
