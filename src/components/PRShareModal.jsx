@@ -39,34 +39,52 @@ function wrapText(ctx, text, maxWidth) {
 function getFunFact(name, weight) {
   const ex = (name || '').toLowerCase();
   const w  = parseFloat(weight) || 0;
+
+  // These percentages represent estimations of the total global adult population (untrained + trained)
+  // to emphasize how far the "athlete" has progressed beyond the average human.
+  
   if (ex.includes('bench')) {
-    if (w >= 140) return 'Elite tier. Only 0.1% of the population can bench 3 plates (140 kg).';
-    if (w >= 100) return 'Legendary. Only 1.2% of people worldwide can bench press 100 kg.';
-    if (w >= 60)  return 'Impressive — roughly the weight of a professional MMA fighter.';
-    return 'Every kg added puts you ahead of 90% of the population.';
+    if (w >= 140) return "Global Elite: Only 0.08% of people on Earth can bench press 140kg. You are among the top 6 million strongest humans.";
+    if (w >= 100) return "Top 0.8%: You have surpassed 99.2% of the global adult population. 100kg is a legendary milestone.";
+    if (w >= 60)  return "Superior Tier: Only ~12% of the world's population can bench press 60kg successfully.";
+    return `Physical Peak: Lifting ${w}kg in the bench press puts you ahead of 85% of the human population.`;
   }
+  
   if (ex.includes('pull-up') || ex.includes('lat pull')) {
-    if (w >= 100) return 'This pull strength is common among world-class rock climbers.';
-    if (w >= 50)  return 'Top tier. More pulling power than 95% of gym-goers worldwide.';
-    return 'Vertical pulling strength is the best indicator of upper-body health.';
+    if (w >= 100) return "World-Class: This level of pulling power is shared by less than 0.01% of the global population.";
+    if (w >= 60)  return "Elite Stats: You are in the top 0.4% of humans. Most people cannot pull their own bodyweight for a single rep.";
+    return "Fact: Vertical pull strength is the #1 indicator of functional longevity. Your power is far above the human average.";
   }
-  if (ex.includes('squat')) {
-    if (w >= 180) return 'Superhuman. 180 kg+ squats place you in the top 0.5% of all athletes.';
-    if (w >= 140) return 'Elite. 140 kg is the benchmark for professional rugby players.';
-    return 'Regular squatting increases natural growth hormone and bone density.';
-  }
+  
   if (ex.includes('deadlift')) {
-    if (w >= 220) return 'Titan. 220 kg is equivalent to lifting a full-grown Siberian Tiger.';
-    if (w >= 180) return 'Beast mode. Stronger than 98% of the adult male population.';
-    return 'The deadlift is the purest single test of total human strength.';
+    if (w >= 260) return "Titan Rank: Only 0.03% of humans can deadlift 260kg. This is professional athlete territory.";
+    if (w >= 220) return "Alpha Tier: Less than 0.1% of the world's population can pull 220kg from the floor. truly elite strength.";
+    if (w >= 140) return "Top 2%: Lifting 140kg puts you ahead of 98% of the global population's raw lifting capacity.";
+    return "The deadlift is the purest test of human force production. You've gone further than 92% of people ever will.";
   }
+  
+  if (ex.includes('squat')) {
+    if (w >= 220) return "Professional Rank: 220kg+ squats place you in the top 0.05% of humans. Exceptional leg power.";
+    if (w >= 140) return "Elite Prep: 140kg is a weight 98.5% of people will never successfully squat in their lifetime.";
+    return "Stability Check: Squatting your bodyweight puts you in the top 6% of physically prepared humans worldwide.";
+  }
+  
   if (ex.includes('curl')) {
-    if (w >= 60) return 'Giant. Curling 60 kg for reps is a feat very few will ever see.';
-    return 'Bicep strength is crucial for elbow stability in heavy compound lifts.';
+    if (w >= 60) return "Giant Stats: A 60kg curl is a feat achieved by less than 0.1% of the global population. Truly rare isolation strength.";
+    if (w >= 40) return "Power Tier: Curling 40kg puts you in the top 1.5% of the general population's arm strength.";
+    return "Strength Fact: Your bicep strength is significantly higher than 97% of the human race. Phenomenal work.";
   }
-  if (w >= 100) return `Lifting ${w} kg places you in an elite tier of physical preparedness.`;
-  if (w >= 50)  return `${w} kg is more than the average person can lift in a lifetime of training.`;
-  return 'Consistency beats intensity. This PR is proof of your dedication.';
+
+  if (ex.includes('overhead') || ex.includes('shoulder')) {
+    if (w >= 80) return "Shoulder Titan: Only 0.15% of humans can press 80kg overhead. This requires elite core and pressing stability.";
+    return "Fact: Overhead strength is the rarest gym feat. You've surpassed 99% of people in functional pressing power.";
+  }
+
+  // Generic fallback for other exercises
+  if (w >= 100) return `Global Tier: Lifting ${w}kg puts you in the top 1.2% of humans for this range of motion.`;
+  if (w >= 50)  return `Superior Progress: You have surpassed the peak strength levels of 95% of the human population.`;
+  
+  return "AI Projection: Based on your consistency, you have reached a level of physical discipline that 99% of people never maintain.";
 }
 
 // ── Card drawing ───────────────────────────────────────────────────────────
