@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { streamChat } from '../lib/openrouter';
+import PRShareModal from '../components/PRShareModal';
 
 const AI_LIMIT = 20;
 const RESET_HOURS = 5;
@@ -769,6 +770,8 @@ export default function AnalyticsPage() {
   const [selectedSession, setSelectedSession] = useState(null);
   const PAGE_SIZE = 5;
   const [activityPage, setActivityPage] = useState(0);
+  const [sharePr, setSharePr] = useState(null);
+  const [showAllPrs, setShowAllPrs] = useState(false);
 
   // Scroll-lock while modal is open
   useEffect(() => {
@@ -962,14 +965,13 @@ export default function AnalyticsPage() {
         if (!name) return;
         const weight = parseFloat(ex.weight) || 0;
         if (weight > 0 && (!bests[name] || weight > bests[name].weight)) {
-          bests[name] = { weight, date: w.date };
+          bests[name] = { weight, date: w.date, sets: Array.isArray(ex.all_sets) ? ex.all_sets : [] };
         }
       });
     });
     return Object.entries(bests)
       .sort(([,a],[,b]) => b.weight - a.weight)
-      .slice(0, 6)
-      .map(([name, { weight, date }]) => ({ name, weight, date }));
+      .map(([name, { weight, date, sets }]) => ({ name, weight, date, sets }));
   })();
 
   const latestMaxLift = personalRecords[0] ?? null;
@@ -1529,6 +1531,9 @@ ${context}
             }}
           />
         )}
+        {sharePr && (
+          <PRShareModal pr={sharePr} onClose={() => setSharePr(null)} />
+        )}
 
         {/* ── Tab Toggle ── */}
         <div className="flex bg-surface-container-low p-1.5 rounded-full">
@@ -1673,31 +1678,45 @@ ${context}
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-label text-xs font-black uppercase tracking-widest text-on-surface-variant mb-1">Personal Records</p>
-                    <p className="text-on-surface-variant text-xs">All-time best weights per exercise</p>
+                    <p className="text-on-surface-variant text-xs">All-time best weights · tap to share</p>
                   </div>
                   <span className="material-symbols-outlined text-yellow-400" style={{ fontVariationSettings: "'FILL' 1" }}>emoji_events</span>
                 </div>
-                <div className="space-y-2">
-                  {personalRecords.map(({ name, weight, date }, i) => (
-                    <div key={name} className="flex items-center gap-3 py-2 border-b border-outline-variant/10 last:border-0">
+                <div className="space-y-1">
+                  {(showAllPrs ? personalRecords : personalRecords.slice(0, 6)).map((pr, i) => (
+                    <button
+                      key={pr.name}
+                      onClick={() => setSharePr(pr)}
+                      className="w-full flex items-center gap-3 py-2.5 px-2 rounded-xl transition-colors hover:bg-surface-container-highest active:bg-surface-container-highest border-b border-outline-variant/10 last:border-0"
+                    >
                       <span
-                        className="text-xs font-black w-5 text-center"
+                        className="text-xs font-black w-5 text-center shrink-0"
                         style={{ color: i === 0 ? '#fbbf24' : i === 1 ? '#94a3b8' : i === 2 ? '#b87333' : '#555' }}
                       >
                         {i + 1}
                       </span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold truncate">{name}</p>
+                      <div className="flex-1 min-w-0 text-left">
+                        <p className="text-sm font-bold truncate">{pr.name}</p>
                         <p className="text-[10px] text-on-surface-variant">
-                          {new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          {new Date(pr.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                         </p>
                       </div>
-                      <span className="font-headline font-extrabold text-lg" style={{ color: '#d4fb00' }}>
-                        {weight}<span className="text-xs text-on-surface-variant ml-0.5">kg</span>
+                      <span className="font-headline font-extrabold text-lg shrink-0" style={{ color: '#d4fb00' }}>
+                        {pr.weight}<span className="text-xs text-on-surface-variant ml-0.5">kg</span>
                       </span>
-                    </div>
+                      <span className="material-symbols-outlined text-on-surface-variant shrink-0" style={{ fontSize: 18 }}>ios_share</span>
+                    </button>
                   ))}
                 </div>
+                {personalRecords.length > 6 && (
+                  <button
+                    onClick={() => setShowAllPrs(v => !v)}
+                    className="w-full text-center text-xs font-bold py-2 rounded-xl"
+                    style={{ color: '#d4fb00' }}
+                  >
+                    {showAllPrs ? 'Show less' : `View all ${personalRecords.length} PRs`}
+                  </button>
+                )}
               </div>
             )}
 
