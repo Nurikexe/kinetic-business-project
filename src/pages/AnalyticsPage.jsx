@@ -1535,6 +1535,62 @@ ${context}
           <PRShareModal pr={sharePr} onClose={() => setSharePr(null)} />
         )}
 
+        {/* All PRs popup */}
+        {showAllPrs && createPortal(
+          <div className="fixed inset-0 z-50 flex flex-col justify-end">
+            <div className="absolute inset-0 bg-black/70" onClick={() => setShowAllPrs(false)} />
+            <div className="relative bg-surface-container rounded-t-3xl flex flex-col" style={{ maxHeight: '88dvh' }}>
+              {/* Handle */}
+              <div className="flex justify-center pt-3 pb-1 shrink-0">
+                <div className="w-10 h-1 rounded-full bg-outline-variant/40" />
+              </div>
+              {/* Header */}
+              <div className="flex items-center gap-3 px-5 py-3 shrink-0">
+                <div className="flex-1 min-w-0">
+                  <p className="font-label text-[10px] font-black uppercase tracking-widest text-on-surface-variant">All Records</p>
+                  <h3 className="font-headline font-black text-xl tracking-tight text-on-surface">Personal Records</h3>
+                </div>
+                <button
+                  onClick={() => setShowAllPrs(false)}
+                  className="w-9 h-9 flex items-center justify-center rounded-full bg-surface-container-highest text-on-surface-variant shrink-0"
+                >
+                  <span className="material-symbols-outlined text-xl">close</span>
+                </button>
+              </div>
+              {/* Scrollable list */}
+              <div className="overflow-y-auto flex-1 px-5 pb-8">
+                <div className="space-y-1">
+                  {personalRecords.map((pr, i) => (
+                    <button
+                      key={pr.name}
+                      onClick={() => { setShowAllPrs(false); setSharePr(pr); }}
+                      className="w-full flex items-center gap-3 py-3 px-2 rounded-xl transition-colors hover:bg-surface-container-highest active:bg-surface-container-highest border-b border-outline-variant/10 last:border-0"
+                    >
+                      <span
+                        className="text-xs font-black w-6 text-center shrink-0"
+                        style={{ color: i === 0 ? '#fbbf24' : i === 1 ? '#94a3b8' : i === 2 ? '#b87333' : '#555' }}
+                      >
+                        {i + 1}
+                      </span>
+                      <div className="flex-1 min-w-0 text-left">
+                        <p className="text-sm font-bold truncate">{pr.name}</p>
+                        <p className="text-[10px] text-on-surface-variant">
+                          {new Date(pr.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </p>
+                      </div>
+                      <span className="font-headline font-extrabold text-lg shrink-0" style={{ color: '#d4fb00' }}>
+                        {pr.weight}<span className="text-xs text-on-surface-variant ml-0.5">kg</span>
+                      </span>
+                      <span className="material-symbols-outlined text-on-surface-variant shrink-0" style={{ fontSize: 18 }}>ios_share</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+
         {/* ── Tab Toggle ── */}
         <div className="flex bg-surface-container-low p-1.5 rounded-full">
           <button
@@ -1683,7 +1739,7 @@ ${context}
                   <span className="material-symbols-outlined text-yellow-400" style={{ fontVariationSettings: "'FILL' 1" }}>emoji_events</span>
                 </div>
                 <div className="space-y-1">
-                  {(showAllPrs ? personalRecords : personalRecords.slice(0, 6)).map((pr, i) => (
+                  {personalRecords.slice(0, 5).map((pr, i) => (
                     <button
                       key={pr.name}
                       onClick={() => setSharePr(pr)}
@@ -1708,13 +1764,13 @@ ${context}
                     </button>
                   ))}
                 </div>
-                {personalRecords.length > 6 && (
+                {personalRecords.length > 5 && (
                   <button
-                    onClick={() => setShowAllPrs(v => !v)}
+                    onClick={() => setShowAllPrs(true)}
                     className="w-full text-center text-xs font-bold py-2 rounded-xl"
                     style={{ color: '#d4fb00' }}
                   >
-                    {showAllPrs ? 'Show less' : `View all ${personalRecords.length} PRs`}
+                    See all {personalRecords.length} records
                   </button>
                 )}
               </div>
