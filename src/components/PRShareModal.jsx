@@ -51,61 +51,91 @@ function drawPRCard(canvas, { name, weight, date, selectedSets }) {
   // Accent header strip
   const strip = ctx.createLinearGradient(0, 0, W, 0);
   strip.addColorStop(0, ACCENT);
-  strip.addColorStop(0.55, 'rgba(212,251,0,0.18)');
-  strip.addColorStop(1, 'rgba(212,251,0,0)');
+  strip.addColorStop(0.4, ACCENT + 'cc');
+  strip.addColorStop(1, 'transparent');
   ctx.fillStyle = strip;
-  ctx.fillRect(0, 0, W, 52);
+  ctx.fillRect(0, 0, W, 48);
 
-  // Subtle glow behind weight number
-  const glow = ctx.createRadialGradient(W * 0.25, 185, 10, W * 0.25, 185, 160);
-  glow.addColorStop(0, 'rgba(212,251,0,0.12)');
-  glow.addColorStop(1, 'rgba(212,251,0,0)');
-  ctx.fillStyle = glow;
-  ctx.fillRect(0, 70, W, 200);
+  // Spotlight glow behind weight
+  const spotlight = ctx.createRadialGradient(80, 160, 0, 80, 160, 240);
+  spotlight.addColorStop(0, ACCENT + '20');
+  spotlight.addColorStop(1, 'transparent');
+  ctx.fillStyle = spotlight;
+  ctx.fillRect(0, 60, W, 180);
 
   ctx.restore();
 
-  // ── Header text ────────────────────────────────────────────
+  // ── Header Content ─────────────────────────────────────────
   ctx.fillStyle = '#0a0a0a';
-  ctx.font = 'bold 11px system-ui,-apple-system,sans-serif';
+  ctx.font = 'black 10px system-ui,-apple-system,sans-serif';
   ctx.textAlign = 'left';
-  ctx.fillText('PERSONAL RECORD', 20, 34);
+  ctx.fillText('PERSONAL RECORD', 20, 30);
 
   const dateStr = date
     ? new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     : '';
-  ctx.fillStyle = 'rgba(0,0,0,0.45)';
-  ctx.font = '11px system-ui,-apple-system,sans-serif';
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  ctx.font = 'bold 10px system-ui,-apple-system,sans-serif';
   ctx.textAlign = 'right';
-  ctx.fillText(dateStr, W - 20, 34);
+  ctx.fillText(dateStr.toUpperCase(), W - 20, 30);
 
   // ── Exercise name ──────────────────────────────────────────
   ctx.textAlign = 'left';
-  ctx.fillStyle = 'rgba(255,255,255,0.55)';
-  ctx.font = 'bold 15px system-ui,-apple-system,sans-serif';
+  ctx.fillStyle = 'white';
+  ctx.font = 'black 22px system-ui,-apple-system,sans-serif';
   let exName = (name || '').toUpperCase();
-  while (ctx.measureText(exName).width > W - 40 && exName.length > 3) {
+  while (ctx.measureText(exName).width > W - 180 && exName.length > 3) {
     exName = exName.slice(0, -1);
   }
   if (exName !== (name || '').toUpperCase()) exName += '…';
-  ctx.fillText(exName, 20, 86);
+  ctx.fillText(exName, 20, 84);
 
-  // ── Weight (huge) ──────────────────────────────────────────
+  // ── Weight (Luxury Typography) ──────────────────────────────
   ctx.fillStyle = ACCENT;
-  ctx.font = `bold 128px system-ui,-apple-system,sans-serif`;
+  ctx.font = `black 140px system-ui,-apple-system,sans-serif`;
   const weightStr = String(weight);
-  ctx.fillText(weightStr, 14, 216);
+  ctx.fillText(weightStr, 12, 218);
 
-  // kg unit right of the number
+  // kg unit 
   const wW = ctx.measureText(weightStr).width;
-  ctx.fillStyle = 'rgba(255,255,255,0.38)';
-  ctx.font = 'bold 30px system-ui,-apple-system,sans-serif';
-  ctx.fillText('KG', 14 + wW + 10, 206);
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.font = 'black 32px system-ui,-apple-system,sans-serif';
+  ctx.fillText('KG', 12 + wW + 12, 204);
+
+  // ── Luxury Fact Box (Right-aligned) ────────────────────────
+  const fact = getFunFact(name, weight);
+  ctx.save();
+
+  // Vertical accent line
+  ctx.strokeStyle = ACCENT;
+  ctx.lineWidth = 1;
+  ctx.globalAlpha = 0.3;
+  ctx.beginPath();
+  ctx.moveTo(W - 165, 75);
+  ctx.lineTo(W - 165, 145);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  // Tiny "FACT" label
+  ctx.fillStyle = ACCENT;
+  ctx.font = 'black 8px system-ui,-apple-system,sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('STRENGTH FACT', W - 155, 84);
+
+  // The fact text - High visibility
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.font = 'medium 11px system-ui,-apple-system,sans-serif';
+  const factLines = wrapText(ctx, fact, 135);
+  let fy = 100;
+  factLines.forEach(line => {
+    ctx.fillText(line, W - 155, fy);
+    fy += 15;
+  });
+  ctx.restore();
 
   // ── Sets section ───────────────────────────────────────────
   if (selectedSets.length > 0) {
-    // Separator
-    ctx.strokeStyle = 'rgba(255,255,255,0.09)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(20, 238);
@@ -114,12 +144,12 @@ function drawPRCard(canvas, { name, weight, date, selectedSets }) {
 
     let y = 270;
     selectedSets.forEach((set, i) => {
-      ctx.fillStyle = 'rgba(255,255,255,0.32)';
-      ctx.font = '12px system-ui,-apple-system,sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.4)';
+      ctx.font = '11px system-ui,-apple-system,sans-serif';
       ctx.textAlign = 'left';
       ctx.fillText(`SET ${i + 1}`, 20, y);
 
-      ctx.fillStyle = 'rgba(255,255,255,0.88)';
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
       ctx.font = 'bold 12px system-ui,-apple-system,sans-serif';
       ctx.textAlign = 'right';
       const sw = set.weight ? `${set.weight} KG` : `${weight} KG`;
@@ -130,40 +160,17 @@ function drawPRCard(canvas, { name, weight, date, selectedSets }) {
   }
 
   // ── Branding ───────────────────────────────────────────────
-  ctx.fillStyle = 'rgba(255,255,255,0.14)';
-  ctx.font = 'bold 10px system-ui,-apple-system,sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.12)';
+  ctx.font = 'black 10px system-ui,-apple-system,sans-serif';
   ctx.textAlign = 'right';
-  ctx.fillText('KINETIC', W - 20, H - 14);
-
-  // ── Fun Fact (AI-style stats) ──────────────────────────────
-  const fact = getFunFact(name, weight);
-  ctx.save();
-  // Move to left edge, rotate for a vertical "Did you know" label
-  ctx.translate(12, 110);
-  ctx.rotate(-Math.PI / 2);
-  ctx.fillStyle = ACCENT;
-  ctx.font = 'black 8px system-ui,-apple-system,sans-serif';
-  ctx.globalAlpha = 0.5;
-  ctx.textAlign = 'left';
-  ctx.fillText('STRENGTH STATS', 0, 0);
-  ctx.restore();
-
-  // Draw the actual fact text in the background/left area
-  ctx.fillStyle = 'rgba(255,255,255,0.25)';
-  ctx.font = 'italic 11px system-ui,-apple-system,sans-serif';
-  ctx.textAlign = 'left';
-  const factLines = wrapText(ctx, fact, 140); 
-  let fy = 110;
-  factLines.forEach(line => {
-    ctx.fillText(line, 22, fy);
-    fy += 14;
-  });
+  ctx.fillText('KINETIC // SYSTEM', W - 20, H - 14);
 }
+
 
 function getFunFact(name, weight) {
   const ex = (name || '').toLowerCase();
   const w = parseFloat(weight) || 0;
-  
+
   if (ex.includes('bench')) {
     if (w >= 140) return "Elite: Only 0.1% of the population can bench press 3 plates (140kg).";
     if (w >= 100) return "Legendary: Only 1.2% of people worldwide can bench press 100kg.";
@@ -189,7 +196,7 @@ function getFunFact(name, weight) {
     if (w >= 60) return "Giant: Curling 60kg for reps is a feat of strength few will ever see.";
     return "Bicep strength is crucial for elbow stability in heavy compound lifts.";
   }
-  
+
   // Generic fallback
   if (w >= 100) return `Lifting ${w}kg puts you in an elite tier of physical preparedness.`;
   if (w >= 50) return `${w}kg is more than the average person can lift in a lifetime.`;
