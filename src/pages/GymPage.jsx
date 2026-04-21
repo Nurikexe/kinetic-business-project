@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase';
 import EditProgressionModal from '../components/EditProgressionModal';
 import EditRulesModal from '../components/EditRulesModal';
 import EditWorkoutModal from '../components/EditWorkoutModal';
+import ExercisePicker from '../components/ExercisePicker';
 
 // ── Active Gym Session ────────────────────────────────────────
 function ActiveGymSession({ onFinish, onCancel }) {
@@ -21,6 +22,7 @@ function ActiveGymSession({ onFinish, onCancel }) {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess]     = useState(false);
   const [error, setError]         = useState('');
+  const [showAddExercise, setShowAddExercise] = useState(false);
 
   // Keep context in sync so navigating away and back restores state
   useEffect(() => {
@@ -54,6 +56,19 @@ function ActiveGymSession({ onFinish, onCancel }) {
       ...ex,
       entries: ex.entries.length > 1 ? ex.entries.filter((_, j) => j !== entryIdx) : ex.entries,
     })));
+
+  const handleAddExercise = (newEx) => {
+    const freshEx = {
+      exId: Date.now(),
+      exName: newEx.name,
+      entries: Array.from({ length: parseInt(newEx.sets) || 1 }, () => ({
+        weight: '',
+        reps: newEx.reps || '',
+      })),
+    };
+    setSets(s => [...s, freshEx]);
+    setShowAddExercise(false);
+  };
 
   const handleSubmit = async () => {
     setSubmitting(true);
@@ -256,6 +271,32 @@ function ActiveGymSession({ onFinish, onCancel }) {
             </div>
           </motion.div>
         ))}
+
+        {/* ── Add Exercise Component ────────────────────────── */}
+        <div className="py-2">
+          {!showAddExercise ? (
+            <button
+              onClick={() => setShowAddExercise(true)}
+              className="w-full py-4 rounded-2xl bg-surface-container-highest border border-dashed border-outline-variant/30 flex items-center justify-center gap-2.5 text-on-surface-variant hover:text-primary-fixed hover:border-primary-container/40 transition-all active:scale-[0.98]"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add_circle</span>
+              <span className="text-[13px] font-black uppercase tracking-widest">Add New Exercise</span>
+            </button>
+          ) : (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-[10px] font-black uppercase tracking-widest text-primary-fixed">New Exercise</span>
+                <button 
+                  onClick={() => setShowAddExercise(false)}
+                  className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60 hover:text-on-surface"
+                >
+                  Cancel
+                </button>
+              </div>
+              <ExercisePicker onAdd={handleAddExercise} />
+            </div>
+          )}
+        </div>
 
         {/* ── Session Notes ─────────────────────────────────── */}
         <div className="rounded-2xl bg-surface-container overflow-hidden border border-outline-variant/10">
