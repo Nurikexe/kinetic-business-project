@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
-import { streamChat } from '../lib/openrouter';
+import { streamChat } from '../lib/googleai';
 import PRShareModal from '../components/PRShareModal';
 
 const AI_LIMIT = 20;

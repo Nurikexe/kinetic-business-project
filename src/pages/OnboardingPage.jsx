@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { streamChat } from '../lib/openrouter';
+import { streamChat } from '../lib/googleai';
 import { buildOnboardingConfig } from '../data/onboarding';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
