@@ -118,6 +118,43 @@ export default function ChatPage({ coach, initialRequest, onViewData }) {
   const bottomRef = useRef(null)
 
   const scrollToBottom = () => bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  const applyPayments = (pmts) => {
+    const map = {}
+    ;(pmts ?? []).forEach((p) => { map[p.id] = p })
+    setPayments(map)
+  }
+
+  const syncConversation = async (requestToSync, { silent = false } = {}) => {
+    if (!requestToSync) return
+
+    const [{ data: msgs }, { data: pmts }, { data: access }] = await Promise.all([
+      supabase.from('messages').select('*').eq('request_id', requestToSync.id).order('created_at'),
+      supabase.from('payment_requests').select('*').eq('request_id', requestToSync.id),
+      supabase.from('workout_access').select('id').eq('coach_id', coach.id).eq('user_id', requestToSync.user_id).maybeSingle(),
+    ])
+
+    if (Array.isArray(msgs)) {
+      setMessages((prev) => {
+        if (
+          prev.length === msgs.length &&
+          prev.every((msg, index) => msg.id === msgs[index]?.id)
+        ) {
+          return prev
+        }
+        return msgs
+      })
+    }
+
+    if (Array.isArray(pmts)) {
+      applyPayments(pmts)
+    }
+
+    setHasAccess(!!access)
+
+    if (!silent) {
+      scrollToBottom()
+    }
+  }
 
   useEffect(() => {
     if (initialRequest) {
@@ -179,9 +216,7 @@ export default function ChatPage({ coach, initialRequest, onViewData }) {
       ])
       if (!mounted) return
       setMessages(msgs ?? [])
-      const map = {}
-      ;(pmts ?? []).forEach(p => { map[p.id] = p })
-      setPayments(map)
+      applyPayments(pmts)
       setHasAccess(!!access)
     }
     load()
@@ -215,6 +250,18 @@ export default function ChatPage({ coach, initialRequest, onViewData }) {
 
     return () => { mounted = false; supabase.removeChannel(channel) }
   }, [selectedRequest?.id, coach.id])
+
+  useEffect(() => {
+    if (!selectedRequest) return undefined
+
+    const intervalId = window.setInterval(() => {
+      void syncConversation(selectedRequest, { silent: true })
+    }, 2500)
+
+    return () => {
+      window.clearInterval(intervalId)
+    }
+  }, [selectedRequest, coach.id])
 
   useEffect(() => { scrollToBottom() }, [messages])
 

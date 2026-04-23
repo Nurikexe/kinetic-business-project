@@ -177,6 +177,38 @@ export default function CoachChatPage({ coach, request, setPage }) {
   const bottomRef = useRef(null);
 
   const scrollToBottom = () => bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const applyPayments = (pmts) => {
+    const map = {};
+    (pmts ?? []).forEach((p) => { map[p.id] = p; });
+    setPayments(map);
+  };
+
+  const syncConversation = async ({ silent = false } = {}) => {
+    const [{ data: msgs }, { data: pmts }] = await Promise.all([
+      supabase.from('messages').select('*').eq('request_id', request.id).order('created_at'),
+      supabase.from('payment_requests').select('*').eq('request_id', request.id),
+    ]);
+
+    if (Array.isArray(msgs)) {
+      setMessages((prev) => {
+        if (
+          prev.length === msgs.length &&
+          prev.every((msg, index) => msg.id === msgs[index]?.id)
+        ) {
+          return prev;
+        }
+        return msgs;
+      });
+    }
+
+    if (Array.isArray(pmts)) {
+      applyPayments(pmts);
+    }
+
+    if (!silent) {
+      scrollToBottom();
+    }
+  };
 
   // Initial load
   useEffect(() => {
@@ -188,9 +220,7 @@ export default function CoachChatPage({ coach, request, setPage }) {
       ]);
       if (!mounted) return;
       setMessages(msgs ?? []);
-      const map = {};
-      (pmts ?? []).forEach(p => { map[p.id] = p; });
-      setPayments(map);
+      applyPayments(pmts);
     }
     load();
     return () => { mounted = false; };
@@ -228,6 +258,16 @@ export default function CoachChatPage({ coach, request, setPage }) {
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
+  }, [request.id]);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      void syncConversation({ silent: true });
+    }, 2500);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
   }, [request.id]);
 
   useEffect(() => { scrollToBottom(); }, [messages]);

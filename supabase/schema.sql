@@ -388,6 +388,14 @@ CREATE POLICY "user_config_coach_update" ON user_config FOR UPDATE
       JOIN coaches c ON c.id = wa.coach_id
       WHERE wa.user_id = user_config.user_id AND c.user_id = auth.uid()
     )
+  )
+  WITH CHECK (
+    auth.uid() = user_id OR
+    EXISTS (
+      SELECT 1 FROM workout_access wa
+      JOIN coaches c ON c.id = wa.coach_id
+      WHERE wa.user_id = user_config.user_id AND c.user_id = auth.uid()
+    )
   );
 
 -- ── Realtime publication ──────────────────────────────────────
