@@ -370,6 +370,16 @@ CREATE POLICY "run_sessions_coach_read" ON run_sessions FOR SELECT
   );
 
 -- Coaches can also update future workout plans for their paid clients.
+CREATE POLICY "user_config_coach_read" ON user_config FOR SELECT
+  USING (
+    auth.uid() = user_id OR
+    EXISTS (
+      SELECT 1 FROM workout_access wa
+      JOIN coaches c ON c.id = wa.coach_id
+      WHERE wa.user_id = user_config.user_id AND c.user_id = auth.uid()
+    )
+  );
+
 CREATE POLICY "user_config_coach_update" ON user_config FOR UPDATE
   USING (
     auth.uid() = user_id OR
@@ -379,3 +389,30 @@ CREATE POLICY "user_config_coach_update" ON user_config FOR UPDATE
       WHERE wa.user_id = user_config.user_id AND c.user_id = auth.uid()
     )
   );
+
+-- ── Realtime publication ──────────────────────────────────────
+-- These tables back live chat, coach-request status changes, and
+-- coach-driven plan edits in the user app.
+
+DO $$
+BEGIN
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE coach_requests;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  END;
+
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE messages;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  END;
+
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE payment_requests;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  END;
+
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE user_config;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  END;
+END $$;

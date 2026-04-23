@@ -94,6 +94,31 @@ export function UserConfigProvider({ children }) {
       });
   }, [user?.id]);
 
+  useEffect(() => {
+    if (!user) return undefined;
+
+    const channel = supabase
+      .channel(`user_config_${user.id}`)
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'user_config',
+        filter: `user_id=eq.${user.id}`,
+      }, (payload) => {
+        if (pendingRef.current || savingRef.current) return;
+        if (payload.new) {
+          setHasConfigRow(true);
+          setConfig(normalizeConfig(payload.new));
+        } else if (payload.eventType === 'DELETE') {
+          setHasConfigRow(false);
+          setConfig(DEFAULTS);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
+
   const flushSave = useCallback(async () => {
     if (!user || !loaded || !pendingRef.current || savingRef.current) return;
     savingRef.current = true;

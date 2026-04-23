@@ -198,6 +198,10 @@ export default function CoachChatPage({ coach, request, setPage }) {
 
   // Realtime
   useEffect(() => {
+    setStatus(request.status);
+  }, [request.status]);
+
+  useEffect(() => {
     const channel = supabase
       .channel('chat_' + request.id)
       .on('postgres_changes', {
@@ -215,6 +219,12 @@ export default function CoachChatPage({ coach, request, setPage }) {
         filter: `request_id=eq.${request.id}`,
       }, payload => {
         setPayments(prev => ({ ...prev, [payload.new.id]: payload.new }));
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE', schema: 'public', table: 'coach_requests',
+        filter: `id=eq.${request.id}`,
+      }, payload => {
+        setStatus(payload.new.status);
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };

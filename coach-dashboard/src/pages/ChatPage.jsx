@@ -119,6 +119,12 @@ export default function ChatPage({ coach, initialRequest, onViewData }) {
 
   const scrollToBottom = () => bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
 
+  useEffect(() => {
+    if (initialRequest) {
+      setSelectedRequest(initialRequest)
+    }
+  }, [initialRequest])
+
   // Load accepted requests + profiles
   useEffect(() => {
     let mounted = true
@@ -146,7 +152,18 @@ export default function ChatPage({ coach, initialRequest, onViewData }) {
       }
     }
     load()
-    return () => { mounted = false }
+
+    const requestsChannel = supabase
+      .channel('coach_active_requests_' + coach.id)
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'coach_requests',
+        filter: `coach_id=eq.${coach.id}`,
+      }, () => load())
+      .subscribe()
+    return () => {
+      mounted = false
+      supabase.removeChannel(requestsChannel)
+    }
   }, [coach.id])
 
   // Load messages + payments for selected request
@@ -187,6 +204,12 @@ export default function ChatPage({ coach, initialRequest, onViewData }) {
       }, payload => {
         setPayments(prev => ({ ...prev, [payload.new.id]: payload.new }))
         if (payload.new.status === 'paid') setHasAccess(true)
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE', schema: 'public', table: 'coach_requests',
+        filter: `id=eq.${selectedRequest.id}`,
+      }, payload => {
+        setSelectedRequest(prev => prev?.id === payload.new.id ? { ...prev, ...payload.new } : prev)
       })
       .subscribe()
 

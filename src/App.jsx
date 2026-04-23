@@ -17,15 +17,25 @@ import CoachesPage      from './pages/CoachesPage';
 import CoachProfilePage from './pages/CoachProfilePage';
 import CoachChatPage    from './pages/CoachChatPage';
 import BottomNav        from './components/BottomNav';
+import {
+  USER_PAGE_KEY,
+  USER_SELECTED_COACH_KEY,
+  USER_SELECTED_REQUEST_KEY,
+} from './lib/navigationState';
 
 const PAGE_SPRING = { type: 'spring', stiffness: 260, damping: 32, mass: 0.9 };
 
 // Pages that show the bottom nav
 const NAV_PAGES = ['home', 'gym', 'running', 'analytics', 'cabinet', 'coaches'];
 
-function AppContent({ page, setPage }) {
-  const [selectedCoach, setSelectedCoach]     = useState(null);
-  const [selectedRequest, setSelectedRequest] = useState(null);
+function AppContent({
+  page,
+  setPage,
+  selectedCoach,
+  setSelectedCoach,
+  selectedRequest,
+  setSelectedRequest,
+}) {
   const { loaded, hasConfigRow, updateConfig } = useUserConfig();
   const { hasActive }                          = useActiveSession();
   const [onboardingDone, setOnboardingDone]    = useState(false);
@@ -271,6 +281,15 @@ function AppContent({ page, setPage }) {
     setPage('cabinet');
   };
 
+  useEffect(() => {
+    if (page === 'coach-profile' && !selectedCoach) {
+      setPage('coaches');
+    }
+    if (page === 'coach-chat' && !selectedRequest) {
+      setPage(selectedCoach ? 'coach-profile' : 'coaches');
+    }
+  }, [page, selectedCoach, selectedRequest, setPage]);
+
   if (showOnboarding) {
     return (
       <OnboardingPage
@@ -337,13 +356,9 @@ function AppContent({ page, setPage }) {
 
 function AppShell() {
   const { user, loading } = useAuth();
-  const [page, setPage]   = useLocalStorage('kinetic_page', 'home');
-
-  // Reset to home if on a non-nav page after reload
-  useEffect(() => {
-    if (!NAV_PAGES.includes(page)) setPage('home');
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const [page, setPage] = useLocalStorage(USER_PAGE_KEY, 'home');
+  const [selectedCoach, setSelectedCoach] = useLocalStorage(USER_SELECTED_COACH_KEY, null);
+  const [selectedRequest, setSelectedRequest] = useLocalStorage(USER_SELECTED_REQUEST_KEY, null);
 
   if (loading) {
     return (
@@ -361,7 +376,14 @@ function AppShell() {
   return (
     <UserConfigProvider>
       <ActiveSessionProvider>
-        <AppContent page={page} setPage={setPage} />
+        <AppContent
+          page={page}
+          setPage={setPage}
+          selectedCoach={selectedCoach}
+          setSelectedCoach={setSelectedCoach}
+          selectedRequest={selectedRequest}
+          setSelectedRequest={setSelectedRequest}
+        />
       </ActiveSessionProvider>
     </UserConfigProvider>
   );

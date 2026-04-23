@@ -80,6 +80,7 @@ export default function UserDataPage({ coach, request, onBack }) {
   const [editingPlan, setEditingPlan] = useState(false)
   const [savingPlan, setSavingPlan] = useState(false)
   const [editedDays, setEditedDays] = useState(null)
+  const [saveError, setSaveError] = useState('')
 
   useEffect(() => {
     let mounted = true
@@ -122,11 +123,30 @@ export default function UserDataPage({ coach, request, onBack }) {
   }, [coach.id, request.user_id])
 
   const savePlan = async () => {
+    setSaveError('')
     setSavingPlan(true)
-    await supabase
+    const { data, error } = await supabase
       .from('user_config')
-      .update({ gym_days: editedDays })
+      .update({
+        gym_days: editedDays,
+        gym_day_count: Array.isArray(editedDays) ? editedDays.length : 0,
+        updated_at: new Date().toISOString(),
+      })
       .eq('user_id', request.user_id)
+      .select('gym_days,run_weeks,run_types')
+      .maybeSingle()
+
+    if (error) {
+      setSaveError(error.message || 'Failed to save the workout plan.')
+      setSavingPlan(false)
+      return
+    }
+
+    if (data) {
+      setUserConfig(data)
+      setEditedDays(data.gym_days ?? [])
+    }
+
     setSavingPlan(false)
     setEditingPlan(false)
   }
@@ -246,6 +266,10 @@ export default function UserDataPage({ coach, request, onBack }) {
                     </div>
                   )}
                 </div>
+
+                {saveError && (
+                  <p className="font-label text-xs text-error-container mb-4">{saveError}</p>
+                )}
 
                 {(!editedDays || editedDays.length === 0) ? (
                   <EmptyState icon="calendar_month" label="No plan configured yet" />

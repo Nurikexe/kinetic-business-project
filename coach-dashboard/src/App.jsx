@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import LoginPage     from './pages/LoginPage'
@@ -7,13 +7,22 @@ import RequestsPage  from './pages/RequestsPage'
 import ChatPage      from './pages/ChatPage'
 import UserDataPage  from './pages/UserDataPage'
 import Sidebar       from './components/Sidebar'
+import { useLocalStorage } from './hooks/useLocalStorage'
 
 const SPRING = { type: 'spring', stiffness: 260, damping: 32 }
+const COACH_PAGE_KEY = 'coach_dashboard_page'
+const COACH_SELECTED_REQUEST_KEY = 'coach_dashboard_selected_request'
 
 function DashboardShell() {
   const { user, coachProfile, loading } = useAuth()
-  const [page, setPage]                 = useState('requests')
-  const [selectedRequest, setSelectedRequest] = useState(null)
+  const [page, setPage] = useLocalStorage(COACH_PAGE_KEY, 'requests')
+  const [selectedRequest, setSelectedRequest] = useLocalStorage(COACH_SELECTED_REQUEST_KEY, null)
+
+  useEffect(() => {
+    if ((page === 'chat' || page === 'user-data') && !selectedRequest) {
+      setPage('requests')
+    }
+  }, [page, selectedRequest, setPage])
 
   if (loading) {
     return (

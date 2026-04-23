@@ -134,7 +134,19 @@ export default function CoachesPage({ setPage, onSelectCoach, onOpenChat }) {
       setLoading(false);
     }
     load();
-    return () => { mounted = false; };
+
+    const channel = supabase
+      .channel(`user_requests_${user.id}`)
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'coach_requests',
+        filter: `user_id=eq.${user.id}`,
+      }, () => load())
+      .subscribe();
+
+    return () => {
+      mounted = false;
+      supabase.removeChannel(channel);
+    };
   }, [user.id]);
 
   const filtered = search.trim()

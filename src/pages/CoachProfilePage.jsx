@@ -26,13 +26,35 @@ export default function CoachProfilePage({ coach, setPage, onRequestSent }) {
   const [error, setError]         = useState('');
 
   useEffect(() => {
-    supabase
-      .from('coach_requests')
-      .select('*')
-      .eq('user_id', user.id)
-      .eq('coach_id', coach.id)
-      .maybeSingle()
-      .then(({ data }) => setExistingRequest(data));
+    let mounted = true;
+    const loadRequest = async () => {
+      const { data } = await supabase
+        .from('coach_requests')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('coach_id', coach.id)
+        .maybeSingle();
+      if (mounted) setExistingRequest(data);
+    };
+
+    loadRequest();
+
+    const channel = supabase
+      .channel(`coach_profile_request_${coach.id}_${user.id}`)
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'coach_requests',
+        filter: `user_id=eq.${user.id}`,
+      }, (payload) => {
+        if (payload.new?.coach_id === coach.id || payload.old?.coach_id === coach.id) {
+          loadRequest();
+        }
+      })
+      .subscribe();
+
+    return () => {
+      mounted = false;
+      supabase.removeChannel(channel);
+    };
   }, [user.id, coach.id]);
 
   const sendRequest = async () => {
