@@ -2,7 +2,8 @@ export const NAV_TABS = [
   { id: 'home',      label: 'Home',      icon: 'home' },
   { id: 'gym',       label: 'Gym',       icon: 'fitness_center' },
   { id: 'running',   label: 'Run',       icon: 'directions_run' },
-  { id: 'analytics', label: 'Analytics', icon: 'monitoring' },
+  { id: 'coaches',   label: 'Coaches',   icon: 'group' },
+  { id: 'analytics', label: 'Stats',     icon: 'monitoring' },
   { id: 'cabinet',   label: 'Profile',   icon: 'person' },
 ];
 

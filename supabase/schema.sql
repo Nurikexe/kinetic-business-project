@@ -173,3 +173,209 @@ BEGIN
   DELETE FROM auth.users WHERE id = auth.uid();
 END;
 $$;
+
+-- ══════════════════════════════════════════════════════════════
+-- COACHING MARKETPLACE SCHEMA
+-- ══════════════════════════════════════════════════════════════
+
+-- ── profiles ──────────────────────────────────────────────────
+-- Public user display info so coaches can see user names.
+-- Populated by the client on first login/registration.
+
+CREATE TABLE IF NOT EXISTS profiles (
+  user_id      UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  display_name TEXT NOT NULL DEFAULT '',
+  avatar_url   TEXT NOT NULL DEFAULT ''
+);
+
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "profiles_public_read" ON profiles FOR SELECT USING (true);
+CREATE POLICY "profiles_own_write"   ON profiles FOR ALL   USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+-- ── coaches ───────────────────────────────────────────────────
+-- One row per coach. A coach is a regular auth user who has
+-- created a coach profile.
+
+CREATE TABLE IF NOT EXISTS coaches (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id         UUID REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE NOT NULL,
+  display_name    TEXT NOT NULL,
+  bio             TEXT NOT NULL DEFAULT '',
+  specializations TEXT[] NOT NULL DEFAULT '{}',
+  certifications  TEXT[] NOT NULL DEFAULT '{}',
+  price_per_month NUMERIC(10,2) NOT NULL DEFAULT 0,
+  avatar_url      TEXT NOT NULL DEFAULT '',
+  is_available    BOOLEAN NOT NULL DEFAULT true,
+  created_at      TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE coaches ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "coaches_public_read"  ON coaches FOR SELECT USING (true);
+CREATE POLICY "coaches_own_insert"   ON coaches FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "coaches_own_update"   ON coaches FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "coaches_own_delete"   ON coaches FOR DELETE USING (auth.uid() = user_id);
+
+-- ── coach_requests ────────────────────────────────────────────
+-- Hire requests from users to coaches.
+
+CREATE TABLE IF NOT EXISTS coach_requests (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id      UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  coach_id     UUID REFERENCES coaches(id) ON DELETE CASCADE NOT NULL,
+  status       TEXT NOT NULL DEFAULT 'pending',   -- 'pending' | 'accepted' | 'declined'
+  message      TEXT NOT NULL DEFAULT '',
+  created_at   TIMESTAMPTZ DEFAULT now(),
+  updated_at   TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(user_id, coach_id)
+);
+
+ALTER TABLE coach_requests ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "requests_user_insert" ON coach_requests FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "requests_participant_read" ON coach_requests FOR SELECT
+  USING (
+    auth.uid() = user_id OR
+    auth.uid() = (SELECT user_id FROM coaches WHERE id = coach_id)
+  );
+
+CREATE POLICY "requests_coach_update" ON coach_requests FOR UPDATE
+  USING (auth.uid() = (SELECT user_id FROM coaches WHERE id = coach_id));
+
+-- ── messages ──────────────────────────────────────────────────
+-- Chat messages between user and coach within an accepted request.
+-- message_type: 'text' | 'payment_request'
+
+CREATE TABLE IF NOT EXISTS messages (
+  id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  request_id         UUID REFERENCES coach_requests(id) ON DELETE CASCADE NOT NULL,
+  sender_id          UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  content            TEXT NOT NULL DEFAULT '',
+  message_type       TEXT NOT NULL DEFAULT 'text',
+  payment_request_id UUID DEFAULT NULL,
+  created_at         TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "messages_participant_read" ON messages FOR SELECT
+  USING (
+    auth.uid() = sender_id OR
+    auth.uid() = (SELECT cr.user_id FROM coach_requests cr WHERE cr.id = request_id) OR
+    auth.uid() = (SELECT c.user_id FROM coaches c
+                  JOIN coach_requests cr ON cr.coach_id = c.id
+                  WHERE cr.id = request_id)
+  );
+
+CREATE POLICY "messages_participant_insert" ON messages FOR INSERT
+  WITH CHECK (auth.uid() = sender_id);
+
+-- ── payment_requests ──────────────────────────────────────────
+-- Synthetic invoices sent by coaches through chat.
+-- platform_fee (15%) and coach_payout (85%) are computed columns.
+
+CREATE TABLE IF NOT EXISTS payment_requests (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  request_id   UUID REFERENCES coach_requests(id) ON DELETE CASCADE NOT NULL,
+  coach_id     UUID REFERENCES coaches(id) NOT NULL,
+  user_id      UUID REFERENCES auth.users(id) NOT NULL,
+  amount       NUMERIC(10,2) NOT NULL,
+  platform_fee NUMERIC(10,2) GENERATED ALWAYS AS (ROUND(amount * 0.15, 2)) STORED,
+  coach_payout NUMERIC(10,2) GENERATED ALWAYS AS (ROUND(amount * 0.85, 2)) STORED,
+  description  TEXT NOT NULL DEFAULT '',
+  status       TEXT NOT NULL DEFAULT 'pending',   -- 'pending' | 'paid'
+  paid_at      TIMESTAMPTZ DEFAULT NULL,
+  created_at   TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE payment_requests ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "payments_participant_read" ON payment_requests FOR SELECT
+  USING (
+    auth.uid() = user_id OR
+    auth.uid() = (SELECT user_id FROM coaches WHERE id = coach_id)
+  );
+
+CREATE POLICY "payments_coach_insert" ON payment_requests FOR INSERT
+  WITH CHECK (auth.uid() = (SELECT user_id FROM coaches WHERE id = coach_id));
+
+CREATE POLICY "payments_user_pay" ON payment_requests FOR UPDATE
+  USING (auth.uid() = user_id);
+
+-- ── workout_access ────────────────────────────────────────────
+-- Granted automatically by trigger when user pays a payment_request.
+-- Allows the coach read access to that user's workout history
+-- and write access to their future plans.
+
+CREATE TABLE IF NOT EXISTS workout_access (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  coach_id   UUID REFERENCES coaches(id) ON DELETE CASCADE NOT NULL,
+  user_id    UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  request_id UUID REFERENCES coach_requests(id) DEFAULT NULL,
+  granted_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(coach_id, user_id)
+);
+
+ALTER TABLE workout_access ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "access_participant_read" ON workout_access FOR SELECT
+  USING (
+    auth.uid() = user_id OR
+    auth.uid() = (SELECT user_id FROM coaches WHERE id = coach_id)
+  );
+
+-- ── Trigger: grant workout_access on payment ─────────────────
+
+CREATE OR REPLACE FUNCTION handle_payment_paid()
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
+BEGIN
+  IF NEW.status = 'paid' AND OLD.status = 'pending' THEN
+    INSERT INTO workout_access (coach_id, user_id, request_id)
+    VALUES (NEW.coach_id, NEW.user_id, NEW.request_id)
+    ON CONFLICT (coach_id, user_id) DO NOTHING;
+    NEW.paid_at := now();
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS on_payment_paid ON payment_requests;
+CREATE TRIGGER on_payment_paid
+  BEFORE UPDATE ON payment_requests
+  FOR EACH ROW EXECUTE FUNCTION handle_payment_paid();
+
+-- ── Extended RLS: coach read access to workout data ──────────
+-- Coaches can read workouts/run_sessions for users who have paid.
+
+CREATE POLICY "workouts_coach_read" ON workouts FOR SELECT
+  USING (
+    auth.uid() = user_id OR
+    EXISTS (
+      SELECT 1 FROM workout_access wa
+      JOIN coaches c ON c.id = wa.coach_id
+      WHERE wa.user_id = workouts.user_id AND c.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "run_sessions_coach_read" ON run_sessions FOR SELECT
+  USING (
+    auth.uid() = user_id OR
+    EXISTS (
+      SELECT 1 FROM workout_access wa
+      JOIN coaches c ON c.id = wa.coach_id
+      WHERE wa.user_id = run_sessions.user_id AND c.user_id = auth.uid()
+    )
+  );
+
+-- Coaches can also update future workout plans for their paid clients.
+CREATE POLICY "user_config_coach_update" ON user_config FOR UPDATE
+  USING (
+    auth.uid() = user_id OR
+    EXISTS (
+      SELECT 1 FROM workout_access wa
+      JOIN coaches c ON c.id = wa.coach_id
+      WHERE wa.user_id = user_config.user_id AND c.user_id = auth.uid()
+    )
+  );

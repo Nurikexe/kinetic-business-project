@@ -13,14 +13,19 @@ import RunningPage      from './pages/RunningPage';
 import AnalyticsPage    from './pages/AnalyticsPage';
 import CabinetPage      from './pages/CabinetPage';
 import CreateWorkoutPage from './pages/CreateWorkoutPage';
+import CoachesPage      from './pages/CoachesPage';
+import CoachProfilePage from './pages/CoachProfilePage';
+import CoachChatPage    from './pages/CoachChatPage';
 import BottomNav        from './components/BottomNav';
 
 const PAGE_SPRING = { type: 'spring', stiffness: 260, damping: 32, mass: 0.9 };
 
 // Pages that show the bottom nav
-const NAV_PAGES = ['home', 'gym', 'running', 'analytics', 'cabinet'];
+const NAV_PAGES = ['home', 'gym', 'running', 'analytics', 'cabinet', 'coaches'];
 
 function AppContent({ page, setPage }) {
+  const [selectedCoach, setSelectedCoach]     = useState(null);
+  const [selectedRequest, setSelectedRequest] = useState(null);
   const { loaded, hasConfigRow, updateConfig } = useUserConfig();
   const { hasActive }                          = useActiveSession();
   const [onboardingDone, setOnboardingDone]    = useState(false);
@@ -301,6 +306,27 @@ function AppContent({ page, setPage }) {
             />
           )}
           {page === 'create'    && <CreateWorkoutPage setPage={setPage} />}
+          {page === 'coaches'   && (
+            <CoachesPage
+              setPage={setPage}
+              onSelectCoach={(coach) => { setSelectedCoach(coach); setPage('coach-profile'); }}
+              onOpenChat={(coach, request) => { setSelectedCoach(coach); setSelectedRequest(request); setPage('coach-chat'); }}
+            />
+          )}
+          {page === 'coach-profile' && selectedCoach && (
+            <CoachProfilePage
+              coach={selectedCoach}
+              setPage={setPage}
+              onRequestSent={(request) => { setSelectedRequest(request); setPage('coach-chat'); }}
+            />
+          )}
+          {page === 'coach-chat' && selectedRequest && (
+            <CoachChatPage
+              coach={selectedCoach}
+              request={selectedRequest}
+              setPage={setPage}
+            />
+          )}
         </motion.div>
       </AnimatePresence>
 
