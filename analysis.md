@@ -1332,3 +1332,181 @@ If the goal is healthy unit economics, the best near-term strategy is:
 - Strava pricing: https://www.strava.com/pricing
 - Trainerize pricing: https://www.trainerize.com/pricing/
 - Meta benchmark reference: https://www.wordstream.com/blog/facebook-ads-benchmarks-2025
+
+## 35. Justification for the `$5` AI subscription price
+
+This section explains why a `$5/month` AI premium subscription can be justified even when the product allows only limited prompt usage, such as:
+
+- `20 prompts every 5 hours`
+
+This pricing should be understood as a **subscription price based on expected average usage**, not as a promise that the platform can profitably serve every user at theoretical maximum usage.
+
+### Relevant Gemini API pricing assumptions
+
+Using the pricing reference provided for Gemini Flash:
+
+- input text: `$0.75 per 1 million tokens`
+- output text: `$4.50 per 1 million tokens`
+
+That means prompt cost can be modeled as:
+
+```text
+Cost per prompt =
+  (input_tokens / 1,000,000 × 0.75)
++ (output_tokens / 1,000,000 × 4.50)
+```
+
+### Example API cost per prompt
+
+#### Small prompt
+
+- input: `200`
+- output: `400`
+
+Cost:
+
+- input cost = `200 / 1,000,000 × 0.75 = $0.00015`
+- output cost = `400 / 1,000,000 × 4.50 = $0.00180`
+- total = `$0.00195`
+
+#### Medium prompt
+
+- input: `500`
+- output: `1,000`
+
+Cost:
+
+- input cost = `$0.000375`
+- output cost = `$0.00450`
+- total = `$0.004875`
+
+#### Large prompt
+
+- input: `1,000`
+- output: `2,000`
+
+Cost:
+
+- input cost = `$0.00075`
+- output cost = `$0.00900`
+- total = `$0.00975`
+
+### Maximum possible usage under the product cap
+
+If the limit is `20 prompts every 5 hours`, then the maximum theoretical usage is:
+
+- `24 / 5 = 4.8 windows per day`
+- `4.8 × 20 = 96 prompts/day`
+- `96 × 30 = 2,880 prompts/month`
+
+This is a worst-case, near-abusive usage scenario.
+
+### Monthly API cost at maximum usage
+
+#### Small prompt case
+
+- `2,880 × $0.00195 = $5.62/month`
+
+#### Medium prompt case
+
+- `2,880 × $0.004875 = $14.04/month`
+
+#### Large prompt case
+
+- `2,880 × $0.00975 = $28.08/month`
+
+### Implication
+
+This means:
+
+- `$5/month` does **not** cover worst-case heavy usage if prompts are medium or large
+- `$5/month` covers only very light prompt sizes under maximum usage
+- therefore, the business case for `$5/month` cannot be based on the assumption that all users consume the full cap consistently
+
+### Why the `$5` price can still be justified
+
+The correct justification is that pricing is based on **average usage**, not worst-case usage.
+
+In subscription businesses, heavy users are typically subsidized by lighter users. That is normal, as long as:
+
+- most users do not come close to the hard cap
+- the cap prevents unlimited abuse
+- the average cost per subscriber remains below the subscription price
+
+### More realistic usage assumptions
+
+If a normal paid user sends:
+
+- `4 to 8 prompts/day`
+- that equals about `120 to 240 prompts/month`
+
+Then the monthly API cost looks much better.
+
+#### Medium prompt case
+
+- `120 × $0.004875 = $0.59/month`
+- `240 × $0.004875 = $1.17/month`
+
+#### Large prompt case
+
+- `120 × $0.00975 = $1.17/month`
+- `240 × $0.00975 = $2.34/month`
+
+Under this type of real-world usage, `$5/month` is much more defensible.
+
+### Why `$5` is not only paying for tokens
+
+The subscription fee should not be positioned as a pure token resale product.
+
+It also covers:
+
+- AI API cost
+- prompt orchestration and application logic
+- backend infrastructure
+- retries and failed requests
+- product development
+- support
+- payment processing
+- gross margin
+
+That means the pricing logic is:
+
+- not “we charge exactly what Gemini costs”
+- but “we charge for a premium AI-enabled product experience”
+
+### Best pricing narrative
+
+The strongest internal justification is:
+
+> The `$5/month` AI subscription is priced against expected average user behavior, not theoretical maximum usage. The `20 prompts every 5 hours` cap exists to limit abuse and control downside risk. Most users are expected to consume far fewer prompts than the cap, which keeps average inference cost within an acceptable range. The subscription also pays for infrastructure, support, payment fees, and product margin, not just raw model tokens.
+
+### Strategic conclusion
+
+The `$5/month` AI tier is justified if:
+
+- average user behavior is light to moderate
+- prompt volume remains far below the hard limit for most users
+- AI features help convert users into higher-LTV products such as coaching
+
+The `$5/month` AI tier is **not** justified if:
+
+- many users repeatedly hit the prompt cap
+- average prompts are large
+- output lengths are uncontrolled
+- the product tries to scale purely through cold paid acquisition into this low-ticket subscription
+
+### Final recommendation on the AI tier
+
+The best economic interpretation is:
+
+- `$5/month` is a valid low-friction premium entry point
+- it should be treated as a conversion and retention layer
+- it should not be treated as the main standalone profit engine unless actual usage stays well below the cap
+
+If actual prompt consumption increases materially, then the likely next step would be one of:
+
+- lower prompt limits
+- output length control
+- fair-use wording
+- a higher-priced AI plan
+- an annual AI subscription
