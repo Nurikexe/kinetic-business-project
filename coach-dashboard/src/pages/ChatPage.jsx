@@ -200,12 +200,15 @@ export default function ChatPage({ coach, initialRequest, onViewData }) {
     setSending(true)
     const content = text.trim()
     setText('')
-    await supabase.from('messages').insert({
+    const { data: newMsg } = await supabase.from('messages').insert({
       request_id:   selectedRequest.id,
       sender_id:    coach.user_id,
       content,
       message_type: 'text',
-    })
+    }).select().single()
+    if (newMsg) {
+      setMessages(prev => prev.find(m => m.id === newMsg.id) ? prev : [...prev, newMsg])
+    }
     setSending(false)
   }
 
@@ -224,13 +227,16 @@ export default function ChatPage({ coach, initialRequest, onViewData }) {
 
     if (payment) {
       setPayments(prev => ({ ...prev, [payment.id]: payment }))
-      await supabase.from('messages').insert({
+      const { data: newMsg } = await supabase.from('messages').insert({
         request_id:         selectedRequest.id,
         sender_id:          coach.user_id,
         content:            `Payment request: $${Number(amount).toFixed(2)}`,
         message_type:       'payment_request',
         payment_request_id: payment.id,
-      })
+      }).select().single()
+      if (newMsg) {
+        setMessages(prev => prev.find(m => m.id === newMsg.id) ? prev : [...prev, newMsg])
+      }
     }
     setShowInvoice(false)
   }

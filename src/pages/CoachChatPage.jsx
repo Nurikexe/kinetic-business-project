@@ -3,6 +3,108 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 
+function PaymentModal({ payment, onConfirm, onClose }) {
+  const [card, setCard]     = useState('');
+  const [expiry, setExpiry] = useState('');
+  const [cvv, setCvv]       = useState('');
+  const [name, setName]     = useState('');
+  const [busy, setBusy]     = useState(false);
+  const [error, setError]   = useState('');
+
+  const formatCard = v => v.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim();
+  const formatExpiry = v => {
+    const d = v.replace(/\D/g, '').slice(0, 4);
+    return d.length > 2 ? d.slice(0, 2) + '/' + d.slice(2) : d;
+  };
+
+  const submit = async () => {
+    const rawCard = card.replace(/\s/g, '');
+    if (rawCard.length < 16) return setError('Enter a valid 16-digit card number.');
+    if (expiry.length < 5)   return setError('Enter a valid expiry (MM/YY).');
+    if (cvv.length < 3)      return setError('Enter a valid CVV.');
+    if (!name.trim())        return setError('Enter the cardholder name.');
+    setError('');
+    setBusy(true);
+    await onConfirm(payment);
+    setBusy(false);
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end justify-center"
+      onClick={e => e.target === e.currentTarget && onClose()}
+    >
+      <motion.div
+        initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 80, opacity: 0 }}
+        transition={{ type: 'spring', damping: 26, stiffness: 300 }}
+        className="w-full max-w-md bg-surface-container rounded-t-3xl p-6 pb-10 space-y-5"
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="font-headline font-bold text-on-surface text-lg">Complete Payment</p>
+            <p className="font-label text-xs text-outline mt-0.5">Amount: <strong>${Number(payment.amount).toFixed(2)}</strong></p>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center">
+            <span className="material-symbols-outlined text-on-surface-variant text-lg">close</span>
+          </button>
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <p className="font-label text-xs text-on-surface-variant mb-1">Cardholder Name</p>
+            <input
+              value={name} onChange={e => setName(e.target.value)}
+              placeholder="John Doe"
+              className="w-full bg-surface-container-high border border-outline/20 rounded-xl px-4 py-3 font-label text-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary-container/60"
+            />
+          </div>
+          <div>
+            <p className="font-label text-xs text-on-surface-variant mb-1">Card Number</p>
+            <input
+              value={card} onChange={e => setCard(formatCard(e.target.value))}
+              placeholder="1234 5678 9012 3456"
+              inputMode="numeric"
+              className="w-full bg-surface-container-high border border-outline/20 rounded-xl px-4 py-3 font-label text-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary-container/60 tracking-widest"
+            />
+          </div>
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <p className="font-label text-xs text-on-surface-variant mb-1">Expiry</p>
+              <input
+                value={expiry} onChange={e => setExpiry(formatExpiry(e.target.value))}
+                placeholder="MM/YY"
+                inputMode="numeric"
+                className="w-full bg-surface-container-high border border-outline/20 rounded-xl px-4 py-3 font-label text-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary-container/60"
+              />
+            </div>
+            <div className="flex-1">
+              <p className="font-label text-xs text-on-surface-variant mb-1">CVV</p>
+              <input
+                value={cvv} onChange={e => setCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                placeholder="123"
+                inputMode="numeric"
+                type="password"
+                className="w-full bg-surface-container-high border border-outline/20 rounded-xl px-4 py-3 font-label text-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary-container/60"
+              />
+            </div>
+          </div>
+        </div>
+
+        {error && <p className="font-label text-xs text-error">{error}</p>}
+
+        <button
+          onClick={submit} disabled={busy}
+          className="w-full bg-primary-container text-on-primary-fixed font-label font-bold text-sm py-3.5 rounded-xl active:scale-95 transition-transform disabled:opacity-50"
+        >
+          {busy ? 'Processing…' : `Pay $${Number(payment.amount).toFixed(2)}`}
+        </button>
+        <p className="text-center font-label text-[10px] text-outline">This is a simulated payment — no real charge occurs.</p>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 function PaymentCard({ payment, isOwn, onPay }) {
   const isPaid = payment.status === 'paid';
   return (
@@ -65,12 +167,13 @@ function Bubble({ msg, isOwn }) {
 
 export default function CoachChatPage({ coach, request, setPage }) {
   const { user } = useAuth();
-  const [messages, setMessages]   = useState([]);
-  const [payments, setPayments]   = useState({});
-  const [text, setText]           = useState('');
-  const [sending, setSending]     = useState(false);
-  const [paying, setPaying]       = useState(null);
-  const [status, setStatus]       = useState(request.status);
+  const [messages, setMessages]     = useState([]);
+  const [payments, setPayments]     = useState({});
+  const [text, setText]             = useState('');
+  const [sending, setSending]       = useState(false);
+  const [paying, setPaying]         = useState(null);
+  const [payingModal, setPayingModal] = useState(null);
+  const [status, setStatus]         = useState(request.status);
   const bottomRef = useRef(null);
 
   const scrollToBottom = () => bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -124,12 +227,15 @@ export default function CoachChatPage({ coach, request, setPage }) {
     setSending(true);
     const content = text.trim();
     setText('');
-    await supabase.from('messages').insert({
+    const { data: newMsg } = await supabase.from('messages').insert({
       request_id:   request.id,
       sender_id:    user.id,
       content,
       message_type: 'text',
-    });
+    }).select().single();
+    if (newMsg) {
+      setMessages(prev => prev.find(m => m.id === newMsg.id) ? prev : [...prev, newMsg]);
+    }
     setSending(false);
   };
 
@@ -141,6 +247,7 @@ export default function CoachChatPage({ coach, request, setPage }) {
       .eq('id', payment.id);
     setPayments(prev => ({ ...prev, [payment.id]: { ...prev[payment.id], status: 'paid' } }));
     setPaying(null);
+    setPayingModal(null);
   };
 
   const isPending = status === 'pending';
@@ -201,7 +308,7 @@ export default function CoachChatPage({ coach, request, setPage }) {
                     <PaymentCard
                       payment={payments[msg.payment_request_id]}
                       isOwn={msg.sender_id === user.id}
-                      onPay={paying ? () => {} : handlePay}
+                      onPay={paying ? () => {} : (p) => setPayingModal(p)}
                     />
                   ) : (
                     <Bubble msg={msg} isOwn={msg.sender_id === user.id} />
@@ -213,6 +320,16 @@ export default function CoachChatPage({ coach, request, setPage }) {
         )}
         <div ref={bottomRef} />
       </div>
+
+      <AnimatePresence>
+        {payingModal && (
+          <PaymentModal
+            payment={payingModal}
+            onConfirm={handlePay}
+            onClose={() => setPayingModal(null)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Input */}
       {!isPending && (
