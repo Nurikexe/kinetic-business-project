@@ -16,6 +16,12 @@ At a product level, the platform combines three businesses in one:
 
 The current monetization logic in the codebase is centered on the coaching marketplace flow, where coaches invoice athletes and the platform keeps a commission.
 
+In addition, the business model should be understood as having a premium AI subscription layer:
+
+- users pay `$5` to unlock AI features
+
+That premium AI access should be treated as a second revenue stream on top of coaching commissions.
+
 ## 2. Tech stack and architecture
 
 ### Frontend
@@ -591,8 +597,14 @@ The economically relevant mechanism in the existing code is:
 - coaches chat and send invoices
 - the platform keeps 15%
 - payment unlocks servicing rights and plan editing
+- premium users pay `$5` to unlock AI-powered features
 
-If you want to calculate real unit economics today, the core dataset should be `payment_requests`, joined with:
+If you want to calculate real unit economics today, the core dataset should be split into two revenue buckets:
+
+- coaching marketplace revenue from `payment_requests`
+- premium subscription revenue from `$5` AI access purchases
+
+For the marketplace side, the core dataset should be `payment_requests`, joined with:
 
 - `coach_requests` for funnel conversion
 - `messages` for engagement / sales behavior
@@ -601,5 +613,722 @@ If you want to calculate real unit economics today, the core dataset should be `
 
 From the current implementation, the most important truth is this:
 
-- KINETIC is not yet monetizing via subscriptions in code
-- it is monetizing via transactional coach invoices with a 15% commission model
+- KINETIC has two intended monetization layers:
+  - a `$5` premium AI subscription
+  - a transactional coach invoice marketplace with a 15% commission model
+
+## 16. Detailed unit economics model
+
+This section is a planning model, not an observed performance report.
+
+The codebase does not yet contain:
+
+- a real subscription billing system for the `$5` AI tier
+- real payment processor data
+- observed CAC by channel
+- observed subscription churn
+- observed retained cohort revenue
+
+So the right way to use this section is:
+
+1. as a financial planning model
+2. as a benchmark target framework
+3. as a decision tool for whether paid acquisition makes sense
+
+## 17. Revenue streams to model separately
+
+You should not blend everything into one ARPU number too early. KINETIC has two very different businesses.
+
+### Revenue stream A: `$5` AI premium subscription
+
+This unlocks AI features for the athlete.
+
+Economic properties:
+
+- low price point
+- potentially broad audience
+- likely lower willingness to pay
+- likely higher churn than coaching
+- very sensitive to CAC
+- potentially positive only if organic/referral acquisition is strong
+
+### Revenue stream B: coaching marketplace commission
+
+This is the 15% take-rate business from coach invoices.
+
+Economic properties:
+
+- higher revenue per paid relationship
+- lower conversion volume
+- more operationally intensive
+- stronger retention if coach-client fit is good
+- more defensible versus generic fitness apps
+
+## 18. Core assumptions for the model
+
+Below are reasonable planning assumptions for a first-pass model.
+
+You should replace them with actual data once the billing system is live.
+
+### AI premium subscription assumptions
+
+#### Conservative
+
+- monthly price: `$5.00`
+- payment processor fee: `$0.45`
+  - modeled as roughly `2.9% + $0.30`
+- AI variable cost per subscriber per month: `$1.50`
+- support + infra cost per subscriber per month: `$0.75`
+- contribution margin per subscriber per month: `$2.30`
+- monthly churn: `18%`
+
+#### Base
+
+- monthly price: `$5.00`
+- payment processor fee: `$0.45`
+- AI variable cost per subscriber per month: `$1.00`
+- support + infra cost per subscriber per month: `$0.55`
+- contribution margin per subscriber per month: `$3.00`
+- monthly churn: `12%`
+
+#### Aggressive
+
+- monthly price: `$5.00`
+- payment processor fee: `$0.45`
+- AI variable cost per subscriber per month: `$0.60`
+- support + infra cost per subscriber per month: `$0.35`
+- contribution margin per subscriber per month: `$3.60`
+- monthly churn: `8%`
+
+### Coaching marketplace assumptions
+
+The product lets coaches invoice arbitrary amounts, so platform economics depend heavily on coach pricing and retention.
+
+#### Conservative
+
+- average coach invoice: `$120/month`
+- platform fee at 15%: `$18.00/month`
+- processor cost on full payment: `$3.78/month`
+- support + ops cost per paid client-month: `$3.00`
+- net contribution per paid client-month: `$11.22`
+- retention: `3 months`
+
+#### Base
+
+- average coach invoice: `$150/month`
+- platform fee at 15%: `$22.50/month`
+- processor cost on full payment: `$4.65/month`
+- support + ops cost per paid client-month: `$3.00`
+- net contribution per paid client-month: `$14.85`
+- retention: `4 months`
+
+#### Aggressive
+
+- average coach invoice: `$200/month`
+- platform fee at 15%: `$30.00/month`
+- processor cost on full payment: `$6.10/month`
+- support + ops cost per paid client-month: `$4.00`
+- net contribution per paid client-month: `$19.90`
+- retention: `6 months`
+
+## 19. LTV model
+
+### AI premium LTV
+
+For subscriptions, a practical planning formula is:
+
+- `Revenue LTV = monthly subscription revenue / monthly churn`
+- `Contribution LTV = monthly contribution margin / monthly churn`
+
+#### AI premium LTV table
+
+| Scenario | Monthly Revenue | Monthly Contribution | Monthly Churn | Revenue LTV | Contribution LTV |
+|---|---:|---:|---:|---:|---:|
+| Conservative | $5.00 | $2.30 | 18% | $27.78 | $12.78 |
+| Base | $5.00 | $3.00 | 12% | $41.67 | $25.00 |
+| Aggressive | $5.00 | $3.60 | 8% | $62.50 | $45.00 |
+
+### Coaching LTV
+
+For marketplace coaching, the better formula is:
+
+- `Revenue LTV = platform fee per month × retention months`
+- `Contribution LTV = net contribution per month × retention months`
+
+#### Coaching LTV table
+
+| Scenario | Avg Coach Invoice | Platform Fee / Month | Net Contribution / Month | Retention | Revenue LTV | Contribution LTV |
+|---|---:|---:|---:|---:|---:|---:|
+| Conservative | $120 | $18.00 | $11.22 | 3 mo | $54.00 | $33.66 |
+| Base | $150 | $22.50 | $14.85 | 4 mo | $90.00 | $59.40 |
+| Aggressive | $200 | $30.00 | $19.90 | 6 mo | $180.00 | $119.40 |
+
+## 20. Blended LTV logic
+
+The best version of KINETIC is not AI-only and not marketplace-only. It is a hybrid funnel:
+
+- a large top-of-funnel audience buys the `$5` AI premium tier
+- a subset of those users later hire coaches
+- some coach-led users may also pay for AI features
+
+This creates a blended user journey.
+
+Example blended case:
+
+- user first becomes an AI premium subscriber
+- stays subscribed for 4 months
+- later converts into a coach client
+- pays a coach for 4 months at `$150/month`
+
+Blended economics for that user:
+
+- AI revenue: `$20`
+- AI contribution: around `$12`
+- coaching platform revenue: `$90`
+- coaching contribution: around `$59.40`
+- total contribution: about `$71.40`
+
+That kind of hybrid user is highly valuable. The problem is that you should not assume every user becomes that user.
+
+## 21. CAC model
+
+### General CAC formulas
+
+- `CAC = total paid acquisition spend / number of acquired paying customers`
+- `Lead CAC = ad spend / leads`
+- `Paid Customer CAC = ad spend / paying customers`
+
+### Important distinction
+
+For KINETIC, you need at least three CACs:
+
+1. `CAC_AI`
+   - cost to acquire a paying `$5` AI subscriber
+2. `CAC_CoachClient`
+   - cost to acquire a paying coaching client
+3. `CAC_CoachSupply`
+   - cost to acquire an active coach who gets at least one paying client
+
+These are not interchangeable.
+
+## 22. Meta ads benchmark framing
+
+Meta ad costs are unstable, so these should be treated as benchmark anchors rather than precise forecasts.
+
+Recent public benchmark data shows:
+
+- health & fitness traffic CPC around `$0.80`
+- health & fitness lead CPC around `$2.64`
+- health & fitness lead conversion rate around `5.63%`
+- health & fitness CPL around `$52.98`
+
+Those numbers matter because they imply:
+
+- low-ticket fitness subscriptions are hard to profitably acquire on cold Meta traffic
+- lead-gen for higher-ticket coaching can work, but only with strong funnel conversion and retention
+
+## 23. Allowable CAC by business line
+
+The simplest planning rule is:
+
+- `Allowable CAC = LTV / target LTV:CAC ratio`
+
+Recommended target ratios:
+
+- early-stage minimum acceptable: `2:1`
+- healthier paid acquisition target: `3:1`
+- strong / scale-ready: `4:1+`
+
+### AI premium allowable CAC
+
+| Scenario | Contribution LTV | Max CAC at 2:1 | Max CAC at 3:1 | Max CAC at 4:1 |
+|---|---:|---:|---:|---:|
+| Conservative | $12.78 | $6.39 | $4.26 | $3.20 |
+| Base | $25.00 | $12.50 | $8.33 | $6.25 |
+| Aggressive | $45.00 | $22.50 | $15.00 | $11.25 |
+
+Interpretation:
+
+- if AI premium is only `$5/month`, cold Meta acquisition is usually dangerous
+- if actual CAC lands above `$10`, AI-only acquisition likely becomes unattractive unless churn is very low
+- the `$5` tier works much better as:
+  - an upsell from organic users
+  - a retention layer
+  - a low-friction bridge into higher-LTV coaching
+
+### Coaching allowable CAC
+
+| Scenario | Contribution LTV | Max CAC at 2:1 | Max CAC at 3:1 | Max CAC at 4:1 |
+|---|---:|---:|---:|---:|
+| Conservative | $33.66 | $16.83 | $11.22 | $8.42 |
+| Base | $59.40 | $29.70 | $19.80 | $14.85 |
+| Aggressive | $119.40 | $59.70 | $39.80 | $29.85 |
+
+Interpretation:
+
+- coaching only becomes comfortably buyable on Meta if:
+  - average invoice is high enough
+  - retention is long enough
+  - funnel from click to paid client is disciplined
+
+## 24. Should KINETIC spend on Meta ads?
+
+### Short answer
+
+Yes, but carefully, and not with the same strategy for both revenue streams.
+
+### For the `$5` AI product
+
+Do **not** treat this as a pure cold-paid Meta subscription product at scale yet.
+
+Reason:
+
+- the price point is too low
+- allowable CAC is narrow
+- AI costs and payment fees take a meaningful share of revenue
+- early churn can kill payback quickly
+
+Best use of Meta for AI premium:
+
+- retargeting warm users
+- reactivation campaigns
+- content-led acquisition into email / community / free plan
+- upsell from existing users rather than direct cold paid subscription
+
+### For coaching marketplace demand
+
+Meta can make sense if you sell into a higher-intent, higher-AOV funnel:
+
+- “Get matched with a coach”
+- “Get a personalized plan + accountability”
+- “Hybrid athlete training with real coach support”
+
+But the economics likely do not work if coaches invoice too little.
+
+## 25. Recommended Meta ad budget
+
+### Phase 1: validation budget
+
+Recommended monthly spend:
+
+- `$1,500 to $3,000/month`
+
+Recommended daily spend:
+
+- `$50 to $100/day`
+
+Why:
+
+- enough budget to test multiple creatives and audiences
+- not so much that you burn capital before knowing CAC
+- appropriate for an early-stage product without hardened conversion data
+
+Suggested allocation:
+
+- `70%` coaching demand generation
+- `20%` retargeting
+- `10%` creative testing / experiments
+
+### Phase 2: controlled scale
+
+Only do this if:
+
+- you have at least 20 to 30 paying conversions worth analyzing
+- you know click-to-paid conversion by funnel step
+- your blended payback period is acceptable
+
+Recommended spend:
+
+- `$3,000 to $8,000/month`
+
+### Phase 3: scale
+
+Only do this if:
+
+- LTV:CAC is consistently above `3:1`
+- retention is stable
+- you have repeatable creative performance
+- you have real billing and refund data
+
+Recommended spend:
+
+- `$10,000+/month`
+
+Current product maturity suggests you should **not** start here.
+
+## 26. Meta budget recommendation by revenue stream
+
+### AI premium
+
+Recommended initial spend:
+
+- `$10 to $20/day` only for remarketing or warm audiences
+
+Do not start with cold Meta ads at `$100/day` for the `$5` AI plan.
+
+### Coaching demand generation
+
+Recommended initial spend:
+
+- `$40 to $80/day`
+
+This is the better use of paid social because LTV is materially higher.
+
+### Coach supply acquisition
+
+Recommended spend:
+
+- use lightweight paid tests only after athlete demand is proven
+
+Reason:
+
+- marketplace businesses fail when they subsidize both sides too early
+- if athlete monetization is not stable, coach-supply CAC will be wasted
+
+## 27. Example CAC scenarios from Meta
+
+These are modeled examples using benchmark CPC/CPL ranges and reasonable funnel assumptions.
+
+### AI premium funnel example
+
+Assume:
+
+- Meta traffic CPC: `$0.80`
+- landing page visitor to paid AI subscriber conversion: `2.5%`
+
+Then:
+
+- `CAC = $0.80 / 2.5% = $32`
+
+That is too high for a `$5` product in almost every scenario.
+
+Even if conversion improves to `5%`:
+
+- `CAC = $0.80 / 5% = $16`
+
+That still only works in the aggressive LTV scenario.
+
+Conclusion:
+
+- cold Meta for the `$5` AI tier is weak unless:
+  - churn is extremely low
+  - there is an annual plan
+  - AI tier acts as a gateway to coaching
+
+### Coaching funnel example
+
+Assume:
+
+- Meta traffic CPC: `$0.80`
+- click to coach request: `12%`
+- request acceptance: `50%`
+- accepted request to paid invoice: `30%`
+
+Then click-to-paid conversion:
+
+- `12% × 50% × 30% = 1.8%`
+
+CAC:
+
+- `$0.80 / 1.8% = $44.44`
+
+That is:
+
+- too high for conservative coaching economics
+- too high for base economics at a `3:1` target
+- workable only if:
+  - retention increases
+  - invoices are larger
+  - conversion improves
+
+Now assume a better funnel:
+
+- click to request: `18%`
+- acceptance: `60%`
+- accepted to paid: `40%`
+
+Then click-to-paid conversion:
+
+- `18% × 60% × 40% = 4.32%`
+
+CAC:
+
+- `$0.80 / 4.32% = $18.52`
+
+This works against base coaching economics.
+
+Key takeaway:
+
+- the coaching business can support Meta if the funnel is sharp
+- the AI-only business usually cannot
+
+## 28. Payback period
+
+### Formula
+
+- `Payback Period (months) = CAC / monthly contribution margin`
+
+### AI premium payback
+
+Base case:
+
+- CAC: `$12`
+- monthly contribution: `$3`
+- payback: `4 months`
+
+This is borderline for a low-priced subscription.
+
+### Coaching payback
+
+Base case:
+
+- CAC: `$20`
+- monthly contribution: `$14.85`
+- payback: `1.35 months`
+
+This is much better.
+
+Conclusion:
+
+- the marketplace side gives a much healthier path to paid acquisition
+- the `$5` tier is more useful for conversion and retention than for direct paid-user acquisition
+
+## 29. ROI formulas
+
+### Marketing ROI
+
+- `ROI = (gross profit from acquired users - ad spend) / ad spend`
+
+### Example: AI premium
+
+If:
+
+- 100 acquired subscribers
+- CAC = `$10`
+- contribution LTV = `$25`
+
+Then:
+
+- total spend = `$1,000`
+- total contribution = `$2,500`
+- ROI = `($2,500 - $1,000) / $1,000 = 150%`
+
+### Example: coaching
+
+If:
+
+- 20 paid coaching users
+- CAC = `$25`
+- contribution LTV = `$59.40`
+
+Then:
+
+- spend = `$500`
+- contribution = `$1,188`
+- ROI = `($1,188 - $500) / $500 = 137.6%`
+
+## 30. Competitor analysis
+
+### Competitor 1: Future
+
+Current public pricing shows roughly:
+
+- `$199/month`
+- promotional first-month discounts or passes are common
+
+What Future does well:
+
+- premium remote coaching
+- high accountability
+- strong coach-client communication
+- very clear value proposition
+
+Why Future matters:
+
+- it validates that remote coaching can command high monthly pricing
+- it sets a high benchmark for what users will pay if human accountability is strong
+
+How KINETIC differs:
+
+- KINETIC is not only remote coaching
+- KINETIC also includes AI planning and training software
+- KINETIC can support more flexible coach pricing than a fixed premium membership
+
+Strategic implication:
+
+- if KINETIC coaches charge too little, the business will under-monetize relative to the market
+- Future suggests premium remote coaching pricing can plausibly live around `$150 to $199+` monthly
+
+### Competitor 2: Runna
+
+Current public pricing shows roughly:
+
+- `$19.99/month`
+- `$119.99/year`
+
+What Runna does well:
+
+- focused running proposition
+- strong onboarding into specific race goals
+- much lower price than human coaching
+
+Why Runna matters:
+
+- it is a strong benchmark for the AI / plan-led running category
+- it shows that software-only coaching support can command substantially more than `$5`
+
+How KINETIC differs:
+
+- KINETIC is broader than running
+- KINETIC includes gym + hybrid athlete planning
+- KINETIC also includes coach marketplace monetization
+
+Strategic implication:
+
+- a `$5` AI tier is intentionally inexpensive versus specialized apps like Runna
+- this can help conversion, but it leaves limited room for CAC
+- if AI features become valuable enough, KINETIC may eventually justify a higher premium tier than `$5`
+
+### Competitor 3: Strava
+
+Current U.S. public pricing shows roughly:
+
+- `$11.99/month`
+- `$79.99/year`
+
+What Strava does well:
+
+- retention through network effects and community
+- analytics, status, and habit loops
+- social graph moat
+
+Why Strava matters:
+
+- it is the benchmark for engagement, not coaching
+- it proves consumers will pay for performance and social utility even without direct 1:1 coaching
+
+How KINETIC differs:
+
+- KINETIC is more outcome-oriented and coach-oriented
+- Strava is a network product first
+- KINETIC does not yet have Strava’s community lock-in
+
+Strategic implication:
+
+- KINETIC should not compete with Strava on social graph
+- it should compete on results, personalization, hybrid planning, and coach conversion
+
+### Competitor 4: Trainerize
+
+Current public pricing starts very low for coaches and scales with business size.
+
+What Trainerize does well:
+
+- coach operating system
+- B2B coach tooling
+- client messaging, programs, payments, add-ons
+
+Why Trainerize matters:
+
+- it is a direct competitor to the coach-dashboard side
+- it validates software demand from coaches
+- it competes on coach productivity rather than athlete brand
+
+How KINETIC differs:
+
+- KINETIC combines coach tooling with athlete acquisition and marketplace demand
+- Trainerize is more of a coach SaaS platform than a consumer marketplace
+
+Strategic implication:
+
+- KINETIC’s moat should be “distribution + consumer funnel + AI + coach tooling”
+- if it becomes just a coach backend, it will be compared directly against mature B2B tools
+
+## 31. Competitive positioning summary
+
+KINETIC sits between four models:
+
+- Future = premium remote human coaching
+- Runna = focused digital plan/coaching app
+- Strava = retention and analytics community
+- Trainerize = coach operating system
+
+The strongest position for KINETIC is:
+
+- hybrid athlete specialization
+- low-friction `$5` AI premium entry point
+- upgrade path into human coaching
+- coach marketplace monetization with 15% take rate
+
+That positioning is stronger than trying to win as:
+
+- a generic cheap fitness app
+- a pure AI workout generator
+- a generic coach SaaS clone
+
+## 32. Strategic conclusion on pricing
+
+### The `$5` AI premium price
+
+Pros:
+
+- easy to try
+- strong conversion tool
+- low psychological friction
+
+Cons:
+
+- hard to support cold paid acquisition
+- limited room for processor fees and AI cost
+- limited room for support and experimentation
+
+Conclusion:
+
+- `$5` is good as an entry or retention tier
+- `$5` is weak as the only monetization engine
+
+### The coaching commission model
+
+Pros:
+
+- materially higher LTV
+- better supports paid acquisition
+- stronger differentiation
+
+Cons:
+
+- more complex operationally
+- needs demand and supply balance
+- requires retention and trust
+
+Conclusion:
+
+- the coaching marketplace should be the economic engine
+- the AI premium tier should be the top-of-funnel and expansion layer
+
+## 33. Final recommendation
+
+If the goal is healthy unit economics, the best near-term strategy is:
+
+1. Keep the `$5` AI tier, but do not rely on cold paid acquisition to scale it.
+2. Use AI as a conversion layer, retention layer, and upsell path.
+3. Focus Meta acquisition on higher-LTV coaching demand.
+4. Encourage coaches to invoice at meaningful price points.
+5. Push toward:
+   - `$150+` monthly coaching packages
+   - multi-month commitments
+   - higher retention
+6. Hold Meta spend initially in the `$1.5k to $3k/month` range until paid conversion data is stable.
+7. Scale only when:
+   - coaching CAC is consistently below about `$20 to $30`
+   - blended LTV:CAC is above `3:1`
+   - payback is below `3 months`
+
+## 34. Market reference links
+
+- Future pricing: https://future.co/
+- Future membership pricing help: https://faq.future.co/en/articles/12073382-membership-plans-pricing
+- Runna pricing: https://www.runna.com/pricing
+- Strava pricing: https://www.strava.com/pricing
+- Trainerize pricing: https://www.trainerize.com/pricing/
+- Meta benchmark reference: https://www.wordstream.com/blog/facebook-ads-benchmarks-2025
