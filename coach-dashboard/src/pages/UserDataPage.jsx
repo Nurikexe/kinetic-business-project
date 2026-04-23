@@ -82,6 +82,50 @@ export default function UserDataPage({ coach, request, onBack }) {
   const [editedDays, setEditedDays] = useState(null)
   const [saveError, setSaveError] = useState('')
 
+  const updateExerciseField = (dayIdx, exIdx, field, value) => {
+    setEditedDays((prev) => prev.map((day, currentDayIdx) =>
+      currentDayIdx === dayIdx
+        ? {
+            ...day,
+            exercises: (day.exercises ?? []).map((exercise, currentExIdx) =>
+              currentExIdx === exIdx ? { ...exercise, [field]: value } : exercise
+            ),
+          }
+        : day
+    ))
+  }
+
+  const addExerciseToDay = (dayIdx) => {
+    setEditedDays((prev) => prev.map((day, currentDayIdx) =>
+      currentDayIdx === dayIdx
+        ? {
+            ...day,
+            exercises: [
+              ...(day.exercises ?? []),
+              {
+                id: `coach-ex-${Date.now()}-${currentDayIdx}`,
+                name: '',
+                sets: '3',
+                reps: '8-10',
+                weight: '',
+              },
+            ],
+          }
+        : day
+    ))
+  }
+
+  const removeExerciseFromDay = (dayIdx, exIdx) => {
+    setEditedDays((prev) => prev.map((day, currentDayIdx) =>
+      currentDayIdx === dayIdx
+        ? {
+            ...day,
+            exercises: (day.exercises ?? []).filter((_, currentExIdx) => currentExIdx !== exIdx),
+          }
+        : day
+    ))
+  }
+
   useEffect(() => {
     let mounted = true
     async function load() {
@@ -283,6 +327,15 @@ export default function UserDataPage({ coach, request, onBack }) {
                             {day.sub && <p className="font-label text-xs text-on-surface-variant">{day.sub}</p>}
                             {day.schedule && <p className="font-label text-[10px] text-outline">{day.schedule}</p>}
                           </div>
+                          {editingPlan && (
+                            <button
+                              onClick={() => addExerciseToDay(dayIdx)}
+                              className="flex items-center gap-1.5 px-3 py-2 bg-primary-container/10 text-primary-container font-label text-[11px] font-bold rounded-xl hover:bg-primary-container/20 transition-colors"
+                            >
+                              <span className="material-symbols-outlined text-base">add</span>
+                              Add Exercise
+                            </button>
+                          )}
                         </div>
                         <div className="space-y-2">
                           {(day.exercises ?? []).map((ex, exIdx) => (
@@ -291,14 +344,8 @@ export default function UserDataPage({ coach, request, onBack }) {
                                 {editingPlan ? (
                                   <input
                                     value={ex.name}
-                                    onChange={e => {
-                                      const newDays = editedDays.map((d, di) =>
-                                        di === dayIdx
-                                          ? { ...d, exercises: d.exercises.map((ex2, ei) => ei === exIdx ? { ...ex2, name: e.target.value } : ex2) }
-                                          : d
-                                      )
-                                      setEditedDays(newDays)
-                                    }}
+                                    onChange={e => updateExerciseField(dayIdx, exIdx, 'name', e.target.value)}
+                                    placeholder="Exercise name"
                                     className="w-full bg-surface-container border border-outline/20 rounded-lg px-3 py-1.5 font-label text-sm text-on-surface focus:outline-none focus:border-primary-container/50"
                                   />
                                 ) : (
@@ -310,30 +357,23 @@ export default function UserDataPage({ coach, request, onBack }) {
                                   <>
                                     <input
                                       value={ex.sets}
-                                      onChange={e => {
-                                        const newDays = editedDays.map((d, di) =>
-                                          di === dayIdx
-                                            ? { ...d, exercises: d.exercises.map((ex2, ei) => ei === exIdx ? { ...ex2, sets: e.target.value } : ex2) }
-                                            : d
-                                        )
-                                        setEditedDays(newDays)
-                                      }}
+                                      onChange={e => updateExerciseField(dayIdx, exIdx, 'sets', e.target.value)}
                                       className="w-14 bg-surface-container border border-outline/20 rounded-lg px-2 py-1.5 font-label text-xs text-on-surface text-center focus:outline-none focus:border-primary-container/50"
                                       placeholder="sets"
                                     />
                                     <input
                                       value={ex.reps}
-                                      onChange={e => {
-                                        const newDays = editedDays.map((d, di) =>
-                                          di === dayIdx
-                                            ? { ...d, exercises: d.exercises.map((ex2, ei) => ei === exIdx ? { ...ex2, reps: e.target.value } : ex2) }
-                                            : d
-                                        )
-                                        setEditedDays(newDays)
-                                      }}
+                                      onChange={e => updateExerciseField(dayIdx, exIdx, 'reps', e.target.value)}
                                       className="w-20 bg-surface-container border border-outline/20 rounded-lg px-2 py-1.5 font-label text-xs text-on-surface text-center focus:outline-none focus:border-primary-container/50"
                                       placeholder="reps"
                                     />
+                                    <button
+                                      onClick={() => removeExerciseFromDay(dayIdx, exIdx)}
+                                      className="w-8 h-8 rounded-lg bg-surface-container text-outline hover:text-error-container hover:bg-error-container/10 transition-colors flex items-center justify-center"
+                                      title="Remove exercise"
+                                    >
+                                      <span className="material-symbols-outlined text-base">delete</span>
+                                    </button>
                                   </>
                                 ) : (
                                   <p className="font-label text-xs text-on-surface-variant">{ex.sets} × {ex.reps}</p>
