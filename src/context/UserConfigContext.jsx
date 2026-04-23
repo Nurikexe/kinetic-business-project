@@ -51,8 +51,12 @@ const UserConfigContext = createContext(null);
 const normalizeConfig = (data = {}) => ({
   ...DEFAULTS,
   ...data,
-  run_weeks: Array.isArray(data.run_weeks) ? data.run_weeks : DEFAULTS.run_weeks,
-  run_types: Array.isArray(data.run_types) ? data.run_types : DEFAULTS.run_types,
+  gym_days:    Array.isArray(data.gym_days)    ? data.gym_days    : DEFAULTS.gym_days,
+  completed:   Array.isArray(data.completed)   ? data.completed   : DEFAULTS.completed,
+  lifts:       Array.isArray(data.lifts)       ? data.lifts       : DEFAULTS.lifts,
+  gym_rules:   Array.isArray(data.gym_rules)   ? data.gym_rules   : DEFAULTS.gym_rules,
+  run_weeks:   Array.isArray(data.run_weeks)   ? data.run_weeks   : DEFAULTS.run_weeks,
+  run_types:   Array.isArray(data.run_types)   ? data.run_types   : DEFAULTS.run_types,
   liked_plans: Array.isArray(data.liked_plans) ? data.liked_plans : DEFAULTS.liked_plans,
 });
 
@@ -96,8 +100,11 @@ export function UserConfigProvider({ children }) {
     const payload = pendingRef.current;
     pendingRef.current = null;
 
+    // Strip client-only fields that have no column in user_config
+    const { sex, avatar_url, ...dbPayload } = payload;
+
     const { error } = await supabase.from('user_config').upsert(
-      { ...payload, user_id: user.id, updated_at: new Date().toISOString() },
+      { ...dbPayload, user_id: user.id, updated_at: new Date().toISOString() },
       { onConflict: 'user_id' }
     );
 
