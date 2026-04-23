@@ -100,11 +100,8 @@ export function UserConfigProvider({ children }) {
     const payload = pendingRef.current;
     pendingRef.current = null;
 
-    // Strip client-only fields that have no column in user_config
-    const { sex, avatar_url, ...dbPayload } = payload;
-
     const { error } = await supabase.from('user_config').upsert(
-      { ...dbPayload, user_id: user.id, updated_at: new Date().toISOString() },
+      { ...payload, user_id: user.id, updated_at: new Date().toISOString() },
       { onConflict: 'user_id' }
     );
 
