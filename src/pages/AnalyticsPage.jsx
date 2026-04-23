@@ -1162,7 +1162,7 @@ export default function AnalyticsPage() {
       const messages = [
         {
           role: 'system',
-          content: `You are KINETIC AI, an expert hybrid athlete coach. Use the user's real training data below to give highly personalized, actionable advice. Be specific, reference their actual numbers, and be encouraging. Answer in 3-6 sentences.
+          content: `You are KINETIC AI, an expert hybrid athlete coach. Use the user's real training data to give highly personalized, actionable advice. Be direct, reference their actual numbers, and keep it concise. Reply in 2-3 short sentences only — no bullet points, no headers, no long explanations.
 
 === USER TRAINING DATA ===
 ${context}
@@ -1393,6 +1393,27 @@ ${context}
               <div className="flex items-center gap-2 text-xs font-bold" style={{ color: '#00e3fd' }}>
                 <div className="w-3 h-3 rounded-full border border-t-transparent animate-spin" style={{ borderColor: '#00e3fd', borderTopColor: 'transparent' }} />
                 Fetching your training data…
+              </div>
+            )}
+
+            {/* Thinking indicator */}
+            {aiStreaming && !aiResponse && !aiContextLoading && (
+              <div className="flex items-center gap-3" style={{
+                background: 'rgba(212,251,0,0.05)',
+                border: '1px solid rgba(212,251,0,0.12)',
+                borderRadius: '0.875rem',
+                padding: '0.875rem 1rem',
+              }}>
+                <div className="flex gap-1">
+                  {[0, 1, 2].map(i => (
+                    <div key={i} className="w-1.5 h-1.5 rounded-full animate-bounce" style={{
+                      background: '#d4fb00',
+                      animationDelay: `${i * 0.15}s`,
+                      animationDuration: '0.8s',
+                    }} />
+                  ))}
+                </div>
+                <span className="text-xs font-bold" style={{ color: 'rgba(212,251,0,0.7)' }}>Thinking…</span>
               </div>
             )}
 
