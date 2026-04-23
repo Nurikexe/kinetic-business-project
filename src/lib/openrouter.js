@@ -1,5 +1,5 @@
 const OPENROUTER_BASE = 'https://openrouter.ai/api/v1';
-const MODEL = 'google/gemma-3-4b-it:free';
+const MODEL = 'google/gemma-3-12b-it';
 
 function getKey() {
   return import.meta.env.VITE_OPENROUTER_API_KEY ?? '';

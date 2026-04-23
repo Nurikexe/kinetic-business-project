@@ -30,12 +30,12 @@ function messagesToContents(messages) {
  * @param {function} onChunk - called with each text chunk as it arrives
  * @returns {Promise<string>} full response text
  */
-export async function streamChat(messages, onChunk) {
+export async function streamChat(messages, onChunk, model = MODEL) {
   const ai = getClient();
   const contents = messagesToContents(messages);
 
   const response = await ai.models.generateContentStream({
-    model: MODEL,
+    model,
     contents,
   });
 

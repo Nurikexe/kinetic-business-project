@@ -50,16 +50,22 @@ function parseInline(str) {
       if (end !== -1) {
         result.push(<strong key={key++} style={{ color: '#d4fb00', fontWeight: 900 }}>{str.slice(idx + 2, end)}</strong>);
         idx = end + 2;
-        continue;
+      } else {
+        result.push('**');
+        idx += 2;
       }
+      continue;
     }
-    if (str[idx] === '*' && str[idx + 1] !== '*') {
+    if (str[idx] === '*') {
       const end = str.indexOf('*', idx + 1);
       if (end !== -1) {
         result.push(<em key={key++} style={{ color: 'rgba(212,251,0,0.75)', fontStyle: 'italic' }}>{str.slice(idx + 1, end)}</em>);
         idx = end + 1;
-        continue;
+      } else {
+        result.push('*');
+        idx += 1;
       }
+      continue;
     }
     let plain = '';
     while (idx < str.length && str[idx] !== '*') plain += str[idx++];
@@ -70,11 +76,13 @@ function parseInline(str) {
 function renderAiMarkdown(text) {
   if (!text) return null;
   return text.split('\n').map((line, i) => {
+    // skip markdown table rows/separators
+    if (/^\s*\|/.test(line) || /^\s*[-|]+\s*$/.test(line)) return null;
     if (/^#{1,3}\s/.test(line)) {
       const content = line.replace(/^#+\s/, '');
       return <p key={i} style={{ fontWeight: 900, fontSize: 11, color: '#d4fb00', marginTop: 10, marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{content}</p>;
     }
-    if (/^[-•*]\s/.test(line)) {
+    if (/^[-•]\s/.test(line)) {
       return (
         <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 4 }}>
           <span style={{ color: '#d4fb00', fontWeight: 900, lineHeight: 1.7, flexShrink: 0 }}>▸</span>
@@ -1223,7 +1231,8 @@ ${context}
         { role: 'system', content: systemPrompt },
         { role: 'user', content: aiInput.trim() },
       ];
-      await streamChat(messages, (chunk) => setAiResponse(r => r + chunk));
+      const model = useDeepAnalysis ? 'gemini-3.1-flash-lite-preview' : 'gemma-3-12b-it';
+      await streamChat(messages, (chunk) => setAiResponse(r => r + chunk), model);
       const newState = incrementAiState(creditCost);
       setAiState(newState);
       setCountdown(Math.max(0, newState.resetAt - Date.now()));
