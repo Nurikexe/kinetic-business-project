@@ -23,13 +23,13 @@ function getAiState() {
     return s;
   } catch { return { count: 0, resetAt: Date.now() + RESET_HOURS * 3600 * 1000 }; }
 }
-function incrementAiState() {
+function incrementAiState(delta = 1) {
   try {
     const s = getAiState();
-    s.count += 1;
+    s.count += delta;
     localStorage.setItem(AI_STORAGE_KEY, JSON.stringify(s));
     return s;
-  } catch { return { count: 1, resetAt: Date.now() + RESET_HOURS * 3600 * 1000 }; }
+  } catch { return { count: delta, resetAt: Date.now() + RESET_HOURS * 3600 * 1000 }; }
 }
 function fmtCountdown(ms) {
   if (ms <= 0) return '0:00:00';
@@ -38,6 +38,53 @@ function fmtCountdown(ms) {
   const m = Math.floor((totalSec % 3600) / 60);
   const s = totalSec % 60;
   return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+// ── AI markdown renderer ─────────────────────────────────────
+function parseInline(str) {
+  const result = [];
+  let idx = 0, key = 0;
+  while (idx < str.length) {
+    if (str[idx] === '*' && str[idx + 1] === '*') {
+      const end = str.indexOf('**', idx + 2);
+      if (end !== -1) {
+        result.push(<strong key={key++} style={{ color: '#d4fb00', fontWeight: 900 }}>{str.slice(idx + 2, end)}</strong>);
+        idx = end + 2;
+        continue;
+      }
+    }
+    if (str[idx] === '*' && str[idx + 1] !== '*') {
+      const end = str.indexOf('*', idx + 1);
+      if (end !== -1) {
+        result.push(<em key={key++} style={{ color: 'rgba(212,251,0,0.75)', fontStyle: 'italic' }}>{str.slice(idx + 1, end)}</em>);
+        idx = end + 1;
+        continue;
+      }
+    }
+    let plain = '';
+    while (idx < str.length && str[idx] !== '*') plain += str[idx++];
+    if (plain) result.push(plain);
+  }
+  return result;
+}
+function renderAiMarkdown(text) {
+  if (!text) return null;
+  return text.split('\n').map((line, i) => {
+    if (/^#{1,3}\s/.test(line)) {
+      const content = line.replace(/^#+\s/, '');
+      return <p key={i} style={{ fontWeight: 900, fontSize: 11, color: '#d4fb00', marginTop: 10, marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{content}</p>;
+    }
+    if (/^[-•*]\s/.test(line)) {
+      return (
+        <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 4 }}>
+          <span style={{ color: '#d4fb00', fontWeight: 900, lineHeight: 1.7, flexShrink: 0 }}>▸</span>
+          <span style={{ lineHeight: 1.7 }}>{parseInline(line.slice(2))}</span>
+        </div>
+      );
+    }
+    if (line.trim() === '') return <div key={i} style={{ height: 5 }} />;
+    return <p key={i} style={{ marginBottom: 3, lineHeight: 1.7 }}>{parseInline(line)}</p>;
+  });
 }
 
 // ── SVG Bar chart ─────────────────────────────────────────────
@@ -745,6 +792,7 @@ export default function AnalyticsPage() {
   const [aiStreaming, setAiStreaming]  = useState(false);
   const [aiContextLoading, setAiContextLoading] = useState(false);
   const [aiState, setAiState]         = useState(getAiState);
+  const [useDeepAnalysis, setUseDeepAnalysis] = useState(false);
   const [countdown, setCountdown]     = useState(() => Math.max(0, getAiState().resetAt - Date.now()));
 
   // Countdown timer — tick every second
@@ -1079,19 +1127,19 @@ export default function AnalyticsPage() {
   })();
 
   // ── AI insight ────────────────────────────────────────────
-  const buildRichContext = async () => {
-    // Fetch targeted data: last 10 workouts with exercises, last 10 runs, user_config
+  const buildRichContext = async (deep = false) => {
+    const dataLimit = deep ? 30 : 10;
     const [wRes, rRes, cfgRes] = await Promise.all([
       supabase.from('workouts')
         .select('date, day_name, day_focus, exercises, notes')
         .eq('user_id', user.id)
         .order('date', { ascending: false })
-        .limit(10),
+        .limit(dataLimit),
       supabase.from('run_sessions')
         .select('date, title, total_distance, avg_pace, duration, notes')
         .eq('user_id', user.id)
         .order('date', { ascending: false })
-        .limit(10),
+        .limit(dataLimit),
       supabase.from('user_config')
         .select('*')
         .eq('user_id', user.id)
@@ -1103,7 +1151,7 @@ export default function AnalyticsPage() {
     const cfg = cfgRes.data ?? {};
 
     // Personal records from already-loaded allGymData
-    const prs = personalRecords.slice(0, 5);
+    const prs = personalRecords.slice(0, deep ? 10 : 5);
 
     // Build concise context string
     const lines = [];
@@ -1152,26 +1200,31 @@ export default function AnalyticsPage() {
   };
 
   const handleAiSubmit = async () => {
-    if (!aiInput.trim() || aiState.count >= AI_LIMIT || aiStreaming) return;
+    const creditCost = useDeepAnalysis ? 2 : 1;
+    if (!aiInput.trim() || aiState.count + creditCost > AI_LIMIT || aiStreaming) return;
     setAiStreaming(true);
     setAiContextLoading(true);
     setAiResponse('');
     try {
-      const context = await buildRichContext();
+      const context = await buildRichContext(useDeepAnalysis);
       setAiContextLoading(false);
-      const messages = [
-        {
-          role: 'system',
-          content: `You are KINETIC AI, an expert hybrid athlete coach. Use the user's real training data to give highly personalized, actionable advice. Be direct, reference their actual numbers, and keep it concise. Reply in 2-3 short sentences only — no bullet points, no headers, no long explanations.
+      const systemPrompt = useDeepAnalysis
+        ? `You are KINETIC AI, an expert hybrid athlete coach with access to the user's comprehensive training history. Provide a detailed, structured analysis. Use markdown formatting: **bold** for key metrics and numbers, bullet points starting with "- " for recommendations, and ### for section headers. Give thorough, actionable advice organized by topic. Reference specific numbers from their data.
 
 === USER TRAINING DATA ===
 ${context}
-=== END DATA ===`,
-        },
+=== END DATA ===`
+        : `You are KINETIC AI, an expert hybrid athlete coach. Use the user's real training data to give highly personalized, actionable advice. Be direct, reference their actual numbers, and keep it concise. Reply in 2-3 short sentences only — no bullet points, no headers, no long explanations.
+
+=== USER TRAINING DATA ===
+${context}
+=== END DATA ===`;
+      const messages = [
+        { role: 'system', content: systemPrompt },
         { role: 'user', content: aiInput.trim() },
       ];
       await streamChat(messages, (chunk) => setAiResponse(r => r + chunk));
-      const newState = incrementAiState();
+      const newState = incrementAiState(creditCost);
       setAiState(newState);
       setCountdown(Math.max(0, newState.resetAt - Date.now()));
     } catch (e) {
@@ -1372,6 +1425,72 @@ ${context}
               </div>
             </div>
 
+            {/* Deep Analysis toggle */}
+            <button
+              onClick={() => setUseDeepAnalysis(v => !v)}
+              disabled={aiStreaming || aiContextLoading}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                width: '100%',
+                background: useDeepAnalysis
+                  ? 'linear-gradient(135deg, rgba(212,251,0,0.12) 0%, rgba(0,227,253,0.08) 100%)'
+                  : 'rgba(255,255,255,0.04)',
+                border: `1px solid ${useDeepAnalysis ? 'rgba(212,251,0,0.35)' : 'rgba(255,255,255,0.08)'}`,
+                borderRadius: '0.875rem',
+                padding: '10px 14px',
+                cursor: aiStreaming || aiContextLoading ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s',
+                opacity: aiStreaming || aiContextLoading ? 0.5 : 1,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span
+                  className="material-symbols-outlined"
+                  style={{
+                    fontSize: 18,
+                    color: useDeepAnalysis ? '#d4fb00' : 'var(--on-surface-variant)',
+                    fontVariationSettings: "'FILL' 1",
+                  }}
+                >
+                  analytics
+                </span>
+                <div style={{ textAlign: 'left' }}>
+                  <p style={{ fontSize: 12, fontWeight: 900, color: useDeepAnalysis ? '#d4fb00' : 'var(--on-surface)', letterSpacing: '0.04em', fontFamily: 'var(--font-headline, inherit)', textTransform: 'uppercase' }}>
+                    Deep Analysis
+                  </p>
+                  <p style={{ fontSize: 10, color: 'var(--on-surface-variant)', fontWeight: 600 }}>
+                    {useDeepAnalysis ? 'Last 30 sessions · full history' : 'Last 10 sessions · quick answer'}
+                  </p>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{
+                  fontSize: 10, fontWeight: 900, letterSpacing: '0.06em',
+                  color: useDeepAnalysis ? '#00e3fd' : 'var(--on-surface-variant)',
+                  background: useDeepAnalysis ? 'rgba(0,227,253,0.12)' : 'rgba(255,255,255,0.06)',
+                  border: `1px solid ${useDeepAnalysis ? 'rgba(0,227,253,0.3)' : 'rgba(255,255,255,0.1)'}`,
+                  borderRadius: '2rem', padding: '2px 8px',
+                }}>
+                  {useDeepAnalysis ? '2 credits' : '1 credit'}
+                </span>
+                {/* Toggle pill */}
+                <div style={{
+                  width: 36, height: 20, borderRadius: 99,
+                  background: useDeepAnalysis ? 'linear-gradient(90deg, #d4fb00, #9bdd00)' : 'rgba(255,255,255,0.12)',
+                  position: 'relative', transition: 'background 0.2s', flexShrink: 0,
+                }}>
+                  <div style={{
+                    position: 'absolute', top: 3, left: useDeepAnalysis ? 19 : 3,
+                    width: 14, height: 14, borderRadius: '50%',
+                    background: useDeepAnalysis ? '#000' : 'rgba(255,255,255,0.5)',
+                    transition: 'left 0.2s',
+                  }} />
+                </div>
+              </div>
+            </button>
+
             {/* Progress bar for prompts */}
             <div style={{ height: 3, borderRadius: 99, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
               <div style={{
@@ -1432,7 +1551,7 @@ ${context}
                   <span className="material-symbols-outlined text-sm" style={{ color: '#d4fb00', fontVariationSettings: "'FILL' 1" }}>smart_toy</span>
                   <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: '#d4fb00' }}>AI Response</span>
                 </div>
-                {aiResponse}
+                {renderAiMarkdown(aiResponse)}
                 {aiStreaming && <span className="inline-block w-0.5 h-4 animate-pulse ml-1 align-middle" style={{ background: '#d4fb00' }} />}
               </div>
             )}
