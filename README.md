@@ -1,7 +1,5 @@
 # ⚡️ KINETIC | HYBRID ATHLETE
 
-![Hybrid Athlete Hero](./design/hero.png)
-
 ## 🧬 Revolutionize Your Training
 **KINETIC** is a next-generation training platform designed for the modern hybrid athlete. Whether you're chasing a sub-20 minute 5K or a 200kg deadlift, KINETIC fuses strength and endurance training into a single, cohesive experience powered by cutting-edge AI.
 
